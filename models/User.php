@@ -1,99 +1,143 @@
 <?php
 
-declare(strict_types=1);
-
 namespace app\models;
 
-use yii\base\BaseObject;
-use yii\web\IdentityInterface;
+use Yii;
 
-class User extends BaseObject implements IdentityInterface
+/**
+ * This is the model class for table "users".
+ *
+ * @property int $id
+ * @property string $username
+ * @property string $email
+ * @property string $password_hash
+ * @property int|null $member_ship_id
+ * @property int|null $total_points
+ * @property int $status
+ * @property int $created_at
+ * @property int $updated_at
+ *
+ * @property MembershipLevel $membershipLevel
+ * @property Order[] $orders
+ * @property Cart $cart
+ * @property CouponUsage[] $couponUsages
+ * @property ArticleComment[] $articleComments
+ * @property ArticleLike[] $articleLikes
+ * @property UserAddress[] $userAddresses
+ */
+class User extends \yii\db\ActiveRecord
 {
-    public int|string $id = '';
-    public string $username = '';
-    public string $passwordHash = '';
-    public string $authKey = '';
-    public string $accessToken = '';
 
-    private static array $_users = [
-        '100' => [
-            'id' => '100',
-            'username' => 'admin',
-            // password: admin
-            'passwordHash' => '$2y$13$gYAywKSkhfZDq9FLNdm7buKnvlRxDexf5xipSMAxQPDUxpaptmZJu',
-            'authKey' => 'test100key',
-            'accessToken' => '100-token',
-        ],
-        '101' => [
-            'id' => '101',
-            'username' => 'demo',
-            // password: demo
-            'passwordHash' => '$2y$13$alRLq1PGVMlGYwS/Y3iy3ewQns1Z8ol8Iq6Zb5k7ZwEhblA1aL29y',
-            'authKey' => 'test101key',
-            'accessToken' => '101-token',
-        ],
-    ];
 
     /**
      * {@inheritdoc}
      */
-    public static function findIdentity($id): static|null
+    public static function tableName()
     {
-        return isset(self::$_users[$id]) ? new static(self::$_users[$id]) : null;
+        return 'users';
     }
 
     /**
      * {@inheritdoc}
      */
-    public static function findIdentityByAccessToken($token, $type = null): static|null
+    public function rules()
     {
-        foreach (self::$_users as $user) {
-            if ($user['accessToken'] === $token) {
-                return new static($user);
-            }
-        }
-
-        return null;
+        return [
+            [['member_ship_id'], 'default', 'value' => null],
+            [['total_points'], 'default', 'value' => 0],
+            [['status'], 'default', 'value' => 1],
+            [['username', 'email', 'password_hash', 'created_at', 'updated_at'], 'required'],
+            [['member_ship_id', 'total_points', 'status', 'created_at', 'updated_at'], 'integer'],
+            [['username', 'email', 'password_hash'], 'string', 'max' => 255],
+            [['email'], 'unique'],
+        ];
     }
 
     /**
-     * Finds user by username
+     * {@inheritdoc}
+     */
+    public function attributeLabels()
+    {
+        return [
+            'id' => 'ID',
+            'username' => 'Username',
+            'email' => 'Email',
+            'password_hash' => 'Password Hash',
+            'member_ship_id' => 'Member Ship ID',
+            'total_points' => 'Total Points',
+            'status' => 'Status',
+            'created_at' => 'Created At',
+            'updated_at' => 'Updated At',
+        ];
+    }
+
+    /**
+     * Gets query for [[MembershipLevel]].
      *
-     * @param string $username
-     * @return static|null
+     * @return \yii\db\ActiveQuery
      */
-    public static function findByUsername(string $username): static|null
+    public function getMembershipLevel()
     {
-        foreach (self::$_users as $user) {
-            if (strcasecmp($user['username'], $username) === 0) {
-                return new static($user);
-            }
-        }
-
-        return null;
+        return $this->hasOne(MembershipLevel::class, ['id' => 'member_ship_id']);
     }
 
     /**
-     * {@inheritdoc}
+     * Gets query for [[Orders]].
+     *
+     * @return \yii\db\ActiveQuery
      */
-    public function getId(): int|string
+    public function getOrders()
     {
-        return $this->id;
+        return $this->hasMany(Order::class, ['user_id' => 'id']);
     }
 
     /**
-     * {@inheritdoc}
+     * Gets query for [[Cart]].
+     *
+     * @return \yii\db\ActiveQuery
      */
-    public function getAuthKey(): string|null
+    public function getCart()
     {
-        return $this->authKey;
+        return $this->hasOne(Cart::class, ['user_id' => 'id']);
     }
 
     /**
-     * {@inheritdoc}
+     * Gets query for [[CouponUsages]].
+     *
+     * @return \yii\db\ActiveQuery
      */
-    public function validateAuthKey($authKey): bool
+    public function getCouponUsages()
     {
-        return $this->authKey === $authKey;
+        return $this->hasMany(CouponUsage::class, ['user_id' => 'id']);
+    }
+
+    /**
+     * Gets query for [[ArticleComments]].
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getArticleComments()
+    {
+        return $this->hasMany(ArticleComment::class, ['user_id' => 'id']);
+    }
+
+    /**
+     * Gets query for [[ArticleLikes]].
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getArticleLikes()
+    {
+        return $this->hasMany(ArticleLike::class, ['user_id' => 'id']);
+    }
+
+    /**
+     * Gets query for [[UserAddresses]].
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getUserAddresses()
+    {
+        return $this->hasMany(UserAddress::class, ['user_id' => 'id']);
     }
 }

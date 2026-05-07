@@ -1,0 +1,108 @@
+<?php
+
+namespace app\models;
+
+use Yii;
+
+/**
+ * This is the model class for table "article_comments".
+ *
+ * @property int $id
+ * @property int $article_id
+ * @property int $user_id
+ * @property string $content
+ * @property int|null $parent_id
+ * @property int $status
+ * @property int $created_at
+ * @property int $updated_at
+ *
+ * @property Article $article
+ * @property User $user
+ * @property ArticleComment $parent
+ * @property ArticleComment[] $children
+ */
+class ArticleComment extends \yii\db\ActiveRecord
+{
+
+
+    /**
+     * {@inheritdoc}
+     */
+    public static function tableName()
+    {
+        return 'article_comments';
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function rules()
+    {
+        return [
+            [['parent_id'], 'default', 'value' => null],
+            [['status'], 'default', 'value' => 1],
+            [['article_id', 'user_id', 'content', 'created_at', 'updated_at'], 'required'],
+            [['article_id', 'user_id', 'parent_id', 'status', 'created_at', 'updated_at'], 'integer'],
+            [['content'], 'string'],
+            [['article_id'], 'exist', 'skipOnError' => true, 'targetClass' => Article::class, 'targetAttribute' => ['article_id' => 'id']],
+        ];
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function attributeLabels()
+    {
+        return [
+            'id' => 'ID',
+            'article_id' => 'Article ID',
+            'user_id' => 'User ID',
+            'content' => 'Content',
+            'parent_id' => 'Parent ID',
+            'status' => 'Status',
+            'created_at' => 'Created At',
+            'updated_at' => 'Updated At',
+        ];
+    }
+
+    /**
+     * Gets query for [[Article]].
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getArticle()
+    {
+        return $this->hasOne(Article::class, ['id' => 'article_id']);
+    }
+
+    /**
+     * Gets query for [[User]].
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getUser()
+    {
+        return $this->hasOne(User::class, ['id' => 'user_id']);
+    }
+
+    /**
+     * Gets query for [[Parent]].
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getParent()
+    {
+        return $this->hasOne(ArticleComment::class, ['id' => 'parent_id']);
+    }
+
+    /**
+     * Gets query for [[Children]].
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getChildren()
+    {
+        return $this->hasMany(ArticleComment::class, ['parent_id' => 'id']);
+    }
+
+}
