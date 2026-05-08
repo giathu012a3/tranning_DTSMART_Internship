@@ -51,12 +51,18 @@ class CartDetail extends \yii\db\ActiveRecord
     }
 
     /**
-     * Gets query for [[Cart]].
-     *
      * @return \yii\db\ActiveQuery
      */
     public function getCart()
     {
         return $this->hasOne(Cart::class, ['id' => 'cart_id']);
+    }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getProduct()
+    {
+        return $this->hasOne(Product::class, ['id' => 'product_id']);
     }
 }

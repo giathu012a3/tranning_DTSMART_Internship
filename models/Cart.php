@@ -52,8 +52,6 @@ class Cart extends \yii\db\ActiveRecord
     }
 
     /**
-     * Gets query for [[User]].
-     *
      * @return \yii\db\ActiveQuery
      */
     public function getUser()
@@ -62,8 +60,6 @@ class Cart extends \yii\db\ActiveRecord
     }
 
     /**
-     * Gets query for [[CartDetails]].
-     *
      * @return \yii\db\ActiveQuery
      */
     public function getCartDetails()

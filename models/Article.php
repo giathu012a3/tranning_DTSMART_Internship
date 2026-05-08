@@ -73,8 +73,6 @@ class Article extends \yii\db\ActiveRecord
     }
 
     /**
-     * Gets query for [[ArticleComments]].
-     *
      * @return \yii\db\ActiveQuery
      */
     public function getArticleComments()
@@ -83,8 +81,6 @@ class Article extends \yii\db\ActiveRecord
     }
 
     /**
-     * Gets query for [[Author]].
-     *
      * @return \yii\db\ActiveQuery
      */
     public function getAuthor()
@@ -93,8 +89,6 @@ class Article extends \yii\db\ActiveRecord
     }
 
     /**
-     * Gets query for [[ArticleLikes]].
-     *
      * @return \yii\db\ActiveQuery
      */
     public function getArticleLikes()
@@ -103,8 +97,6 @@ class Article extends \yii\db\ActiveRecord
     }
 
     /**
-     * Gets query for [[ArticleTags]].
-     *
      * @return \yii\db\ActiveQuery
      */
     public function getArticleTags()
@@ -113,8 +105,6 @@ class Article extends \yii\db\ActiveRecord
     }
 
     /**
-     * Gets query for [[Tags]] via article_tags.
-     *
      * @return \yii\db\ActiveQuery
      */
     public function getTags()
@@ -123,8 +113,6 @@ class Article extends \yii\db\ActiveRecord
     }
 
     /**
-     * Gets query for [[ProductArticles]].
-     *
      * @return \yii\db\ActiveQuery
      */
     public function getProductArticles()
@@ -132,4 +120,27 @@ class Article extends \yii\db\ActiveRecord
         return $this->hasMany(ProductArticle::class, ['article_id' => 'id']);
     }
 
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getProducts()
+    {
+        return $this->hasMany(Product::class, ['id' => 'product_id'])->via('productArticles');
+    }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getAssets()
+    {
+        return $this->hasMany(Asset::class, ['asset_id' => 'id']);
+    }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getFiles()
+    {
+        return $this->hasMany(File::class, ['id' => 'file_id'])->via('assets');
+    }
 }

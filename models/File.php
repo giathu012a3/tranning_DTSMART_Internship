@@ -58,4 +58,12 @@ class File extends \yii\db\ActiveRecord
         ];
     }
 
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getAssets(){
+        return $this->hasMany(Asset::class, ['file_id' => 'id']);
+    }
+
+
 }

@@ -53,12 +53,19 @@ class ProductArticle extends \yii\db\ActiveRecord
     }
 
     /**
-     * Gets query for [[Article]].
-     *
      * @return \yii\db\ActiveQuery
      */
     public function getArticle()
     {
         return $this->hasOne(Article::class, ['id' => 'article_id']);
     }
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getProduct()
+    {
+        return $this->hasOne(Product::class, ['id' => 'product_id']);
+    }
+
+
 }

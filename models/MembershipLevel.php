@@ -63,8 +63,6 @@ class MembershipLevel extends \yii\db\ActiveRecord
     }
 
     /**
-     * Gets query for [[Users]].
-     *
      * @return \yii\db\ActiveQuery
      */
     public function getUsers()
@@ -73,12 +71,12 @@ class MembershipLevel extends \yii\db\ActiveRecord
     }
 
     /**
-     * Gets query for [[Orders]].
-     *
      * @return \yii\db\ActiveQuery
      */
     public function getOrders()
     {
         return $this->hasMany(Order::class, ['membership_level_id' => 'id']);
     }
+
+
 }

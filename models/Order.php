@@ -98,8 +98,6 @@ class Order extends \yii\db\ActiveRecord
     }
 
     /**
-     * Gets query for [[OrderDetails]].
-     *
      * @return \yii\db\ActiveQuery
      */
     public function getOrderDetails()
@@ -108,8 +106,6 @@ class Order extends \yii\db\ActiveRecord
     }
 
     /**
-     * Gets query for [[CouponUsage]].
-     *
      * @return \yii\db\ActiveQuery
      */
     public function getCouponUsage()

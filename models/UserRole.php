@@ -5,18 +5,15 @@ namespace app\models;
 use Yii;
 
 /**
- * This is the model class for table "article_likes".
+ * This is the model class for table "user_roles".
  *
  * @property int $id
- * @property int $article_id
  * @property int $user_id
+ * @property int $role_id
  * @property int $created_at
  * @property int $updated_at
- *
- * @property Article $article
- * @property User $user
  */
-class ArticleLike extends \yii\db\ActiveRecord
+class UserRole extends \yii\db\ActiveRecord
 {
 
 
@@ -25,7 +22,7 @@ class ArticleLike extends \yii\db\ActiveRecord
      */
     public static function tableName()
     {
-        return 'article_likes';
+        return 'user_roles';
     }
 
     /**
@@ -34,8 +31,8 @@ class ArticleLike extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['article_id', 'user_id', 'created_at', 'updated_at'], 'required'],
-            [['article_id', 'user_id', 'created_at', 'updated_at'], 'integer'],
+            [['user_id', 'role_id', 'created_at', 'updated_at'], 'required'],
+            [['user_id', 'role_id', 'created_at', 'updated_at'], 'integer'],
         ];
     }
 
@@ -46,8 +43,8 @@ class ArticleLike extends \yii\db\ActiveRecord
     {
         return [
             'id' => 'ID',
-            'article_id' => 'Article ID',
             'user_id' => 'User ID',
+            'role_id' => 'Role ID',
             'created_at' => 'Created At',
             'updated_at' => 'Updated At',
         ];
@@ -56,16 +53,16 @@ class ArticleLike extends \yii\db\ActiveRecord
     /**
      * @return \yii\db\ActiveQuery
      */
-    public function getArticle()
+    public function getUser()
     {
-        return $this->hasOne(Article::class, ['id' => 'article_id']);
+        return $this->hasOne(User::class, ['id' => 'user_id']);
     }
 
     /**
      * @return \yii\db\ActiveQuery
      */
-    public function getUser()
+    public function getRole()
     {
-        return $this->hasOne(User::class, ['id' => 'user_id']);
+        return $this->hasOne(Role::class, ['id' => 'role_id']);
     }
 }

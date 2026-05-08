@@ -58,12 +58,16 @@ class OrderDetail extends \yii\db\ActiveRecord
     }
 
     /**
-     * Gets query for [[Order]].
-     *
      * @return \yii\db\ActiveQuery
      */
     public function getOrder()
     {
         return $this->hasOne(Order::class, ['id' => 'order_id']);
+    }
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getProduct(){
+        return $this->hasOne(Product::class, ['id' => 'product_id']);
     }
 }

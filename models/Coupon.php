@@ -72,8 +72,6 @@ class Coupon extends \yii\db\ActiveRecord
     }
 
     /**
-     * Gets query for [[CouponUsages]].
-     *
      * @return \yii\db\ActiveQuery
      */
     public function getCouponUsages()

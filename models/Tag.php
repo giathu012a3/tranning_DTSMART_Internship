@@ -60,8 +60,6 @@ class Tag extends \yii\db\ActiveRecord
     }
 
     /**
-     * Gets query for [[ArticleTags]].
-     *
      * @return \yii\db\ActiveQuery
      */
     public function getArticleTags()
@@ -70,8 +68,6 @@ class Tag extends \yii\db\ActiveRecord
     }
 
     /**
-     * Gets query for [[Articles]] via article_tags.
-     *
      * @return \yii\db\ActiveQuery
      */
     public function getArticles()

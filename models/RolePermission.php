@@ -54,8 +54,6 @@ class RolePermission extends \yii\db\ActiveRecord
     }
 
     /**
-     * Gets query for [[Role]].
-     *
      * @return \yii\db\ActiveQuery
      */
     public function getRole()
@@ -64,8 +62,6 @@ class RolePermission extends \yii\db\ActiveRecord
     }
 
     /**
-     * Gets query for [[Permission]].
-     *
      * @return \yii\db\ActiveQuery
      */
     public function getPermission()

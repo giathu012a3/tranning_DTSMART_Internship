@@ -61,8 +61,6 @@ class Role extends \yii\db\ActiveRecord
     }
 
     /**
-     * Gets query for [[RolePermissions]].
-     *
      * @return \yii\db\ActiveQuery
      */
     public function getRolePermissions()
@@ -71,12 +69,25 @@ class Role extends \yii\db\ActiveRecord
     }
 
     /**
-     * Gets query for [[Permissions]] via role_permissions.
-     *
      * @return \yii\db\ActiveQuery
      */
     public function getPermissions()
     {
         return $this->hasMany(Permission::class, ['id' => 'permission_id'])->via('rolePermissions');
+    }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getUserRoles()
+    {
+        return $this->hasMany(UserRole::class, ['role_id' => 'id']);
+    }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getUsers(){
+        return $this->hasMany(User::class, ['id' => 'user_id'])->via('userRoles');
     }
 }

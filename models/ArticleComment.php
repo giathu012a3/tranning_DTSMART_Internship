@@ -66,8 +66,6 @@ class ArticleComment extends \yii\db\ActiveRecord
     }
 
     /**
-     * Gets query for [[Article]].
-     *
      * @return \yii\db\ActiveQuery
      */
     public function getArticle()
@@ -76,8 +74,6 @@ class ArticleComment extends \yii\db\ActiveRecord
     }
 
     /**
-     * Gets query for [[User]].
-     *
      * @return \yii\db\ActiveQuery
      */
     public function getUser()
@@ -86,8 +82,6 @@ class ArticleComment extends \yii\db\ActiveRecord
     }
 
     /**
-     * Gets query for [[Parent]].
-     *
      * @return \yii\db\ActiveQuery
      */
     public function getParent()
@@ -96,8 +90,6 @@ class ArticleComment extends \yii\db\ActiveRecord
     }
 
     /**
-     * Gets query for [[Children]].
-     *
      * @return \yii\db\ActiveQuery
      */
     public function getChildren()

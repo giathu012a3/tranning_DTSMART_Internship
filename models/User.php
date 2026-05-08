@@ -72,8 +72,6 @@ class User extends \yii\db\ActiveRecord
     }
 
     /**
-     * Gets query for [[MembershipLevel]].
-     *
      * @return \yii\db\ActiveQuery
      */
     public function getMembershipLevel()
@@ -82,8 +80,6 @@ class User extends \yii\db\ActiveRecord
     }
 
     /**
-     * Gets query for [[Orders]].
-     *
      * @return \yii\db\ActiveQuery
      */
     public function getOrders()
@@ -92,8 +88,6 @@ class User extends \yii\db\ActiveRecord
     }
 
     /**
-     * Gets query for [[Cart]].
-     *
      * @return \yii\db\ActiveQuery
      */
     public function getCart()
@@ -102,8 +96,6 @@ class User extends \yii\db\ActiveRecord
     }
 
     /**
-     * Gets query for [[CouponUsages]].
-     *
      * @return \yii\db\ActiveQuery
      */
     public function getCouponUsages()
@@ -112,8 +104,6 @@ class User extends \yii\db\ActiveRecord
     }
 
     /**
-     * Gets query for [[ArticleComments]].
-     *
      * @return \yii\db\ActiveQuery
      */
     public function getArticleComments()
@@ -122,8 +112,6 @@ class User extends \yii\db\ActiveRecord
     }
 
     /**
-     * Gets query for [[ArticleLikes]].
-     *
      * @return \yii\db\ActiveQuery
      */
     public function getArticleLikes()
@@ -132,12 +120,35 @@ class User extends \yii\db\ActiveRecord
     }
 
     /**
-     * Gets query for [[UserAddresses]].
-     *
      * @return \yii\db\ActiveQuery
      */
     public function getUserAddresses()
     {
         return $this->hasMany(UserAddress::class, ['user_id' => 'id']);
     }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getUserRoles()
+    {
+        return $this->hasMany(UserRole::class, ['user_id' => 'id']);
+    }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getRoles()
+    {
+        return $this->hasMany(Role::class, ['id' => 'role_id'])->via('userRoles');
+    }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getPermissions()
+    {
+        return $this->hasMany(Permission::class, ['id' => 'permission_id'])->via('roles');
+    }   
+    
 }

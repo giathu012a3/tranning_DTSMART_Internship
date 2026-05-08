@@ -65,12 +65,11 @@ class UserAddress extends \yii\db\ActiveRecord
     }
 
     /**
-     * Gets query for [[User]].
-     *
      * @return \yii\db\ActiveQuery
      */
     public function getUser()
     {
         return $this->hasOne(User::class, ['id' => 'user_id']);
     }
+
 }
