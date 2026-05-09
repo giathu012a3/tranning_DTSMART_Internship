@@ -25,6 +25,13 @@ $config = [
         'request' => [
             // !!! insert a secret key in the following (if it is empty) - this is required by cookie validation
             'cookieValidationKey' => '23456789',
+
+            'parsers' => [
+                'application/json' => 'yii\web\JsonParser',
+            ],
+        ],
+        'response' => [
+            'format' => yii\web\Response::FORMAT_JSON,
         ],
         'cache' => [
             'class' => \yii\caching\FileCache::class,
@@ -52,6 +59,13 @@ $config = [
             'enablePrettyUrl' => true,
             'showScriptName' => false,
             'rules' => [
+                'GET api/products' => 'product/index',
+                'GET api/products/<id:\d+>' => 'product/view',
+                'POST api/products' => 'product/create',
+
+                'GET api/articles/<slug:>' => 'article/view',
+                'GET api/categories/five-products' => 'category/view-five-products-in-all-category',
+
 
             ],
         ],

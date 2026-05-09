@@ -13,7 +13,7 @@ class m260505_032258_create_table_products extends Migration
             'id' => $this->primaryKey(),
             'name' => $this->string()->notNull(),
             'price' => $this->decimal(10, 2)->notNull(),
-            'stock' => $this->decimal(10, 2)->notNull(),
+            'stock' => $this->decimal(10, 2)->notNull()->defaultValue(0),
             'status' => $this->integer()->notNull()->defaultValue(1),
             'description' => $this->text()->null(),
             'category_id' => $this->integer()->notNull(),
