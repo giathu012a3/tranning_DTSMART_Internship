@@ -158,7 +158,7 @@ class CategoryController extends Controller
      * @return string|\yii\web\Response
      * @throws NotFoundHttpException if the model cannot be found
      */
-    public function actionUpdate($id)
+    public function actionUpdate($id )
     {
         try {
             $model = Category::findOne($id);
@@ -170,20 +170,26 @@ class CategoryController extends Controller
                     'message' => 'This category is not found',
                 ];
             }
-
             $data = Yii::$app->request->getBodyParams();
-
-            if ($model->load($data, '') && $model->save()) {
-                return [
-                    'status' => true,
-                    'data' => [
-                        'data' => $model->attributes,
-                        'now' => date('d/m/Y')
-                    ],
-                    'message' => 'successfully updated the category'
-                ];
+            if ($model->load($data,'')) {
+                if (!$model->getDirtyAttributes()) {
+                    return [
+                        'status' => true,
+                        'data' => $model->activeAttributes(),
+                        'message' => 'No data has changed'
+                    ];
+                }
+                if ($model->save()) {
+                    return [
+                        'status' => true,
+                        'data' => [
+                            'data' => $model->attributes,
+                            'now' => date('d/m/Y')
+                        ],
+                        'message' => 'successfully updated the category'
+                    ];
+                }
             }
-
             return [
                 'status' => false,
                 'data' => $model->getErrors(),

@@ -63,14 +63,14 @@ $config = [
                 'GET api/products/<id:\d+>' => 'product/view',
                 'POST api/products' => 'product/create',
                 'GET api/products/featured' => 'product/featured',
-
+                'PUT api/categories/<id:\d+>'=>'category/update',
                 'GET api/articles/<slug:>' => 'article/view',
-                [
-                    'class' => 'yii\rest\UrlRule',
-                    'controller' => 'category', 
-                    'prefix' => 'api',
-                    'pluralize' => true,        
-                ],
+                // [
+                //     'class' => 'yii\rest\UrlRule',
+                //     'controller' => 'category',
+                //     'prefix' => 'api',
+                //     'pluralize' => true,
+                // ],
 
 
             ],
