@@ -4,22 +4,22 @@ namespace app\models\search;
 
 use yii\base\Model;
 use yii\data\ActiveDataProvider;
-use app\models\Product;
+use app\models\Category;
 
 /**
- * ProductSearch represents the model behind the search form of `app\models\Product`.
+ * CategorySearch represents the model behind the search form of `app\models\Category`.
  */
-class ProductSearch extends Product
+class CategorySearch extends Category
 {
+    public $keyword;
     /**
      * {@inheritdoc}
      */
     public function rules()
     {
         return [
-            [['id', 'status', 'category_id', 'created_at', 'updated_at', 'deleted_at'], 'integer'],
-            [['name', 'description', 'category.name'], 'safe'],
-            [['price', 'stock'], 'number'],
+            [['id', 'status', 'created_at', 'updated_at'], 'integer'],
+            [['name', 'keyword'], 'safe'],
         ];
     }
 
@@ -42,14 +42,19 @@ class ProductSearch extends Product
      */
     public function search($params, $formName = null)
     {
-        $query = Product::find()->innerJoinWith(['category' => function ($query){
-            $query->andWhere(['category.status' => 1]);
-        }]);
+        $query = Category::find()->andWhere(['status' => 1]);
 
         // add conditions that should always apply here
 
         $dataProvider = new ActiveDataProvider([
             'query' => $query,
+            'pagination' => [
+                'pageSize' => 5,
+            ],
+            'sort' => [
+                'defaultOrder' => ['id' => SORT_DESC],
+            ],
+            'validatePage' => false,
         ]);
 
         $this->load($params, $formName);
@@ -63,17 +68,13 @@ class ProductSearch extends Product
         // grid filtering conditions
         $query->andFilterWhere([
             'id' => $this->id,
-            'price' => $this->price,
-            'stock' => $this->stock,
             'status' => $this->status,
-            'category_id' => $this->category_id,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
-            'deleted_at' => $this->deleted_at,
         ]);
 
         $query->andFilterWhere(['like', 'name', $this->name])
-            ->andFilterWhere(['like', 'category.id', $this->category->id]);
+            ->andFilterWhere(['or', ['like', 'name', $this->keyword], ['like', 'description', $this->keyword]]);
 
         return $dataProvider;
     }

@@ -17,9 +17,9 @@ class ProductController extends \yii\web\Controller
     {
         try {
             $searchModel = new ProductSearch();
-            $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
+            $dataProvider = $searchModel->search(Yii::$app->request->queryParams, '');
 
-            $dataProvider->query->with('category');
+
 
             $models = $dataProvider->getModels();
             $responseData = array_map(function ($item) {
@@ -107,6 +107,34 @@ class ProductController extends \yii\web\Controller
         }
     }
 
+    public function actionFeatured()
+    {
+        try {
+            $searchModel = new ProductSearch();
+            $dataProvider = $searchModel->search(Yii::$app->request->queryParams, '');
 
+            $featuredProducts = $dataProvider->getModels();
 
+            $responseData = array_map(function ($item) {
+                $response = new ProductResponse();
+                ProductResponse::populateRecord($response, $item->attributes);
+                $response->populateRelation('category', $item->category);
+                return $response;
+            }, $featuredProducts);
+            return [
+                'status' => true,
+                'data' => [
+                    'products' => $responseData,
+                    'now' => date('Y-m-d H:i:s'),
+                ],
+                'message' => 'Featured products retrieved successfully',
+            ];
+        } catch (\Throwable $th) {
+            return [
+                'status' => false,
+                'data' => null,
+                'message' => 'Error retrieving featured products: ' . $th->getMessage(),
+            ];
+        }
+    }
 }

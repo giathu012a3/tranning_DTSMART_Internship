@@ -62,10 +62,12 @@ $config = [
                 'GET api/products' => 'product/index',
                 'GET api/products/<id:\d+>' => 'product/view',
                 'POST api/products' => 'product/create',
+                'GET api/products/featured' => 'product/featured',
 
                 'GET api/articles/<slug:>' => 'article/view',
-                'GET api/categories/five-products' => 'category/view-five-products-in-all-category',
-
+               'GET api/categories' => 'category/index',
+                'GET api/categories/<id:\d+>' => 'category/view',
+                'POST api/categories' => 'category/create',
 
             ],
         ],
