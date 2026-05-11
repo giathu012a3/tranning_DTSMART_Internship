@@ -65,9 +65,13 @@ $config = [
                 'GET api/products/featured' => 'product/featured',
 
                 'GET api/articles/<slug:>' => 'article/view',
-               'GET api/categories' => 'category/index',
-                'GET api/categories/<id:\d+>' => 'category/view',
-                'POST api/categories' => 'category/create',
+                [
+                    'class' => 'yii\rest\UrlRule',
+                    'controller' => 'category', 
+                    'prefix' => 'api',
+                    'pluralize' => true,        
+                ],
+
 
             ],
         ],

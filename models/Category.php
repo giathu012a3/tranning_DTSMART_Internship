@@ -4,6 +4,7 @@ namespace app\models;
 
 use Override;
 use Yii;
+use yii\behaviors\TimestampBehavior;
 
 /**
  * This is the model class for table "categories".
@@ -33,7 +34,7 @@ class Category extends \yii\db\ActiveRecord
     {
         return [
             [['status'], 'default', 'value' => 1],
-            [['name', 'created_at', 'updated_at'], 'required'],
+            [['name'], 'required'],
             [['status', 'created_at', 'updated_at'], 'integer'],
             [['name'], 'string', 'max' => 255],
         ];
@@ -48,6 +49,12 @@ class Category extends \yii\db\ActiveRecord
             'id' => Yii::t('app', 'ID'),
             'name' => Yii::t('app', 'Name'),
 
+        ];
+    }
+    public function behaviors()
+    {
+        return [
+            TimestampBehavior::class,
         ];
     }
 

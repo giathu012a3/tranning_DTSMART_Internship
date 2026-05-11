@@ -50,11 +50,11 @@ class CategorySearch extends Category
             'query' => $query,
             'pagination' => [
                 'pageSize' => 5,
+                'validatePage' => false,
             ],
             'sort' => [
                 'defaultOrder' => ['id' => SORT_DESC],
             ],
-            'validatePage' => false,
         ]);
 
         $this->load($params, $formName);

@@ -42,14 +42,21 @@ class ProductSearch extends Product
      */
     public function search($params, $formName = null)
     {
-        $query = Product::find()->innerJoinWith(['category' => function ($query){
-            $query->andWhere(['category.status' => 1]);
+        $query = Product::find()->innerJoinWith(['category' => function ($q) {
+            $q->onCondition(['categories.status' => 1]);
         }]);
 
         // add conditions that should always apply here
 
         $dataProvider = new ActiveDataProvider([
             'query' => $query,
+            'pagination' => [
+                'pageSize' => 7,
+                'validatePage' => false,
+            ],
+            'sort' => [
+                'defaultOrder' => ['id' => SORT_DESC],
+            ],
         ]);
 
         $this->load($params, $formName);
@@ -72,8 +79,8 @@ class ProductSearch extends Product
             'deleted_at' => $this->deleted_at,
         ]);
 
-        $query->andFilterWhere(['like', 'name', $this->name])
-            ->andFilterWhere(['like', 'category.id', $this->category->id]);
+        $query->andFilterWhere(['like', 'name', $this->name]);
+        // ->andFilterWhere(['like', 'category.id', $this->category->id]);
 
         return $dataProvider;
     }

@@ -3,7 +3,8 @@
 namespace app\controllers;
 
 use app\models\Category;
-use app\models\response\CategoryRespone;
+use app\models\Product;
+use app\models\response\CategoryResponse;
 use app\models\search\CategorySearch;
 use Yii;
 use yii\web\Controller;
@@ -16,7 +17,7 @@ use yii\filters\VerbFilter;
  */
 class CategoryController extends Controller
 {
-
+    public $enableCsrfValidation = false;
     /**
      * @inheritDoc
      */
@@ -48,8 +49,8 @@ class CategoryController extends Controller
 
             $model = $dataProvider->getModels();
             $data = array_map(function ($item) {
-                $response = new CategoryRespone();
-                CategoryRespone::populateRecord($response, $item->attributes);
+                $response = new CategoryResponse();
+                CategoryResponse::populateRecord($response, $item->attributes);
                 return $response;
             }, $model);
             return [
@@ -123,19 +124,31 @@ class CategoryController extends Controller
      */
     public function actionCreate()
     {
-        $model = new Category();
+        try {
+            $model = new Category();
 
-        if ($this->request->isPost) {
-            if ($model->load($this->request->post()) && $model->save()) {
-                return $this->redirect(['view', 'id' => $model->id]);
+            $data = Yii::$app->request->post();
+
+            if ($model->load($data, '') && $model->save()) {
+                return [
+                    'status' => true,
+                    'data' => $model->attributes,
+                    'message' => 'Product created successfully'
+                ];
             }
-        } else {
-            $model->loadDefaultValues();
-        }
 
-        return [
-            'model' => $model,
-        ];
+            return [
+                'status' => false,
+                'data' => $model->getErrors(),
+                'message' => 'Invalid data.',
+            ];
+        } catch (\Throwable $th) {
+            return [
+                'status' => false,
+                'data' => null,
+                'message' => 'Error category: ' . $th->getMessage(),
+            ];
+        }
     }
 
     /**
@@ -147,15 +160,42 @@ class CategoryController extends Controller
      */
     public function actionUpdate($id)
     {
-        $model = $this->findModel($id);
+        try {
+            $model = Category::findOne($id);
 
-        if ($this->request->isPost && $model->load($this->request->post()) && $model->save()) {
-            return $this->redirect(['view', 'id' => $model->id]);
+            if (!$model) {
+                return [
+                    'status' => false,
+                    'data' => null,
+                    'message' => 'This category is not found',
+                ];
+            }
+
+            $data = Yii::$app->request->getBodyParams();
+
+            if ($model->load($data, '') && $model->save()) {
+                return [
+                    'status' => true,
+                    'data' => [
+                        'data' => $model->attributes,
+                        'now' => date('d/m/Y')
+                    ],
+                    'message' => 'successfully updated the category'
+                ];
+            }
+
+            return [
+                'status' => false,
+                'data' => $model->getErrors(),
+                'message' => 'Invalid data.',
+            ];
+        } catch (\Throwable $th) {
+            return [
+                'status' => false,
+                'data' => null,
+                'message' => 'Error category: ' . $th->getMessage(),
+            ];
         }
-
-        return [
-            'model' => $model,
-        ];
     }
 
     /**
@@ -167,9 +207,36 @@ class CategoryController extends Controller
      */
     public function actionDelete($id)
     {
-        $this->findModel($id)->delete();
+        try {
+            $model = Category::find()->where(['id' => $id, 'status' => 1]);
 
-        return $this->redirect(['index']);
+            if (!$model) {
+                return [
+                    'status' => false,
+                    'data' => null,
+                    'message' => "This category is not found"
+                ];
+            }
+
+            $model->status = 0;
+            //$model->save(false) lưu ko kiểm trả validate
+            if ($model->save(false)) {
+                return [
+                    'status' => true,
+                    'data' => [
+                        'data' => $model->attributes,
+                        'now' => date('d/m/Y')
+                    ],
+                    'message' => "The category has been successfully moved to the trash!"
+                ];
+            }
+        } catch (\Throwable $th) {
+            return [
+                'status' => false,
+                'data' => null,
+                'message' => 'Error category: ' . $th->getMessage(),
+            ];
+        }
     }
 
     /**

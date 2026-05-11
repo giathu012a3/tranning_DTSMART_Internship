@@ -5,7 +5,7 @@ namespace app\models\response;
 use app\models\Category;
 
 
-class CategoryRespone extends Category
+class CategoryResponse extends Category
 {
     public function fields()
     {
