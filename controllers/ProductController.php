@@ -19,8 +19,6 @@ class ProductController extends \yii\web\Controller
             $searchModel = new ProductSearch();
             $dataProvider = $searchModel->search(Yii::$app->request->queryParams, '');
 
-
-
             $models = $dataProvider->getModels();
             $responseData = array_map(function ($item) {
                 $response = new ProductResponse();
@@ -36,10 +34,10 @@ class ProductController extends \yii\web\Controller
                     'now' => date('Y-m-d H:i:s'),
                 ],
                 'pagination' => [
-                    'totalCount'   => (int) $dataProvider->getTotalCount(), // Tổng số bản ghi
-                    'pageCount'    => (int) $dataProvider->getPagination()->getPageCount(), // Tổng số trang
-                    'currentPage'  => (int) $dataProvider->getPagination()->getPage() + 1, // Trang hiện tại (Yii2 bắt đầu từ 0 nên +1)
-                    'pageSize'     => (int) $dataProvider->getPagination()->pageSize, // Số lượng trên 1 trang
+                    'totalCount'   => (int) $dataProvider->getTotalCount(),
+                    'pageCount'    => (int) $dataProvider->getPagination()->getPageCount(),
+                    'currentPage'  => (int) $dataProvider->getPagination()->getPage() + 1,
+                    'pageSize'     => (int) $dataProvider->getPagination()->pageSize,
                 ],
                 'message' => 'Product retrieved successfully',
             ];

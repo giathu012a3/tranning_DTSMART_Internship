@@ -60,10 +60,10 @@ class CategoryController extends Controller
                     'now' => date('Y-m-d H:i:s'),
                 ],
                 'pagination' => [
-                    'totalCount'   => (int) $dataProvider->getTotalCount(), // Tổng số bản ghi
-                    'pageCount'    => (int) $dataProvider->getPagination()->getPageCount(), // Tổng số trang
-                    'currentPage'  => (int) $dataProvider->getPagination()->getPage() + 1, // Trang hiện tại (Yii2 bắt đầu từ 0 nên +1)
-                    'pageSize'     => (int) $dataProvider->getPagination()->pageSize, // Số lượng trên 1 trang
+                    'totalCount'   => (int) $dataProvider->getTotalCount(),
+                    'pageCount'    => (int) $dataProvider->getPagination()->getPageCount(),
+                    'currentPage'  => (int) $dataProvider->getPagination()->getPage() + 1,
+                    'pageSize'     => (int) $dataProvider->getPagination()->pageSize,
                 ],
                 'message' => 'Categories retrieved successfully',
             ];
@@ -158,7 +158,7 @@ class CategoryController extends Controller
      * @return string|\yii\web\Response
      * @throws NotFoundHttpException if the model cannot be found
      */
-    public function actionUpdate($id )
+    public function actionUpdate($id)
     {
         try {
             $model = Category::findOne($id);
@@ -171,7 +171,7 @@ class CategoryController extends Controller
                 ];
             }
             $data = Yii::$app->request->getBodyParams();
-            if ($model->load($data,'')) {
+            if ($model->load($data, '')) {
                 if (!$model->getDirtyAttributes()) {
                     return [
                         'status' => true,

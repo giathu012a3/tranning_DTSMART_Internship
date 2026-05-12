@@ -19,6 +19,22 @@ class ProductResponse extends Product
             'category_name' => function ($model) {
                 return $model->category ? $model->category->name : 'N/A';
             },
+            'attachments' => function ($model) {
+                // return $model->assets;
+                $data =[];
+                foreach ($model->assets as $asset) {
+                    if ($asset->file) {
+                        $data[] =[
+                            'file_name' => $asset->file->file_name,
+                            'file_path' => $asset->file->file_path,
+                            'file_size' => $asset->file->file_size,
+                            'collection_name' => $asset->collection_name,
+                            'file_type'  => $asset->file->file_type
+                        ];
+                    }
+                }
+                return $data;
+            }
         ];
     }
 }

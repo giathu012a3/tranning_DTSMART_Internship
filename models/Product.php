@@ -88,7 +88,7 @@ class Product extends \yii\db\ActiveRecord
     {
         return $this->hasMany(Article::class, ['id' => 'article_id'])->via('productArticles');
     }
-    
+
     /**
      *  @return \yii\db\ActiveQuery
      */
@@ -108,14 +108,17 @@ class Product extends \yii\db\ActiveRecord
     /**
      *  @return \yii\db\ActiveQuery
      */
-    public function getAssets(){
-        return $this->hasMany(Asset::class, ['asset_id' => 'id']);
+    public function getAssets()
+    {
+        return $this->hasMany(Asset::class, ['asset_id' => 'id'])
+            ->onCondition(['asset_type' => 'product']);
     }
 
     /**
      *  @return \yii\db\ActiveQuery
      */
-    public function getFiles(){
-        return $this->hasMany(File::class, ['file_id' => 'id'])->via('assets');
+    public function getFiles()
+    {
+        return $this->hasMany(File::class, ['id' => 'file_id'])->via('assets');
     }
 }
