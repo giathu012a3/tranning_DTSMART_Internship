@@ -42,12 +42,7 @@ class ProductSearch extends Product
      */
     public function search($params, $formName = null)
     {
-        $query = Product::find()
-            ->with('files')
-            ->innerJoinWith(['category' => function ($q) {
-                $q->onCondition(['categories.status' => 1]);
-            }])
-            ->andWhere(['products.status' => 1]);
+        $query = Product::find()->activeCategory()->withAsset();
 
         // add conditions that should always apply here
 

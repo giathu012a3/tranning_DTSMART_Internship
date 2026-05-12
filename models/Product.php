@@ -2,6 +2,9 @@
 
 namespace app\models;
 
+use app\components\UploadBehavior;
+use app\models\ProductsQuery;
+use Override;
 use Yii;
 
 /**
@@ -43,6 +46,19 @@ class Product extends \yii\db\ActiveRecord
             [['status', 'category_id', 'created_at', 'updated_at', 'deleted_at'], 'integer'],
             [['description'], 'string'],
             [['name'], 'string', 'max' => 255],
+        ];
+    }
+
+    public function behaviors()
+    {
+        return[
+            [
+                'class'=> UploadBehavior::class,
+                'attributes'=>[
+                    'thumbnail'=>'products',
+                    'image'=>'product_gallery'
+                ]
+            ],
         ];
     }
 
@@ -120,5 +136,9 @@ class Product extends \yii\db\ActiveRecord
     public function getFiles()
     {
         return $this->hasMany(File::class, ['id' => 'file_id'])->via('assets');
+    }
+    public static function find()
+    {
+        return new ProductsQuery(get_called_class());
     }
 }

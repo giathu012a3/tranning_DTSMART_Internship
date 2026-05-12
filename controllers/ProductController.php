@@ -6,7 +6,7 @@ use app\models\response\ProductResponse;
 use Yii;
 use app\models\Product;
 use app\models\search\ProductSearch;
-
+use yii\web\UploadedFile;
 
 class ProductController extends \yii\web\Controller
 {
@@ -53,7 +53,14 @@ class ProductController extends \yii\web\Controller
     public function actionView($id)
     {
         try {
-            $product = Product::findOne($id);
+            $product = Product::find()->activeCategory()
+                ->withAsset()
+                ->byId($id)
+                ->one();
+
+            $reponeseData = new ProductResponse();
+            ProductResponse::populateRecord($reponeseData, $product->attributes);
+
             if (!$product) {
                 return [
                     'status' => false,
@@ -64,8 +71,8 @@ class ProductController extends \yii\web\Controller
             return [
                 'status' => true,
                 'data' => [
-                    'product' => $product->attributes,
-                    'now' => date('Y-m-d H:i:s'),
+                    'product' => $reponeseData,
+                    'now' => date('d/m/Y'),
                 ],
                 'message' => 'Product retrieved successfully',
             ];
@@ -80,13 +87,15 @@ class ProductController extends \yii\web\Controller
 
     public function actionCreate()
     {
+        $product = new Product();
+        $data = Yii::$app->request->post();
+        $thumbnailFile = UploadedFile::getInstancesByName('thumbnail');
+        $galleryFiles = UploadedFile::getInstancesByName('images');
+        if ($product->load($data, '') && $product->validate()) {
+            $transaction = Yii::$app->db->beginTransaction();
+        }
         try {
-            $product = new Product();
-            $product->load(\Yii::$app->request->post(), '');
-
-            $product->created_at = time();
-            $product->updated_at = time();
-            if ($product->save()) {
+            if (!$product->save()) {
                 return [
                     'status' => true,
                     'data' => [

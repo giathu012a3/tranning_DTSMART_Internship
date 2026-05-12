@@ -20,11 +20,10 @@ class ProductResponse extends Product
                 return $model->category ? $model->category->name : 'N/A';
             },
             'attachments' => function ($model) {
-                // return $model->assets;
-                $data =[];
+                $data = [];
                 foreach ($model->assets as $asset) {
                     if ($asset->file) {
-                        $data[] =[
+                        $data[] = [
                             'file_name' => $asset->file->file_name,
                             'file_path' => $asset->file->file_path,
                             'file_size' => $asset->file->file_size,
