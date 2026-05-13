@@ -2,7 +2,11 @@
 
 namespace app\models;
 
+use app\components\UploadBehavior;
+use Override;
 use Yii;
+use yii\behaviors\SluggableBehavior;
+use yii\behaviors\TimestampBehavior;
 
 /**
  * This is the model class for table "articles".
@@ -45,11 +49,31 @@ class Article extends \yii\db\ActiveRecord
         return [
             [['like_count'], 'default', 'value' => 0],
             [['status'], 'default', 'value' => 1],
-            [['title', 'content', 'slug', 'excerpt', 'author_id', 'created_at', 'updated_at'], 'required'],
+            [['title', 'content', 'slug', 'excerpt', 'author_id'], 'required'],
             [['content'], 'string'],
             [['like_count', 'author_id', 'status', 'created_at', 'updated_at'], 'integer'],
             [['title', 'slug', 'excerpt'], 'string', 'max' => 255],
             [['slug'], 'unique'],
+        ];
+    }
+
+    public function behaviors()
+    {
+        return [
+            ['class' => TimestampBehavior::class],
+            [
+                'class' => SluggableBehavior::class,
+                'attribute' => 'title',
+                'slugAttribute' => 'slug',
+                'ensureUnique' => true
+            ],
+            [
+                'class' => UploadBehavior::class,
+                'attributes' => [
+                    'thumbnail' => 'article',
+                    'image' => 'article_gallery'
+                ]
+            ]
         ];
     }
 
@@ -142,5 +166,13 @@ class Article extends \yii\db\ActiveRecord
     public function getFiles()
     {
         return $this->hasMany(File::class, ['id' => 'file_id'])->via('assets');
+    }
+    /**
+     * {@inheritdoc}
+     * @return ArticlesQuery the active query used by this AR class.
+     */
+    public static function find()
+    {
+        return new ArticlesQuery(get_called_class());
     }
 }

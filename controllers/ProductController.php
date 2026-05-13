@@ -55,8 +55,7 @@ class ProductController extends \yii\web\Controller
     {
         try {
             $product = Product::find()->activeCategory()
-                ->withAsset()
-                ->byId($id)->active()
+                ->byId($id)
                 ->one();
 
             if (!$product) {
