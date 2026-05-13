@@ -56,7 +56,7 @@ class ProductController extends \yii\web\Controller
         try {
             $product = Product::find()->activeCategory()
                 ->withAsset()
-                ->byId($id)
+                ->byId($id)->active()
                 ->one();
 
             if (!$product) {
@@ -191,7 +191,7 @@ class ProductController extends \yii\web\Controller
     }
     public function actionDelete($id)
     {
-        $product = Product::find()->byId($id)
+        $product = Product::find()->byId($id)->active()
             ->one();
 
         if (!$product) {
@@ -204,12 +204,15 @@ class ProductController extends \yii\web\Controller
 
         $transaction = Yii::$app->db->beginTransaction();
         try {
-            if ($product->delete()) {
+            $product->status = 0;
+            $product->deleted_at = time();
+
+            if ($product->save(false)) {
                 $transaction->commit();
                 return [
                     'status' => true,
                     'data' => null,
-                    'message' => 'Product deleted successfully',
+                    'message' => 'Product moved to trash successfully',
                 ];
             }
             $transaction->rollBack();
