@@ -58,9 +58,6 @@ class ProductController extends \yii\web\Controller
                 ->byId($id)
                 ->one();
 
-            $reponeseData = new ProductResponse();
-            ProductResponse::populateRecord($reponeseData, $product->attributes);
-
             if (!$product) {
                 return [
                     'status' => false,
@@ -68,6 +65,9 @@ class ProductController extends \yii\web\Controller
                     'message' => 'Product not found',
                 ];
             }
+
+            $reponeseData = new ProductResponse();
+            ProductResponse::populateRecord($reponeseData, $product->attributes);
             return [
                 'status' => true,
                 'data' => [
@@ -88,29 +88,30 @@ class ProductController extends \yii\web\Controller
     public function actionCreate()
     {
         $product = new Product();
-        $data = Yii::$app->request->post();
-        $thumbnailFile = UploadedFile::getInstancesByName('thumbnail');
-        $galleryFiles = UploadedFile::getInstancesByName('images');
-        if ($product->load($data, '') && $product->validate()) {
-            $transaction = Yii::$app->db->beginTransaction();
-        }
+        $transaction = Yii::$app->db->beginTransaction();
         try {
-            if (!$product->save()) {
-                return [
-                    'status' => true,
-                    'data' => [
-                        'product' => $product->attributes,
-                        'now' => date('Y-m-d H:i:s'),
-                    ],
-                    'message' => 'Product created successfully',
-                ];
+            if ($product->load(Yii::$app->request->post(), '')) {
+                if ($product->save()) {
+                    $transaction->commit();
+                    return [
+                        'status' => true,
+                        'data' => [
+                            'product' => $product->attributes,
+                            'now' => date('Y-m-d H:i:s'),
+                            'file' => $_FILES
+                        ],
+                        'message' => 'Product created successfully',
+                    ];
+                }
             }
+            $transaction->rollBack();
             return [
                 'status' => false,
-                'data' => null,
+                'data' => $product->getErrors(),
                 'message' => 'Validation failed: ' . json_encode($product->errors),
             ];
         } catch (\Exception $e) {
+            $transaction->rollBack();
             return [
                 'status' => false,
                 'data' => null,
@@ -138,6 +139,7 @@ class ProductController extends \yii\web\Controller
                 'data' => [
                     'products' => $responseData,
                     'now' => date('Y-m-d H:i:s'),
+
                 ],
                 'message' => 'Featured products retrieved successfully',
             ];

@@ -2,7 +2,9 @@
 
 namespace app\models;
 
+use Override;
 use Yii;
+use yii\behaviors\TimestampBehavior;
 
 /**
  * This is the model class for table "files".
@@ -35,9 +37,16 @@ class File extends \yii\db\ActiveRecord
     {
         return [
             [['status'], 'default', 'value' => 1],
-            [['file_path', 'file_name', 'file_type', 'file_size', 'created_at', 'updated_at'], 'required'],
+            [['file_path', 'file_name', 'file_type', 'file_size'], 'required'],
             [['file_size', 'status', 'created_at', 'updated_at'], 'integer'],
             [['file_path', 'file_name', 'file_type'], 'string', 'max' => 255],
+        ];
+    }
+
+    public function behaviors()
+    {
+        return [
+            TimestampBehavior::class
         ];
     }
 
@@ -61,9 +70,8 @@ class File extends \yii\db\ActiveRecord
     /**
      * @return \yii\db\ActiveQuery
      */
-    public function getAssets(){
+    public function getAssets()
+    {
         return $this->hasMany(Asset::class, ['file_id' => 'id']);
     }
-
-
 }

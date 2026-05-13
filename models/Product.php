@@ -6,6 +6,7 @@ use app\components\UploadBehavior;
 use app\models\ProductsQuery;
 use Override;
 use Yii;
+use yii\behaviors\TimestampBehavior;
 
 /**
  * This is the model class for table "products".
@@ -41,7 +42,7 @@ class Product extends \yii\db\ActiveRecord
         return [
             [['description', 'deleted_at'], 'default', 'value' => null],
             [['status'], 'default', 'value' => 1],
-            [['name', 'price', 'stock', 'category_id', 'created_at', 'updated_at'], 'required'],
+            [['name', 'price', 'stock', 'category_id'], 'required'],
             [['price', 'stock'], 'number'],
             [['status', 'category_id', 'created_at', 'updated_at', 'deleted_at'], 'integer'],
             [['description'], 'string'],
@@ -51,14 +52,16 @@ class Product extends \yii\db\ActiveRecord
 
     public function behaviors()
     {
-        return[
+        return [
             [
-                'class'=> UploadBehavior::class,
-                'attributes'=>[
-                    'thumbnail'=>'products',
-                    'image'=>'product_gallery'
+                'class' => UploadBehavior::class,
+                'attributes' => [
+                    'thumbnail' => 'products',
+                    'image' => 'product_gallery'
                 ]
             ],
+
+            TimestampBehavior::class
         ];
     }
 
