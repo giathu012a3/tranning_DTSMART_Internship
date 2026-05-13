@@ -144,4 +144,15 @@ class Product extends \yii\db\ActiveRecord
     {
         return new ProductsQuery(get_called_class());
     }
+    public function beforeDelete()
+    {
+        if (parent::beforeDelete()) {
+            Asset::deleteAll([
+                'asset_id' => $this->id,
+                'asset_type' => 'product'
+            ]);
+            return true;
+        }
+        return false;
+    }
 }

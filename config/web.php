@@ -59,9 +59,9 @@ $config = [
             'enablePrettyUrl' => true,
             'showScriptName' => false,
             'rules' => [
-                'GET api/products' => 'product/index',
-                'GET api/products/<id:\d+>' => 'product/view',
-                'POST api/products' => 'product/create',
+                // 'GET api/products' => 'product/index',
+                // 'GET api/products/<id:\d+>' => 'product/view',
+                // 'POST api/products' => 'product/create',
                 'GET api/products/featured' => 'product/featured',
                 // 'PUT api/categories/<id:\d+>'=>'category/update',
                 'GET api/articles/<slug:>' => 'article/view',
@@ -70,6 +70,15 @@ $config = [
                     'controller' => 'category',
                     'prefix' => 'api',
                     'pluralize' => true,
+                ],
+                [
+                    'class' => 'yii\rest\UrlRule',
+                    'controller' => 'product',
+                    'prefix' => 'api',
+                    'pluralize' => true,
+                    'extraPatterns' => [
+                        'POST {id}' => 'update',
+                    ]
                 ],
 
 

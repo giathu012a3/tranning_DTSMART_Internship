@@ -29,7 +29,7 @@ class UploadBehavior extends Behavior
                 $file = UploadedFile::getInstanceByName($attribute);
                 if ($file) $files = [$file];
             }
-            
+
             if (empty($files)) {
                 $files = UploadedFile::getInstances($this->owner, $attribute);
                 if (empty($files)) {
@@ -48,12 +48,21 @@ class UploadBehavior extends Behavior
 
     public function saveToSystem($file, $folder, $collectionName)
     {
+        $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+        if (!in_array(strtolower($file->extension), $allowedExtensions)) {
+            throw new \Exception("Error: Only allow uploading image (jpg, png, webp...). Your file is: " . $file->extension);
+        }
+
+        if ($file->size > 5242880) {
+            throw new \Exception("The file size is too large! Please upload the image below 5MB.");
+        }
+
         $fileName = time() . '_' . Yii::$app->security->generateRandomString(5) . '.' . $file->extension;
         $relativePath = 'uploads/' . $folder . '/' . $fileName;
         $absolutePath = Yii::getAlias('@webroot/') . $relativePath;
 
         if (!is_dir(dirname($absolutePath))) {
-            if (!mkdir(dirname($absolutePath), 0777, true)) { 
+            if (!mkdir(dirname($absolutePath), 0777, true)) {
                 throw new \Exception("Cannot create directory: " . dirname($absolutePath));
             }
         }
@@ -66,7 +75,7 @@ class UploadBehavior extends Behavior
             $fileModel->file_size = $file->size;
 
             if (!$fileModel->save()) {
-                throw new \Exception("Lỗi lưu bảng File: " . json_encode($fileModel->getErrors()));
+                throw new \Exception("Table saving error File: " . json_encode($fileModel->getErrors()));
             }
 
             $asset = new Asset();
@@ -74,12 +83,12 @@ class UploadBehavior extends Behavior
             $asset->asset_type = strtolower((new \ReflectionClass($this->owner))->getShortName());
             $asset->file_id = $fileModel->id;
             $asset->collection_name = $collectionName;
-            
+
             if (!$asset->save()) {
-                throw new \Exception("Lỗi lưu bảng Asset: " . json_encode($asset->getErrors()));
+                throw new \Exception("Table saving error Asset: " . json_encode($asset->getErrors()));
             }
         } else {
-            throw new \Exception("Không thể saveAs file vật lý. Lỗi (code): " . $file->error);
+            throw new \Exception("Cannot save as physical file. error (code): " . $file->error);
         }
     }
 }

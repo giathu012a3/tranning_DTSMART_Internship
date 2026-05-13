@@ -2,6 +2,7 @@
 
 namespace app\controllers;
 
+use app\models\Asset;
 use app\models\response\ProductResponse;
 use Yii;
 use app\models\Product;
@@ -34,10 +35,10 @@ class ProductController extends \yii\web\Controller
                     'now' => date('Y-m-d H:i:s'),
                 ],
                 'pagination' => [
-                    'totalCount'   => (int) $dataProvider->getTotalCount(),
-                    'pageCount'    => (int) $dataProvider->getPagination()->getPageCount(),
-                    'currentPage'  => (int) $dataProvider->getPagination()->getPage() + 1,
-                    'pageSize'     => (int) $dataProvider->getPagination()->pageSize,
+                    'totalCount' => (int) $dataProvider->getTotalCount(),
+                    'pageCount' => (int) $dataProvider->getPagination()->getPageCount(),
+                    'currentPage' => (int) $dataProvider->getPagination()->getPage() + 1,
+                    'pageSize' => (int) $dataProvider->getPagination()->pageSize,
                 ],
                 'message' => 'Product retrieved successfully',
             ];
@@ -120,35 +121,141 @@ class ProductController extends \yii\web\Controller
         }
     }
 
-    public function actionFeatured()
+    public function actionUpdate($id)
     {
-        try {
-            $searchModel = new ProductSearch();
-            $dataProvider = $searchModel->search(Yii::$app->request->queryParams, '');
+        $product = Product::find()
+            ->byId($id)
+            ->one();
 
-            $featuredProducts = $dataProvider->getModels();
-
-            $responseData = array_map(function ($item) {
-                $response = new ProductResponse();
-                ProductResponse::populateRecord($response, $item->attributes);
-                $response->populateRelation('category', $item->category);
-                return $response;
-            }, $featuredProducts);
-            return [
-                'status' => true,
-                'data' => [
-                    'products' => $responseData,
-                    'now' => date('Y-m-d H:i:s'),
-
-                ],
-                'message' => 'Featured products retrieved successfully',
-            ];
-        } catch (\Throwable $th) {
+        if (!$product) {
             return [
                 'status' => false,
                 'data' => null,
-                'message' => 'Error retrieving featured products: ' . $th->getMessage(),
+                'message' => 'Product not found',
+            ];
+        }
+        $transaction =  Yii::$app->db->beginTransaction();
+        try {
+            $newThumbnail = UploadedFile::getInstanceByName('thumbnail');
+            if ($product->load(Yii::$app->request->post(), '')) {
+                if ($newThumbnail) {
+                    Asset::deleteAll([
+                        'asset_id' => $product->id,
+                        'asset_type' => 'product',
+                        'collection_name' => 'thumbnail'
+                    ]);
+                }
+
+                $deletedImageIds = Yii::$app->request->post('deleted_image_ids', []);
+                if (!empty($deletedImageIds) && is_array($deletedImageIds)) {
+                    Asset::deleteAll([
+                        'and',
+                        [
+                            'asset_id' => $product->id,
+                            'asset_type' => 'product',
+                            'collection_name' => 'image'
+                        ],
+                        ['in', 'id', $deletedImageIds]
+                    ]);
+                }
+            }
+
+            if ($product->save()) {
+                $transaction->commit();
+                $updatedProduct = Product::find()->withAsset()->byId($id)->one();
+                $reponeseData = new ProductResponse();
+                ProductResponse::populateRecord($reponeseData, $updatedProduct->attributes);
+                return [
+                    'status' => true,
+                    'data' => [
+                        'product' => $reponeseData,
+                        'now' => date('d/m/Y'),
+                    ],
+                    'message' => 'Product updated successfully',
+                ];
+            }
+            $transaction->rollBack();
+            return [
+                'status' => false,
+                'data' => $product->getErrors(),
+                'message' => 'Validation failed: ' . json_encode($product->errors),
+            ];
+        } catch (\Throwable $th) {
+            $transaction->rollBack();
+            return [
+                'status' => false,
+                'data' => null,
+                'message' => 'Error updating product: ' . $th->getMessage(),
             ];
         }
     }
+    public function actionDelete($id)
+    {
+        $product = Product::find()->byId($id)
+            ->one();
+
+        if (!$product) {
+            return [
+                'status' => false,
+                'data' => null,
+                'message' => 'Product not found',
+            ];
+        }
+
+        $transaction = Yii::$app->db->beginTransaction();
+        try {
+            if ($product->delete()) {
+                $transaction->commit();
+                return [
+                    'status' => true,
+                    'data' => null,
+                    'message' => 'Product deleted successfully',
+                ];
+            }
+            $transaction->rollBack();
+            return [
+                'status' => false,
+                'data' => null,
+                'message' => 'Failed to delete product',
+            ];
+        } catch (\Throwable $th) {
+            $transaction->rollBack();
+            return [
+                'status' => false,
+                'data' => null,
+                'message' => 'Error delete product: ' . $th->getMessage(),
+            ];
+        }
+    }
+    // public function actionFeatured()
+    // {
+    //     try {
+    //         $searchModel = new ProductSearch();
+    //         $dataProvider = $searchModel->search(Yii::$app->request->queryParams, '');
+
+    //         $featuredProducts = $dataProvider->getModels();
+
+    //         $responseData = array_map(function ($item) {
+    //             $response = new ProductResponse();
+    //             ProductResponse::populateRecord($response, $item->attributes);
+    //             $response->populateRelation('category', $item->category);
+    //             return $response;
+    //         }, $featuredProducts);
+    //         return [
+    //             'status' => true,
+    //             'data' => [
+    //                 'products' => $responseData,
+    //                 'now' => date('Y-m-d H:i:s'),
+
+    //             ],
+    //             'message' => 'Featured products retrieved successfully',
+    //         ];
+    //     } catch (\Throwable $th) {
+    //         return [
+    //             'status' => false,
+    //             'data' => null,
+    //             'message' => 'Error retrieving featured products: ' . $th->getMessage(),
+    //         ];
+    //     }
+    // }
 }

@@ -24,6 +24,8 @@ class ProductResponse extends Product
                 foreach ($model->assets as $asset) {
                     if ($asset->file) {
                         $data[] = [
+                            'id' => $asset->id,
+                                'file_id' => $asset->file->id,
                             'file_name' => $asset->file->file_name,
                             'file_path' => $asset->file->file_path,
                             'file_size' => $asset->file->file_size,

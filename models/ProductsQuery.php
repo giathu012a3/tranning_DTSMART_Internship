@@ -38,6 +38,10 @@ class ProductsQuery extends \yii\db\ActiveQuery
         return $this->innerJoinWith('category')
             ->andOnCondition(['categories.status' => 1]);
     }
+    public function Category()
+    {
+        return $this->innerJoinWith('category');
+    }
 
     public function withAsset()
     {
