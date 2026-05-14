@@ -3,6 +3,7 @@
 namespace app\controllers;
 
 use app\models\Article;
+use app\models\forms\ArticleForm;
 use app\models\response\ArticleResponse;
 use app\models\search\ArticleSearch;
 use Attribute;
@@ -108,7 +109,7 @@ class ArticleController extends Controller
      */
     public function actionCreate()
     {
-        $form = new \app\models\forms\ArticleForm();
+        $form = new ArticleForm();
         
         try {
             if ($form->load(Yii::$app->request->post(), '')) {
@@ -160,7 +161,7 @@ class ArticleController extends Controller
             ];
         }
 
-        $form = new \app\models\forms\ArticleForm($article);
+        $form = new ArticleForm($article);
 
         try {
             if ($form->load(Yii::$app->request->post(), '')) {
@@ -215,7 +216,7 @@ class ArticleController extends Controller
             return [
                 'status' => true,
                 'data' => null,
-                'message' => 'Article deleted successfully (Soft Delete)'
+                'message' => 'Article deleted successfully!'
             ];
         }
 

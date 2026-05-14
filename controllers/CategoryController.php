@@ -68,11 +68,11 @@ class CategoryController extends Controller
                 ],
                 'message' => 'Categories retrieved successfully',
             ];
-        } catch (\Throwable $th) {
+        } catch (\Throwable $e) {
             return [
                 'status' => false,
                 'data' => null,
-                'message' => 'Error retrieving categories: ' . $th->getMessage(),
+                'message' => 'Error retrieving categories: ' . $e->getMessage(),
             ];
         };
     }
@@ -142,11 +142,11 @@ class CategoryController extends Controller
                 'data' => $form->getErrors(),
                 'message' => 'Invalid data.',
             ];
-        } catch (\Throwable $th) {
+        } catch (\Throwable $e) {
             return [
                 'status' => false,
                 'data' => null,
-                'message' => 'Error category: ' . $th->getMessage(),
+                'message' => 'Error category: ' . $e->getMessage(),
             ];
         }
     }
@@ -191,11 +191,11 @@ class CategoryController extends Controller
                 'data' => $form->getErrors(),
                 'message' => 'Invalid data.',
             ];
-        } catch (\Throwable $th) {
+        } catch (\Throwable $e) {
             return [
                 'status' => false,
                 'data' => null,
-                'message' => 'Error category: ' . $th->getMessage(),
+                'message' => 'Error category: ' . $e->getMessage(),
             ];
         }
     }
@@ -232,11 +232,11 @@ class CategoryController extends Controller
                     'message' => "The category has been successfully moved to the trash!"
                 ];
             }
-        } catch (\Throwable $th) {
+        } catch (\Throwable $e) {
             return [
                 'status' => false,
                 'data' => null,
-                'message' => 'Error category: ' . $th->getMessage(),
+                'message' => 'Error category: ' . $e->getMessage(),
             ];
         }
     }

@@ -43,11 +43,11 @@ class ProductController extends \yii\web\Controller
                 ],
                 'message' => 'Product retrieved successfully',
             ];
-        } catch (\Throwable $th) {
+        } catch (\Throwable $e) {
             return [
                 'status' => false,
                 'data' => null,
-                'message' => 'Error retrieving product: ' . $th->getMessage(),
+                'message' => 'Error retrieving product: ' . $e->getMessage(),
             ];
         }
     }
@@ -172,14 +172,14 @@ class ProductController extends \yii\web\Controller
 
             return [
                 'status' => false,
-                'data' => $form->getErrors(),
+                'data' => null,
                 'message' => 'Validation failed: ' . json_encode($form->errors),
             ];
-        } catch (\Throwable $th) {
+        } catch (\Throwable $e) {
             return [
                 'status' => false,
                 'data' => null,
-                'message' => 'Error updating product: ' . $th->getMessage(),
+                'message' => 'Error updating product: ' . $e->getMessage(),
             ];
         }
     }
@@ -215,12 +215,12 @@ class ProductController extends \yii\web\Controller
                 'data' => null,
                 'message' => 'Failed to delete product',
             ];
-        } catch (\Throwable $th) {
+        } catch (\Throwable $e) {
             $transaction->rollBack();
             return [
                 'status' => false,
                 'data' => null,
-                'message' => 'Error delete product: ' . $th->getMessage(),
+                'message' => 'Error delete product: ' . $e->getMessage(),
             ];
         }
     }

@@ -41,15 +41,25 @@ class Order extends \yii\db\ActiveRecord
 
     /**
      * {@inheritdoc}
+     * @return OrderQuery the active query used by this AR class.
+     */
+    public static function find()
+    {
+        return new OrderQuery(get_called_class());
+    }
+
+    /**
+     * {@inheritdoc}
      */
     public function rules()
     {
         return [
             [['membership_level_id'], 'default', 'value' => null],
+            [['membership_discount_rate'], 'default', 'value' => 0.00],
             [['status'], 'default', 'value' => 1],
             [['user_id', 'full_name', 'email', 'phone', 'address', 'discount_amount', 'total', 'final_total', 'payment_method', 'created_at', 'updated_at'], 'required'],
             [['user_id', 'membership_level_id', 'status', 'created_at', 'updated_at'], 'integer'],
-            [['discount_amount', 'total', 'final_total'], 'number'],
+            [['membership_discount_rate', 'discount_amount', 'total', 'final_total'], 'number'],
             [['full_name', 'email', 'phone', 'address', 'payment_method'], 'string', 'max' => 255],
         ];
     }
@@ -67,6 +77,7 @@ class Order extends \yii\db\ActiveRecord
             'phone' => 'Phone',
             'address' => 'Address',
             'membership_level_id' => 'Membership Level ID',
+            'membership_discount_rate' => 'Membership Discount Rate',
             'discount_amount' => 'Discount Amount',
             'total' => 'Total',
             'final_total' => 'Final Total',

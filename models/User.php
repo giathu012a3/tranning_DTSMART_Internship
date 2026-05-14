@@ -25,7 +25,7 @@ use Yii;
  * @property ArticleLike[] $articleLikes
  * @property UserAddress[] $userAddresses
  */
-class User extends \yii\db\ActiveRecord
+class User extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
 {
 
 
@@ -35,6 +35,15 @@ class User extends \yii\db\ActiveRecord
     public static function tableName()
     {
         return 'users';
+    }
+
+    /**
+     * {@inheritdoc}
+     * @return UserQuery the active query used by this AR class.
+     */
+    public static function find()
+    {
+        return new UserQuery(get_called_class());
     }
 
     /**
@@ -49,6 +58,7 @@ class User extends \yii\db\ActiveRecord
             [['username', 'email', 'password_hash', 'created_at', 'updated_at'], 'required'],
             [['member_ship_id', 'total_points', 'status', 'created_at', 'updated_at'], 'integer'],
             [['username', 'email', 'password_hash'], 'string', 'max' => 255],
+            [['access_token'], 'string', 'max' => 255],
             [['email'], 'unique'],
         ];
     }
@@ -65,6 +75,7 @@ class User extends \yii\db\ActiveRecord
             'password_hash' => 'Password Hash',
             'member_ship_id' => 'Member Ship ID',
             'total_points' => 'Total Points',
+            'access_token' => 'Access Token',
             'status' => 'Status',
             'created_at' => 'Created At',
             'updated_at' => 'Updated At',
@@ -150,5 +161,33 @@ class User extends \yii\db\ActiveRecord
     {
         return $this->hasMany(Permission::class, ['id' => 'permission_id'])->via('roles');
     }   
-    
+
+    // =========================================================
+    // IdentityInterface - Required for Yii2 Auth
+    // =========================================================
+
+    public static function findIdentity($id)
+    {
+        return static::findOne(['id' => $id, 'status' => 1]);
+    }
+
+    public static function findIdentityByAccessToken($token, $type = null)
+    {
+        return static::findOne(['access_token' => $token, 'status' => 1]);
+    }
+
+    public function getId()
+    {
+        return $this->id;
+    }
+
+    public function getAuthKey()
+    {
+        return $this->access_token;
+    }
+
+    public function validateAuthKey($authKey)
+    {
+        return $this->access_token === $authKey;
+    }
 }
