@@ -2,7 +2,7 @@
 
 namespace app\models;
 
-use app\components\UploadBehavior;
+use app\behaviors\UploadBehavior;
 use Override;
 use Yii;
 use yii\behaviors\SluggableBehavior;
@@ -47,33 +47,28 @@ class Article extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
+            [['deleted_at'], 'default', 'value' => null],
             [['like_count'], 'default', 'value' => 0],
             [['status'], 'default', 'value' => 1],
             [['title', 'content', 'slug', 'excerpt', 'author_id'], 'required'],
             [['content'], 'string'],
-            [['like_count', 'author_id', 'status', 'created_at', 'updated_at'], 'integer'],
+            [['like_count', 'author_id', 'status', 'created_at', 'updated_at', 'deleted_at'], 'integer'],
             [['title', 'slug', 'excerpt'], 'string', 'max' => 255],
             [['slug'], 'unique'],
+            [['author_id'], 'exist', 'skipOnError' => true, 'targetClass' => User::class, 'targetAttribute' => ['author_id' => 'id']],
         ];
     }
 
     public function behaviors()
     {
         return [
-            ['class' => TimestampBehavior::class],
             [
                 'class' => SluggableBehavior::class,
                 'attribute' => 'title',
                 'slugAttribute' => 'slug',
-                'ensureUnique' => true
+                'ensureUnique' => true,
             ],
-            [
-                'class' => UploadBehavior::class,
-                'attributes' => [
-                    'thumbnail' => 'article',
-                    'image' => 'article_gallery'
-                ]
-            ]
+            TimestampBehavior::class,
         ];
     }
 
@@ -93,6 +88,7 @@ class Article extends \yii\db\ActiveRecord
             'status' => 'Status',
             'created_at' => 'Created At',
             'updated_at' => 'Updated At',
+            'deleted_at' => 'Deleted At',
         ];
     }
 
@@ -149,7 +145,7 @@ class Article extends \yii\db\ActiveRecord
      */
     public function getProducts()
     {
-        return $this->hasMany(Product::class, ['id' => 'product_id'])->via('productArticles');
+        return $this->hasMany(Product::class, ['id' => 'product_id'])->via('productArticles')->active();
     }
 
     /**
@@ -175,4 +171,5 @@ class Article extends \yii\db\ActiveRecord
     {
         return new ArticlesQuery(get_called_class());
     }
+
 }

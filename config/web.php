@@ -40,6 +40,9 @@ $config = [
             'identityClass' => \app\models\User::class,
             'enableAutoLogin' => true,
         ],
+        'uploader' => [
+            'class' => \app\components\UploadComponent::class,
+        ],
         'errorHandler' => [
             'errorAction' => 'site/error',
         ],

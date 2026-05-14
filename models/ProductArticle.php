@@ -27,6 +27,13 @@ class ProductArticle extends \yii\db\ActiveRecord
         return 'product_articles';
     }
 
+    public function behaviors()
+    {
+        return [
+            \yii\behaviors\TimestampBehavior::class,
+        ];
+    }
+
     /**
      * {@inheritdoc}
      */

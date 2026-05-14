@@ -32,7 +32,13 @@ class ArticlesQuery extends \yii\db\ActiveQuery
         return parent::one($db);
     }
 
-    public function byID($id){
+    public function byId($id)
+    {
         return $this->andWhere(['articles.id' => $id]);
+    }
+
+    public function withAsset()
+    {
+        return $this->with(['assets.file']);
     }
 }

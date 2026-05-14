@@ -75,21 +75,26 @@ class ArticleController extends Controller
      */
     public function actionView($id)
     {
-        $article = Article::find()->byID($id)->active()->one();
-        // return  $article;
+        $article = Article::find()->byId($id)->withAsset()->with(['tags', 'products', 'author'])->active()->one();
+        
         if (!$article) {
             return [
                 'status' => false,
                 'data' => null,
-                'message' => 'Product not found',
+                'message' => 'Article not found',
             ];
         }
         $responseData = new ArticleResponse();
         ArticleResponse::populateRecord($responseData, $article->attributes);
+        $responseData->populateRelation('assets', $article->assets);
+        $responseData->populateRelation('author', $article->author);
+        $responseData->populateRelation('tags', $article->tags);
+        $responseData->populateRelation('products', $article->products);
+
         return [
             'status' => true,
             'data' => [
-                'product' => $responseData,
+                'article' => $responseData,
                 'now' => date('d/m/Y'),
             ],
             'message' => 'Article retrieved successfully',
@@ -103,39 +108,94 @@ class ArticleController extends Controller
      */
     public function actionCreate()
     {
-        $model = new Article();
+        $form = new \app\models\forms\ArticleForm();
+        
+        try {
+            if ($form->load(Yii::$app->request->post(), '')) {
+                if ($form->save()) {
+                    $article = $form->getArticle();
+                    
+                    $updatedArticle = Article::find()->withAsset()->with(['tags', 'products', 'author'])->byId($article->id)->one();
+                    $responseData = new ArticleResponse();
+                    ArticleResponse::populateRecord($responseData, $updatedArticle->attributes);
+                    $responseData->populateRelation('assets', $updatedArticle->assets);
+                    $responseData->populateRelation('author', $updatedArticle->author);
+                    $responseData->populateRelation('tags', $updatedArticle->tags);
+                    $responseData->populateRelation('products', $updatedArticle->products);
 
-        if ($this->request->isPost) {
-            if ($model->load($this->request->post()) && $model->save()) {
-                return $this->redirect(['view', 'id' => $model->id]);
+                    return [
+                        'status' => true,
+                        'data' => [
+                            'article' => $responseData,
+                            'now' => date('d/m/Y'),
+                        ],
+                        'message' => 'Article created successfully'
+                    ];
+                }
             }
-        } else {
-            $model->loadDefaultValues();
+            
+            return [
+                'status' => false,
+                'data' => $form->getErrors(),
+                'message' => 'Validation failed: ' . json_encode($form->errors),
+            ];
+        } catch (\Throwable $e) {
+            return [
+                'status' => false,
+                'data' => null,
+                'message' => 'Error creating article: ' . $e->getMessage(),
+            ];
         }
-
-        return $this->render('create', [
-            'model' => $model,
-        ]);
     }
 
-    /**
-     * Updates an existing Article model.
-     * If update is successful, the browser will be redirected to the 'view' page.
-     * @param int $id ID
-     * @return string|\yii\web\Response
-     * @throws NotFoundHttpException if the model cannot be found
-     */
     public function actionUpdate($id)
     {
-        $model = $this->findModel($id);
+        $article = Article::find()->byId($id)->one();
 
-        if ($this->request->isPost && $model->load($this->request->post()) && $model->save()) {
-            return $this->redirect(['view', 'id' => $model->id]);
+        if (!$article) {
+            return [
+                'status' => false,
+                'data' => null,
+                'message' => 'Article not found',
+            ];
         }
 
-        return $this->render('update', [
-            'model' => $model,
-        ]);
+        $form = new \app\models\forms\ArticleForm($article);
+
+        try {
+            if ($form->load(Yii::$app->request->post(), '')) {
+                if ($form->save()) {
+                    $updatedArticle = Article::find()->withAsset()->with(['tags', 'products', 'author'])->byId($id)->one();
+                    $responseData = new ArticleResponse();
+                    ArticleResponse::populateRecord($responseData, $updatedArticle->attributes);
+                    $responseData->populateRelation('assets', $updatedArticle->assets);
+                    $responseData->populateRelation('author', $updatedArticle->author);
+                    $responseData->populateRelation('tags', $updatedArticle->tags);
+                    $responseData->populateRelation('products', $updatedArticle->products);
+
+                    return [
+                        'status' => true,
+                        'data' => [
+                            'article' => $responseData,
+                            'now' => date('d/m/Y'),
+                        ],
+                        'message' => 'Article updated successfully',
+                    ];
+                }
+            }
+            
+            return [
+                'status' => false,
+                'data' => $form->getErrors(),
+                'message' => 'Validation failed: ' . json_encode($form->errors),
+            ];
+        } catch (\Throwable $e) {
+            return [
+                'status' => false,
+                'data' => null,
+                'message' => 'Error updating article: ' . $e->getMessage(),
+            ];
+        }
     }
 
     /**
@@ -147,9 +207,23 @@ class ArticleController extends Controller
      */
     public function actionDelete($id)
     {
-        $this->findModel($id)->delete();
+        $model = $this->findModel($id);
+        $model->status = 0;
+        $model->deleted_at = time();
+        
+        if ($model->save(false)) {
+            return [
+                'status' => true,
+                'data' => null,
+                'message' => 'Article deleted successfully (Soft Delete)'
+            ];
+        }
 
-        return $this->redirect(['index']);
+        return [
+            'status' => false,
+            'data' => null,
+            'message' => 'Failed to delete article'
+        ];
     }
 
     /**

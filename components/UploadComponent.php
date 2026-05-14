@@ -3,50 +3,41 @@
 namespace app\components;
 
 use Yii;
-use yii\base\Behavior;
-use yii\db\ActiveRecord;
+use yii\base\Component;
 use yii\web\UploadedFile;
 use app\models\File;
 use app\models\Asset;
 
-class UploadBehavior extends Behavior
+class UploadComponent extends Component
 {
-    public $attributes = [];
 
-    public function events()
+    public function processUploads($model, $attributes = [])
     {
-        return [
-            ActiveRecord::EVENT_AFTER_INSERT => 'afterSave',
-            ActiveRecord::EVENT_AFTER_UPDATE => 'afterSave'
-        ];
-    }
-
-    public function afterSave($event)
-    {
-        foreach ($this->attributes as $attribute => $folder) {
+        foreach ($attributes as $attribute => $folder) {
             $files = UploadedFile::getInstancesByName($attribute);
             if (empty($files)) {
                 $file = UploadedFile::getInstanceByName($attribute);
                 if ($file) $files = [$file];
             }
 
+            // Fallback for form models
             if (empty($files)) {
-                $files = UploadedFile::getInstances($this->owner, $attribute);
+                $files = UploadedFile::getInstances($model, $attribute);
                 if (empty($files)) {
-                    $file = UploadedFile::getInstance($this->owner, $attribute);
+                    $file = UploadedFile::getInstance($model, $attribute);
                     if ($file) $files = [$file];
                 }
             }
 
             if (!empty($files)) {
                 foreach ($files as $file) {
-                    $this->saveToSystem($file, $folder, $attribute);
+                    $this->saveToSystem($file, $folder, $attribute, $model);
                 }
             }
         }
     }
 
-    public function saveToSystem($file, $folder, $collectionName)
+    protected function saveToSystem($file, $folder, $collectionName, $model)
     {
         $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
         if (!in_array(strtolower($file->extension), $allowedExtensions)) {
@@ -79,8 +70,8 @@ class UploadBehavior extends Behavior
             }
 
             $asset = new Asset();
-            $asset->asset_id = $this->owner->id;
-            $asset->asset_type = strtolower((new \ReflectionClass($this->owner))->getShortName());
+            $asset->asset_id = $model->id;
+            $asset->asset_type = strtolower((new \ReflectionClass($model))->getShortName());
             $asset->file_id = $fileModel->id;
             $asset->collection_name = $collectionName;
 

@@ -3,7 +3,8 @@
 namespace app\controllers;
 
 use app\models\Category;
-use app\models\Product;
+use app\models\forms\CategoryForm;
+
 use app\models\response\CategoryResponse;
 use app\models\search\CategorySearch;
 use Yii;
@@ -125,21 +126,20 @@ class CategoryController extends Controller
     public function actionCreate()
     {
         try {
-            $model = new Category();
-
+            $form = new CategoryForm();
             $data = Yii::$app->request->post();
 
-            if ($model->load($data, '') && $model->save()) {
+            if ($form->load($data, '') && $form->save()) {
                 return [
                     'status' => true,
-                    'data' => $model->attributes,
-                    'message' => 'Product created successfully'
+                    'data' => $form->getCategory()->attributes,
+                    'message' => 'Category created successfully'
                 ];
             }
 
             return [
                 'status' => false,
-                'data' => $model->getErrors(),
+                'data' => $form->getErrors(),
                 'message' => 'Invalid data.',
             ];
         } catch (\Throwable $th) {
@@ -161,38 +161,34 @@ class CategoryController extends Controller
     public function actionUpdate($id)
     {
         try {
-            $model = Category::findOne($id);
+            $category = Category::findOne($id);
 
-            if (!$model) {
+            if (!$category) {
                 return [
                     'status' => false,
                     'data' => null,
                     'message' => 'This category is not found',
                 ];
             }
+
+            $form = new CategoryForm($category);
             $data = Yii::$app->request->getBodyParams();
-            if ($model->load($data, '')) {
-                if (!$model->getDirtyAttributes()) {
-                    return [
-                        'status' => true,
-                        'data' => $model->activeAttributes(),
-                        'message' => 'No data has changed'
-                    ];
-                }
-                if ($model->save()) {
+
+            if ($form->load($data, '')) {
+                if ($form->save()) {
                     return [
                         'status' => true,
                         'data' => [
-                            'data' => $model->attributes,
+                            'data' => $form->getCategory()->attributes,
                             'now' => date('d/m/Y')
                         ],
-                        'message' => 'successfully updated the category'
+                        'message' => 'Category updated successfully'
                     ];
                 }
             }
             return [
                 'status' => false,
-                'data' => $model->getErrors(),
+                'data' => $form->getErrors(),
                 'message' => 'Invalid data.',
             ];
         } catch (\Throwable $th) {
@@ -225,7 +221,7 @@ class CategoryController extends Controller
             }
 
             $model->status = 0;
-            //$model->save(false) lưu ko kiểm trả validate
+
             if ($model->save(false)) {
                 return [
                     'status' => true,

@@ -2,7 +2,9 @@
 
 namespace app\models;
 
+use Override;
 use Yii;
+use yii\behaviors\TimestampBehavior;
 
 /**
  * This is the model class for table "tags".
@@ -36,11 +38,24 @@ class Tag extends \yii\db\ActiveRecord
     {
         return [
             [['status'], 'default', 'value' => 1],
-            [['name', 'slug', 'created_at', 'updated_at'], 'required'],
+            [['name', 'slug'], 'required'],
             [['status', 'created_at', 'updated_at'], 'integer'],
             [['name', 'slug'], 'string', 'max' => 255],
             [['name'], 'unique'],
             [['slug'], 'unique'],
+        ];
+    }
+
+    public function behaviors()
+    {
+        return [
+            TimestampBehavior::class,
+            [
+                'class' => \yii\behaviors\SluggableBehavior::class,
+                'attribute' => 'name',
+                'slugAttribute' => 'slug',
+                'ensureUnique' => true,
+            ],
         ];
     }
 
@@ -72,6 +87,22 @@ class Tag extends \yii\db\ActiveRecord
      */
     public function getArticles()
     {
-        return $this->hasMany(Article::class, ['id' => 'article_id'])->via('articleTags');
+        return $this->hasMany(Article::class, ['id' => 'article_id'])->via('articleTags')->active();
+    }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getProductTags()
+    {
+        return $this->hasMany(ProductTag::class, ['tag_id' => 'id']);
+    }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getProducts()
+    {
+        return $this->hasMany(Product::class, ['id' => 'product_id'])->via('productTags')->active();
     }
 }

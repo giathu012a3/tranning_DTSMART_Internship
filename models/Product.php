@@ -2,9 +2,8 @@
 
 namespace app\models;
 
-use app\components\UploadBehavior;
+use app\behaviors\UploadBehavior;
 use app\models\ProductsQuery;
-use Override;
 use Yii;
 use yii\behaviors\TimestampBehavior;
 
@@ -47,20 +46,13 @@ class Product extends \yii\db\ActiveRecord
             [['status', 'category_id', 'created_at', 'updated_at', 'deleted_at'], 'integer'],
             [['description'], 'string'],
             [['name'], 'string', 'max' => 255],
+            [['category_id'], 'exist', 'skipOnError' => true, 'targetClass' => Category::class, 'targetAttribute' => ['category_id' => 'id']],
         ];
     }
 
     public function behaviors()
     {
         return [
-            [
-                'class' => UploadBehavior::class,
-                'attributes' => [
-                    'thumbnail' => 'products',
-                    'image' => 'product_gallery'
-                ]
-            ],
-
             TimestampBehavior::class
         ];
     }
@@ -105,7 +97,7 @@ class Product extends \yii\db\ActiveRecord
      */
     public function getArticles()
     {
-        return $this->hasMany(Article::class, ['id' => 'article_id'])->via('productArticles');
+        return $this->hasMany(Article::class, ['id' => 'article_id'])->via('productArticles')->active();
     }
 
     /**
@@ -144,4 +136,21 @@ class Product extends \yii\db\ActiveRecord
     {
         return new ProductsQuery(get_called_class());
     }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getProductTags()
+    {
+        return $this->hasMany(ProductTag::class, ['product_id' => 'id']);
+    }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getTags()
+    {
+        return $this->hasMany(Tag::class, ['id' => 'tag_id'])->via('productTags');
+    }
+
 }

@@ -11,6 +11,7 @@ use app\models\Article;
  */
 class ArticleSearch extends Article
 {
+    public $keyword;
     /**
      * {@inheritdoc}
      */
@@ -70,7 +71,8 @@ class ArticleSearch extends Article
         $query->andFilterWhere(['like', 'title', $this->title])
             ->andFilterWhere(['like', 'content', $this->content])
             ->andFilterWhere(['like', 'slug', $this->slug])
-            ->andFilterWhere(['like', 'excerpt', $this->excerpt]);
+            ->andFilterWhere(['like', 'excerpt', $this->excerpt])
+            ->andFilterWhere(['like','slug', $this->keyword]);
 
         return $dataProvider;
     }

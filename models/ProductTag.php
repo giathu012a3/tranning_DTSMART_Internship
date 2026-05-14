@@ -3,20 +3,18 @@
 namespace app\models;
 
 use Yii;
+use yii\behaviors\TimestampBehavior;
 
 /**
- * This is the model class for table "article_tags".
+ * This is the model class for table "product_tags".
  *
  * @property int $id
- * @property int $article_id
+ * @property int $product_id
  * @property int $tag_id
  * @property int $created_at
  * @property int $updated_at
- *
- * @property Article $article
- * @property Tag $tag
  */
-class ArticleTag extends \yii\db\ActiveRecord
+class ProductTag extends \yii\db\ActiveRecord
 {
 
 
@@ -25,13 +23,13 @@ class ArticleTag extends \yii\db\ActiveRecord
      */
     public static function tableName()
     {
-        return 'article_tags';
+        return 'product_tags';
     }
 
     public function behaviors()
     {
         return [
-            \yii\behaviors\TimestampBehavior::class,
+            TimestampBehavior::class,
         ];
     }
 
@@ -41,8 +39,8 @@ class ArticleTag extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['article_id', 'tag_id', 'created_at', 'updated_at'], 'required'],
-            [['article_id', 'tag_id', 'created_at', 'updated_at'], 'integer'],
+            [['product_id', 'tag_id'], 'required'],
+            [['product_id', 'tag_id', 'created_at', 'updated_at'], 'integer'],
         ];
     }
 
@@ -53,7 +51,7 @@ class ArticleTag extends \yii\db\ActiveRecord
     {
         return [
             'id' => 'ID',
-            'article_id' => 'Article ID',
+            'product_id' => 'Product ID',
             'tag_id' => 'Tag ID',
             'created_at' => 'Created At',
             'updated_at' => 'Updated At',
@@ -61,11 +59,20 @@ class ArticleTag extends \yii\db\ActiveRecord
     }
 
     /**
+     * {@inheritdoc}
+     * @return ProductTagsQuery the active query used by this AR class.
+     */
+    public static function find()
+    {
+        return new ProductTagsQuery(get_called_class());
+    }
+
+    /**
      * @return \yii\db\ActiveQuery
      */
-    public function getArticle()
+    public function getProduct()
     {
-        return $this->hasOne(Article::class, ['id' => 'article_id']);
+        return $this->hasOne(Product::class, ['id' => 'product_id']);
     }
 
     /**
@@ -75,6 +82,4 @@ class ArticleTag extends \yii\db\ActiveRecord
     {
         return $this->hasOne(Tag::class, ['id' => 'tag_id']);
     }
-
-    
 }

@@ -1,10 +1,12 @@
 <?php
+
 namespace app\models\response;
 
 use app\models\Article;
 use Override;
 
-class ArticleResponse extends Article{
+class ArticleResponse extends Article
+{
 
     public function fields()
     {
@@ -35,12 +37,34 @@ class ArticleResponse extends Article{
                             'file_path' => $asset->file->file_path,
                             'file_size' => $asset->file->file_size,
                             'collection_name' => $asset->collection_name,
-                            'file_type'  => $asset->file->file_type
+                            'file_type' => $asset->file->file_type
                         ];
                     }
                 }
                 return $data;
-            }
+            },
+            'tags' => function ($model) {
+                $tags = [];
+                foreach ($model->tags as $tag) {
+                    $tags[] = [
+                        'id' => $tag->id,
+                        'name' => $tag->name,
+                        'slug' => $tag->slug,
+                    ];
+                }
+                return $tags;
+            },
+            'products' => function ($model) {
+                $products = [];
+                foreach ($model->products as $product) {
+                    $products[] = [
+                        'id' => $product->id,
+                        'name' => $product->name,
+                        'price' => $product->price,
+                    ];
+                }
+                return $products;
+            },
         ];
     }
 }

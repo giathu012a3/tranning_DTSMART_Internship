@@ -3,6 +3,7 @@
 namespace app\controllers;
 
 use app\models\Asset;
+use app\models\forms\ProductForm;
 use app\models\response\ProductResponse;
 use Yii;
 use app\models\Product;
@@ -55,6 +56,8 @@ class ProductController extends \yii\web\Controller
     {
         try {
             $product = Product::find()->activeCategory()
+                ->withAsset()
+                ->with(['tags', 'articles'])
                 ->byId($id)
                 ->one();
 
@@ -68,6 +71,10 @@ class ProductController extends \yii\web\Controller
 
             $reponeseData = new ProductResponse();
             ProductResponse::populateRecord($reponeseData, $product->attributes);
+            $reponeseData->populateRelation('assets', $product->assets);
+            $reponeseData->populateRelation('category', $product->category);
+            $reponeseData->populateRelation('tags', $product->tags);
+            $reponeseData->populateRelation('articles', $product->articles);
             return [
                 'status' => true,
                 'data' => [
@@ -87,31 +94,38 @@ class ProductController extends \yii\web\Controller
 
     public function actionCreate()
     {
-        $product = new Product();
-        $transaction = Yii::$app->db->beginTransaction();
+        $form = new ProductForm();
+
         try {
-            if ($product->load(Yii::$app->request->post(), '')) {
-                if ($product->save()) {
-                    $transaction->commit();
+            if ($form->load(Yii::$app->request->post(), '')) {
+                if ($form->save()) {
+                    $product = $form->getProduct();
+
+                    $updatedProduct = Product::find()->withAsset()->with(['tags', 'articles'])->byId($product->id)->one();
+                    $responseData = new ProductResponse();
+                    ProductResponse::populateRecord($responseData, $updatedProduct->attributes);
+                    $responseData->populateRelation('assets', $updatedProduct->assets);
+                    $responseData->populateRelation('category', $updatedProduct->category);
+                    $responseData->populateRelation('tags', $updatedProduct->tags);
+                    $responseData->populateRelation('articles', $updatedProduct->articles);
+
                     return [
                         'status' => true,
                         'data' => [
-                            'product' => $product->attributes,
+                            'product' => $responseData,
                             'now' => date('Y-m-d H:i:s'),
-                            'file' => $_FILES
                         ],
                         'message' => 'Product created successfully',
                     ];
                 }
             }
-            $transaction->rollBack();
+
             return [
                 'status' => false,
-                'data' => $product->getErrors(),
-                'message' => 'Validation failed: ' . json_encode($product->errors),
+                'data' => $form->getErrors(),
+                'message' => 'Validation failed: ' . json_encode($form->errors),
             ];
         } catch (\Exception $e) {
-            $transaction->rollBack();
             return [
                 'status' => false,
                 'data' => null,
@@ -122,9 +136,7 @@ class ProductController extends \yii\web\Controller
 
     public function actionUpdate($id)
     {
-        $product = Product::find()
-            ->byId($id)
-            ->one();
+        $product = Product::find()->byId($id)->one();
 
         if (!$product) {
             return [
@@ -133,54 +145,37 @@ class ProductController extends \yii\web\Controller
                 'message' => 'Product not found',
             ];
         }
-        $transaction =  Yii::$app->db->beginTransaction();
+
+        $form = new ProductForm($product);
+
         try {
-            $newThumbnail = UploadedFile::getInstanceByName('thumbnail');
-            if ($product->load(Yii::$app->request->post(), '')) {
-                if ($newThumbnail) {
-                    Asset::deleteAll([
-                        'asset_id' => $product->id,
-                        'asset_type' => 'product',
-                        'collection_name' => 'thumbnail'
-                    ]);
-                }
+            if ($form->load(Yii::$app->request->post(), '')) {
+                if ($form->save()) {
+                    $updatedProduct = Product::find()->withAsset()->with(['tags', 'articles'])->byId($id)->one();
+                    $responseData = new ProductResponse();
+                    ProductResponse::populateRecord($responseData, $updatedProduct->attributes);
+                    $responseData->populateRelation('assets', $updatedProduct->assets);
+                    $responseData->populateRelation('category', $updatedProduct->category);
+                    $responseData->populateRelation('tags', $updatedProduct->tags);
+                    $responseData->populateRelation('articles', $updatedProduct->articles);
 
-                $deletedImageIds = Yii::$app->request->post('deleted_image_ids', []);
-                if (!empty($deletedImageIds) && is_array($deletedImageIds)) {
-                    Asset::deleteAll([
-                        'and',
-                        [
-                            'asset_id' => $product->id,
-                            'asset_type' => 'product',
-                            'collection_name' => 'image'
+                    return [
+                        'status' => true,
+                        'data' => [
+                            'product' => $responseData,
+                            'now' => date('Y-m-d H:i:s'),
                         ],
-                        ['in', 'id', $deletedImageIds]
-                    ]);
+                        'message' => 'Product updated successfully',
+                    ];
                 }
             }
 
-            if ($product->save()) {
-                $transaction->commit();
-                $updatedProduct = Product::find()->withAsset()->byId($id)->one();
-                $reponeseData = new ProductResponse();
-                ProductResponse::populateRecord($reponeseData, $updatedProduct->attributes);
-                return [
-                    'status' => true,
-                    'data' => [
-                        'product' => $reponeseData,
-                        'now' => date('d/m/Y'),
-                    ],
-                    'message' => 'Product updated successfully',
-                ];
-            }
-            $transaction->rollBack();
             return [
                 'status' => false,
-                'data' => $product->getErrors(),
-                'message' => 'Validation failed: ' . json_encode($product->errors),
+                'data' => $form->getErrors(),
+                'message' => 'Validation failed: ' . json_encode($form->errors),
             ];
         } catch (\Throwable $th) {
-            $transaction->rollBack();
             return [
                 'status' => false,
                 'data' => null,
@@ -229,35 +224,5 @@ class ProductController extends \yii\web\Controller
             ];
         }
     }
-    // public function actionFeatured()
-    // {
-    //     try {
-    //         $searchModel = new ProductSearch();
-    //         $dataProvider = $searchModel->search(Yii::$app->request->queryParams, '');
 
-    //         $featuredProducts = $dataProvider->getModels();
-
-    //         $responseData = array_map(function ($item) {
-    //             $response = new ProductResponse();
-    //             ProductResponse::populateRecord($response, $item->attributes);
-    //             $response->populateRelation('category', $item->category);
-    //             return $response;
-    //         }, $featuredProducts);
-    //         return [
-    //             'status' => true,
-    //             'data' => [
-    //                 'products' => $responseData,
-    //                 'now' => date('Y-m-d H:i:s'),
-
-    //             ],
-    //             'message' => 'Featured products retrieved successfully',
-    //         ];
-    //     } catch (\Throwable $th) {
-    //         return [
-    //             'status' => false,
-    //             'data' => null,
-    //             'message' => 'Error retrieving featured products: ' . $th->getMessage(),
-    //         ];
-    //     }
-    // }
 }
