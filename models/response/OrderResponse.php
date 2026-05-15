@@ -33,13 +33,24 @@ class OrderResponse extends Order
                 $items = [];
                 foreach ($model->orderDetails as $detail) {
                     $items[] = [
-                        'product_id' => $detail->product_id,
+                        'product_id'   => $detail->product_id,
                         'product_name' => $detail->product ? $detail->product->name : 'Unknown',
-                        'quantity' => $detail->quantity,
-                        'price' => $detail->price,
+                        'quantity'     => $detail->quantity,
+                        'price'        => $detail->price,
                     ];
                 }
                 return $items;
+            },
+            'couponUsage' => function ($model) {
+                if (!$model->couponUsage) {
+                    return null;
+                }
+                return [
+                    'coupon_code'      => $model->couponUsage->applied_code,
+                    'discount_type'    => $model->couponUsage->applied_type,
+                    'discount_value'   => $model->couponUsage->applied_value,
+                    'max_discount'     => $model->couponUsage->applied_max_amount,
+                ];
             },
         ];
     }

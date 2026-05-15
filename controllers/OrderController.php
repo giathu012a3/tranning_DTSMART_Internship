@@ -4,6 +4,7 @@ namespace app\controllers;
 
 use Yii;
 use yii\web\Controller;
+use app\models\Order;
 use app\models\forms\OrderForm;
 use app\models\response\OrderResponse;
 use app\models\search\OrderSearch;
@@ -22,29 +23,10 @@ class OrderController extends Controller
         return $behaviors;
     }
 
-    /**
-     * Creates a new Order (Checkout).
-     * @return array
-     */
     public function actionCreate()
     {
         try {
             $form = new OrderForm();
-
-            // Expected JSON payload:
-            // {
-            //   "user_id": 1,
-            //   "full_name": "Nguyen Van A",
-            //   "email": "a@example.com",
-            //   "phone": "0987654321",
-            //   "address": "123 ABC Street",
-            //   "payment_method": "COD",
-            //   "coupon_code": "DISCOUNT10", // optional
-            //   "items": [
-            //     {"product_id": 1, "quantity": 2},
-            //     {"product_id": 3, "quantity": 1}
-            //   ]
-            // }
             $data = Yii::$app->request->post();
 
             if ($form->load($data, '')) {

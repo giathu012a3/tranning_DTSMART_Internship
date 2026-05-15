@@ -2,7 +2,9 @@
 
 namespace app\models;
 
+use Override;
 use Yii;
+use yii\behaviors\TimestampBehavior;
 
 /**
  * This is the model class for table "coupon_usages".
@@ -40,10 +42,17 @@ class CouponUsage extends \yii\db\ActiveRecord
     {
         return [
             [['applied_max_amount'], 'default', 'value' => null],
-            [['coupon_id', 'user_id', 'order_id', 'applied_code', 'applied_type', 'applied_value', 'created_at'], 'required'],
+            [['coupon_id', 'user_id', 'order_id', 'applied_code', 'applied_type', 'applied_value'], 'required'],
             [['coupon_id', 'user_id', 'order_id', 'created_at'], 'integer'],
             [['applied_value', 'applied_max_amount'], 'number'],
             [['applied_code', 'applied_type'], 'string', 'max' => 255],
+        ];
+    }
+
+    public function behaviors()
+    {
+        return [
+            TimestampBehavior::class,
         ];
     }
 

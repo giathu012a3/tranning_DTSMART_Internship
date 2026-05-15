@@ -2,7 +2,9 @@
 
 namespace app\models;
 
+use Override;
 use Yii;
+use yii\behaviors\TimestampBehavior;
 
 /**
  * This is the model class for table "orders".
@@ -54,13 +56,20 @@ class Order extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['membership_level_id'], 'default', 'value' => null],
+            [['membership_level_id', 'deleted_at'], 'default', 'value' => null],
             [['membership_discount_rate'], 'default', 'value' => 0.00],
             [['status'], 'default', 'value' => 1],
-            [['user_id', 'full_name', 'email', 'phone', 'address', 'discount_amount', 'total', 'final_total', 'payment_method', 'created_at', 'updated_at'], 'required'],
-            [['user_id', 'membership_level_id', 'status', 'created_at', 'updated_at'], 'integer'],
+            [['user_id', 'full_name', 'email', 'phone', 'address', 'discount_amount', 'total', 'final_total', 'payment_method'], 'required'],
+            [['user_id', 'membership_level_id', 'status', 'created_at', 'updated_at', 'deleted_at'], 'integer'],
             [['membership_discount_rate', 'discount_amount', 'total', 'final_total'], 'number'],
             [['full_name', 'email', 'phone', 'address', 'payment_method'], 'string', 'max' => 255],
+        ];
+    }
+
+    public function behaviors()
+    {
+        return [
+            TimestampBehavior::class,
         ];
     }
 
@@ -87,6 +96,8 @@ class Order extends \yii\db\ActiveRecord
             'updated_at' => 'Updated At',
         ];
     }
+
+
 
     /**
      * Gets query for [[User]].

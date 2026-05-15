@@ -38,7 +38,8 @@ $config = [
         ],
         'user' => [
             'identityClass' => \app\models\User::class,
-            'enableAutoLogin' => true,
+            'enableAutoLogin' => false,
+            'enableSession' => false,
         ],
         'uploader' => [
             'class' => \app\components\UploadComponent::class,
@@ -62,10 +63,10 @@ $config = [
             'enablePrettyUrl' => true,
             'showScriptName' => false,
             'rules' => [
-                // 'GET api/products' => 'product/index',
+                'GET api/orders' => 'order/index',
                 // 'GET api/products/<id:\d+>' => 'product/view',
-                // 'POST api/products' => 'product/create',
-                'GET api/products/featured' => 'product/featured',
+                'POST api/orders' => 'order/create',
+                // 'GET api/products/featured' => 'product/featured',
                 // 'PUT api/categories/<id:\d+>'=>'category/update',
                 // 'GET api/articles/<slug:>' => 'article/view',
                 [

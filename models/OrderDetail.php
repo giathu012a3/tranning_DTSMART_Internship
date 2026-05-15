@@ -2,7 +2,9 @@
 
 namespace app\models;
 
+use Override;
 use Yii;
+use yii\behaviors\TimestampBehavior;
 
 /**
  * This is the model class for table "order_details".
@@ -35,9 +37,16 @@ class OrderDetail extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['order_id', 'product_id', 'quantity', 'price', 'created_at', 'updated_at'], 'required'],
+            [['order_id', 'product_id', 'quantity', 'price'], 'required'],
             [['order_id', 'product_id', 'quantity', 'created_at', 'updated_at'], 'integer'],
             [['price'], 'number'],
+        ];
+    }
+
+    public function behaviors()
+    {
+        return [
+            TimestampBehavior::class,
         ];
     }
 
@@ -67,7 +76,8 @@ class OrderDetail extends \yii\db\ActiveRecord
     /**
      * @return \yii\db\ActiveQuery
      */
-    public function getProduct(){
+    public function getProduct()
+    {
         return $this->hasOne(Product::class, ['id' => 'product_id']);
     }
 }
