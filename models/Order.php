@@ -97,7 +97,14 @@ class Order extends \yii\db\ActiveRecord
         ];
     }
 
-
+    /**
+     * Soft delete: set deleted_at to current timestamp.
+     */
+    public function softDelete(): bool
+    {
+        $this->deleted_at = time();
+        return $this->save(false);
+    }
 
     /**
      * Gets query for [[User]].

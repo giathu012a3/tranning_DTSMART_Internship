@@ -65,7 +65,10 @@ $config = [
             'rules' => [
                 'GET api/orders' => 'order/index',
                 // 'GET api/products/<id:\d+>' => 'product/view',
-                'POST api/orders' => 'order/create',
+                'POST api/orders'              => 'order/create',
+                'GET api/orders/<id:\d+>'      => 'order/view',
+                'DELETE api/orders/<id:\d+>'   => 'order/delete',
+                'GET api/orders'               => 'order/index',
                 // 'GET api/products/featured' => 'product/featured',
                 // 'PUT api/categories/<id:\d+>'=>'category/update',
                 // 'GET api/articles/<slug:>' => 'article/view',
@@ -104,15 +107,13 @@ if (YII_ENV_DEV) {
     $config['bootstrap'][] = 'debug';
     $config['modules']['debug'] = [
         'class' => \yii\debug\Module::class,
-        // uncomment the following to add your IP if you are not connecting from localhost.
-        //'allowedIPs' => ['127.0.0.1', '::1'],
+        'allowedIPs' => ['127.0.0.1', '::1'],
     ];
 
     $config['bootstrap'][] = 'gii';
     $config['modules']['gii'] = [
         'class' => \yii\gii\Module::class,
-        // uncomment the following to add your IP if you are not connecting from localhost.
-        //'allowedIPs' => ['127.0.0.1', '::1'],
+        'allowedIPs' => ['127.0.0.1', '::1'],
     ];
 }
 

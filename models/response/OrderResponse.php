@@ -20,9 +20,7 @@ class OrderResponse extends Order
             'final_total',
             'payment_method',
             'status',
-            'created_at' => function ($model) {
-                return date('Y-m-d H:i:s', $model->created_at);
-            },
+            'created_at',
         ];
     }
 

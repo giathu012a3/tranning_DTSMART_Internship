@@ -47,17 +47,6 @@ class ProductResponse extends Product
                 }
                 return $tags;
             },
-            // 'articles' => function ($model) {
-            //     $articles = [];
-            //     foreach ($model->articles as $article) {
-            //         $articles[] = [
-            //             'id' => $article->id,
-            //             'title' => $article->title,
-            //             'slug' => $article->slug,
-            //         ];
-            //     }
-            //     return $articles;
-            // }
         ];
     }
 }

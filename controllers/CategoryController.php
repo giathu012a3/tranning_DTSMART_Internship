@@ -30,7 +30,7 @@ class CategoryController extends Controller
                 'verbs' => [
                     'class' => VerbFilter::className(),
                     'actions' => [
-                        'delete' => ['POST'],
+                        'delete' => ['DELETE'],
                     ],
                 ],
             ]
@@ -86,27 +86,19 @@ class CategoryController extends Controller
     public function actionView($id)
     {
         try {
-            $category = Category::findOne($id);
+            $category = Category::findOne(['id' => $id, 'status' => 1]);
             if (!$category) {
                 return [
                     'status' => false,
                     'data' => null,
-                    'message' => 'Category not found',
+                    'message' => 'Category not found or inactive',
                 ];
             }
-            if ($category->status != 1) {
-                return [
-                    'status' => false,
-                    'data' => null,
-                    'message' => 'Category is inactive',
-                ];
-            }
+            $response = new CategoryResponse();
+            CategoryResponse::populateRecord($response, $category->attributes);
             return [
                 'status' => true,
-                'data' => [
-                    'category' => $category->attributes,
-                    'now' => date('d/m/Y'),
-                ],
+                'data' => $response,
                 'message' => 'Category retrieved successfully',
             ];
         } catch (\Throwable $th) {
@@ -210,7 +202,7 @@ class CategoryController extends Controller
     public function actionDelete($id)
     {
         try {
-            $model = Category::find()->where(['id' => $id, 'status' => 1]);
+            $model = Category::findOne(['id' => $id, 'status' => 1]);
 
             if (!$model) {
                 return [
@@ -225,13 +217,16 @@ class CategoryController extends Controller
             if ($model->save(false)) {
                 return [
                     'status' => true,
-                    'data' => [
-                        'data' => $model->attributes,
-                        'now' => date('d/m/Y')
-                    ],
+                    'data' => null,
                     'message' => "The category has been successfully moved to the trash!"
                 ];
             }
+
+            return [
+                'status' => false,
+                'data' => null,
+                'message' => 'Failed to delete category.',
+            ];
         } catch (\Throwable $e) {
             return [
                 'status' => false,

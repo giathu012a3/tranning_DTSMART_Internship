@@ -74,7 +74,7 @@ class CategorySearch extends Category
         ]);
 
         $query->andFilterWhere(['like', 'name', $this->name])
-            ->orFilterWhere(['like', 'name', $this->keyword]);
+            ->andFilterWhere(['like', 'name', $this->keyword]);
 
         return $dataProvider;
     }

@@ -14,6 +14,11 @@ class OrderQuery extends \yii\db\ActiveQuery
         return $this->andWhere(['orders.status' => 1]);
     }
 
+    public function notDeleted()
+    {
+        return $this->andWhere(['orders.deleted_at' => null]);
+    }
+
     /**
      * {@inheritdoc}
      * @return Order[]|array

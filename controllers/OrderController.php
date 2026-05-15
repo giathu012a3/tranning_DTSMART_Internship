@@ -93,4 +93,82 @@ class OrderController extends Controller
             ];
         }
     }
+    public function actionView($id)
+    {
+        try {
+            $order = Order::find()
+                ->byId($id)
+                ->byUser(Yii::$app->user->id)
+                ->notDeleted()
+                ->withDetails()
+                ->withCoupon()
+                ->one();
+
+            if (!$order) {
+                return [
+                    'status'  => false,
+                    'data'    => null,
+                    'message' => 'Order not found.',
+                ];
+            }
+
+            $response = new OrderResponse();
+            $response->setAttributes($order->attributes, false);
+            $response->populateRelation('orderDetails', $order->orderDetails);
+            $response->populateRelation('couponUsage', $order->couponUsage);
+
+            return [
+                'status'  => true,
+                'data'    => $response->toArray([], ['orderDetails', 'couponUsage']),
+                'message' => 'Order retrieved successfully.',
+            ];
+
+        } catch (\Throwable $th) {
+            return [
+                'status'  => false,
+                'data'    => null,
+                'message' => 'Error retrieving order: ' . $th->getMessage(),
+            ];
+        }
+    }
+
+    public function actionDelete($id)
+    {
+        try {
+            $order = Order::find()
+                ->byId($id)
+                ->byUser(Yii::$app->user->id)
+                ->notDeleted()
+                ->one();
+
+            if (!$order) {
+                return [
+                    'status'  => false,
+                    'data'    => null,
+                    'message' => 'Order not found.',
+                ];
+            }
+
+            if ($order->softDelete()) {
+                return [
+                    'status'  => true,
+                    'data'    => null,
+                    'message' => 'Order deleted successfully.',
+                ];
+            }
+
+            return [
+                'status'  => false,
+                'data'    => null,
+                'message' => 'Failed to delete order.',
+            ];
+
+        } catch (\Throwable $th) {
+            return [
+                'status'  => false,
+                'data'    => null,
+                'message' => 'Error deleting order: ' . $th->getMessage(),
+            ];
+        }
+    }
 }

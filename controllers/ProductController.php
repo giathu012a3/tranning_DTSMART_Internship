@@ -2,13 +2,12 @@
 
 namespace app\controllers;
 
-use app\models\Asset;
 use app\models\forms\ProductForm;
 use app\models\response\ProductResponse;
 use Yii;
 use app\models\Product;
 use app\models\search\ProductSearch;
-use yii\web\UploadedFile;
+
 
 class ProductController extends \yii\web\Controller
 {
@@ -33,7 +32,7 @@ class ProductController extends \yii\web\Controller
                 'status' => true,
                 'data' => [
                     'products' => $responseData,
-                    'now' => date('Y-m-d H:i:s'),
+                    'now' => date('m/d/Y'),
                 ],
                 'pagination' => [
                     'totalCount' => (int) $dataProvider->getTotalCount(),
@@ -113,7 +112,7 @@ class ProductController extends \yii\web\Controller
                         'status' => true,
                         'data' => [
                             'product' => $responseData,
-                            'now' => date('Y-m-d H:i:s'),
+                            'now' => date('d/m/Y'),
                         ],
                         'message' => 'Product created successfully',
                     ];
@@ -163,7 +162,7 @@ class ProductController extends \yii\web\Controller
                         'status' => true,
                         'data' => [
                             'product' => $responseData,
-                            'now' => date('Y-m-d H:i:s'),
+                            'now' => date('d/m/Y'),
                         ],
                         'message' => 'Product updated successfully',
                     ];
@@ -224,5 +223,4 @@ class ProductController extends \yii\web\Controller
             ];
         }
     }
-
 }
