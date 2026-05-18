@@ -51,20 +51,20 @@ class CategoryController extends Controller
             $model = $dataProvider->getModels();
             $data = array_map(function ($item) {
                 $response = new CategoryResponse();
-                CategoryResponse::populateRecord($response, $item->attributes);
+                CategoryResponse::populateRecord($response, $item);
                 return $response;
             }, $model);
             return [
                 'status' => true,
                 'data' => [
-                    'dataProvider' => $data,
-                    'now' => date('Y-m-d H:i:s'),
+                    'items' => $data,
+                    'now' => date('d/m/Y'),
                 ],
                 'pagination' => [
-                    'totalCount'   => (int) $dataProvider->getTotalCount(),
-                    'pageCount'    => (int) $dataProvider->getPagination()->getPageCount(),
-                    'currentPage'  => (int) $dataProvider->getPagination()->getPage() + 1,
-                    'pageSize'     => (int) $dataProvider->getPagination()->pageSize,
+                    'total_count' => (int) $dataProvider->getTotalCount(),
+                    'page_count' => (int) $dataProvider->getPagination()->getPageCount(),
+                    'current_page' => (int) $dataProvider->getPagination()->getPage() + 1,
+                    'per_page' => (int) $dataProvider->getPagination()->pageSize,
                 ],
                 'message' => 'Categories retrieved successfully',
             ];
@@ -74,7 +74,8 @@ class CategoryController extends Controller
                 'data' => null,
                 'message' => 'Error retrieving categories: ' . $e->getMessage(),
             ];
-        };
+        }
+        ;
     }
 
     /**
@@ -86,8 +87,8 @@ class CategoryController extends Controller
     public function actionView($id)
     {
         try {
-            $category = Category::findOne(['id' => $id, 'status' => 1]);
-            if (!$category) {
+            $categoryData = Category::find()->where(['id' => $id, 'status' => 1])->asArray()->one();
+            if (!$categoryData) {
                 return [
                     'status' => false,
                     'data' => null,
@@ -95,7 +96,7 @@ class CategoryController extends Controller
                 ];
             }
             $response = new CategoryResponse();
-            CategoryResponse::populateRecord($response, $category->attributes);
+            CategoryResponse::populateRecord($response, $categoryData);
             return [
                 'status' => true,
                 'data' => $response,
@@ -122,9 +123,11 @@ class CategoryController extends Controller
             $data = Yii::$app->request->post();
 
             if ($form->load($data, '') && $form->save()) {
+                $response = new CategoryResponse();
+                CategoryResponse::populateRecord($response, $form->getCategory()->attributes);
                 return [
                     'status' => true,
-                    'data' => $form->getCategory()->attributes,
+                    'data' => $response,
                     'message' => 'Category created successfully'
                 ];
             }
@@ -168,10 +171,12 @@ class CategoryController extends Controller
 
             if ($form->load($data, '')) {
                 if ($form->save()) {
+                    $response = new CategoryResponse();
+                    CategoryResponse::populateRecord($response, $form->getCategory()->attributes);
                     return [
                         'status' => true,
                         'data' => [
-                            'data' => $form->getCategory()->attributes,
+                            'data' => $response,
                             'now' => date('d/m/Y')
                         ],
                         'message' => 'Category updated successfully'
@@ -202,9 +207,9 @@ class CategoryController extends Controller
     public function actionDelete($id)
     {
         try {
-            $model = Category::findOne(['id' => $id, 'status' => 1]);
+            $category = Category::find()->where(['id' => $id, 'status' => 1])->one();
 
-            if (!$model) {
+            if (!$category) {
                 return [
                     'status' => false,
                     'data' => null,
@@ -212,9 +217,7 @@ class CategoryController extends Controller
                 ];
             }
 
-            $model->status = 0;
-
-            if ($model->save(false)) {
+            if ($category->softDelete()) {
                 return [
                     'status' => true,
                     'data' => null,
@@ -225,7 +228,7 @@ class CategoryController extends Controller
             return [
                 'status' => false,
                 'data' => null,
-                'message' => 'Failed to delete category.',
+                'message' => 'Failed to delete category.'
             ];
         } catch (\Throwable $e) {
             return [

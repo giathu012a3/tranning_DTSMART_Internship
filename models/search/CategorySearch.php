@@ -42,7 +42,7 @@ class CategorySearch extends Category
      */
     public function search($params, $formName = null)
     {
-        $query = Category::find()->andWhere(['status' => 1]);
+        $query = Category::find()->andWhere(['status' => 1])->asArray();
 
         // add conditions that should always apply here
 

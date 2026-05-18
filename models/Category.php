@@ -66,5 +66,10 @@ class Category extends \yii\db\ActiveRecord
         return $this->hasMany(Product::class, ['category_id' => 'id']);
     }
 
+    public function softDelete()
+    {
+        $this->status = 0;
+        return $this->save(false);
+    }
 
 }

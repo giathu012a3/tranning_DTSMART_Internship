@@ -67,7 +67,7 @@ class OrderController extends Controller
 
             $data = array_map(function ($model) {
                 $response = new OrderResponse();
-                $response->setAttributes($model->attributes, false);
+                OrderResponse::populateRecord($response, $model->attributes);
                 $response->populateRelation('orderDetails', $model->orderDetails);
                 return $response->toArray([], ['orderDetails']);
             }, $dataProvider->getModels());
@@ -76,12 +76,13 @@ class OrderController extends Controller
                 'status' => true,
                 'data' => [
                     'items' => $data,
-                    'pagination' => [
-                        'total_count' => $dataProvider->getTotalCount(),
-                        'page_count' => $dataProvider->pagination->getPageCount(),
-                        'current_page' => $dataProvider->pagination->getPage() + 1,
-                        'per_page' => $dataProvider->pagination->getPageSize(),
-                    ],
+                    'now' => date('d/m/Y'),
+                ],
+                'pagination' => [
+                    'total_count'  => (int) $dataProvider->getTotalCount(),
+                    'page_count'   => (int) $dataProvider->getPagination()->getPageCount(),
+                    'current_page' => (int) $dataProvider->getPagination()->getPage() + 1,
+                    'per_page'     => (int) $dataProvider->getPagination()->pageSize,
                 ],
                 'message' => 'Orders retrieved successfully'
             ];
@@ -113,7 +114,7 @@ class OrderController extends Controller
             }
 
             $response = new OrderResponse();
-            $response->setAttributes($order->attributes, false);
+            OrderResponse::populateRecord($response, $order->attributes);
             $response->populateRelation('orderDetails', $order->orderDetails);
             $response->populateRelation('couponUsage', $order->couponUsage);
 

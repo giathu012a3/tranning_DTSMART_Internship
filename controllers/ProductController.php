@@ -31,14 +31,14 @@ class ProductController extends \yii\web\Controller
             return [
                 'status' => true,
                 'data' => [
-                    'products' => $responseData,
-                    'now' => date('m/d/Y'),
+                    'items' => $responseData,
+                    'now' => date('d/m/Y'),
                 ],
                 'pagination' => [
-                    'totalCount' => (int) $dataProvider->getTotalCount(),
-                    'pageCount' => (int) $dataProvider->getPagination()->getPageCount(),
-                    'currentPage' => (int) $dataProvider->getPagination()->getPage() + 1,
-                    'pageSize' => (int) $dataProvider->getPagination()->pageSize,
+                    'total_count'  => (int) $dataProvider->getTotalCount(),
+                    'page_count'   => (int) $dataProvider->getPagination()->getPageCount(),
+                    'current_page' => (int) $dataProvider->getPagination()->getPage() + 1,
+                    'per_page'     => (int) $dataProvider->getPagination()->pageSize,
                 ],
                 'message' => 'Product retrieved successfully',
             ];
@@ -195,27 +195,20 @@ class ProductController extends \yii\web\Controller
             ];
         }
 
-        $transaction = Yii::$app->db->beginTransaction();
         try {
-            $product->status = 0;
-            $product->deleted_at = time();
-
-            if ($product->save(false)) {
-                $transaction->commit();
+            if ($product->softDelete()) {
                 return [
                     'status' => true,
                     'data' => null,
                     'message' => 'Product moved to trash successfully',
                 ];
             }
-            $transaction->rollBack();
             return [
                 'status' => false,
                 'data' => null,
                 'message' => 'Failed to delete product',
             ];
         } catch (\Throwable $e) {
-            $transaction->rollBack();
             return [
                 'status' => false,
                 'data' => null,

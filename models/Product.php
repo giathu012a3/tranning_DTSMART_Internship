@@ -153,4 +153,11 @@ class Product extends \yii\db\ActiveRecord
         return $this->hasMany(Tag::class, ['id' => 'tag_id'])->via('productTags');
     }
 
+    public function softDelete()
+    {
+        $this->status = 0;
+        $this->deleted_at = time();
+        return $this->save(false);
+    }
+
 }
