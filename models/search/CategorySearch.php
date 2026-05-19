@@ -18,7 +18,7 @@ class CategorySearch extends Category
     public function rules()
     {
         return [
-            [['id', 'status', 'created_at', 'updated_at'], 'integer'],
+            [['id', 'status', 'created_at', 'updated_at', 'deleted_at'], 'integer'],
             [['name', 'keyword'], 'safe'],
         ];
     }
@@ -42,7 +42,10 @@ class CategorySearch extends Category
      */
     public function search($params, $formName = null)
     {
-        $query = Category::find()->andWhere(['status' => 1])->asArray();
+        $query = Category::find()
+            ->select(['id', 'name', 'status', 'created_at'])
+            ->notDeleted()
+            ->asArray();
 
         // add conditions that should always apply here
 
@@ -50,7 +53,7 @@ class CategorySearch extends Category
             'query' => $query,
             'pagination' => [
                 'pageSize' => 5,
-                'validatePage' => false,
+                'validatePage' => true,
             ],
             'sort' => [
                 'defaultOrder' => ['id' => SORT_DESC],
@@ -71,6 +74,7 @@ class CategorySearch extends Category
             'status' => $this->status,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
+            'deleted_at' => $this->deleted_at,
         ]);
 
         $query->andFilterWhere(['like', 'name', $this->name])

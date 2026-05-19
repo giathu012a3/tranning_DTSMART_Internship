@@ -74,8 +74,7 @@ class CategoryController extends Controller
                 'data' => null,
                 'message' => 'Error retrieving categories: ' . $e->getMessage(),
             ];
-        }
-        ;
+        };
     }
 
     /**
@@ -87,8 +86,8 @@ class CategoryController extends Controller
     public function actionView($id)
     {
         try {
-            $categoryData = Category::find()->where(['id' => $id, 'status' => 1])->asArray()->one();
-            if (!$categoryData) {
+            $category = Category::find()->byId($id)->notDeleted()->one();
+            if (!$category) {
                 return [
                     'status' => false,
                     'data' => null,
@@ -96,7 +95,7 @@ class CategoryController extends Controller
                 ];
             }
             $response = new CategoryResponse();
-            CategoryResponse::populateRecord($response, $categoryData);
+            CategoryResponse::populateRecord($response, $category->attributes);
             return [
                 'status' => true,
                 'data' => $response,
@@ -207,7 +206,7 @@ class CategoryController extends Controller
     public function actionDelete($id)
     {
         try {
-            $category = Category::find()->where(['id' => $id, 'status' => 1])->one();
+            $category = Category::find()->byId($id)->notDeleted()->one();
 
             if (!$category) {
                 return [

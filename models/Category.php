@@ -14,6 +14,7 @@ use yii\behaviors\TimestampBehavior;
  * @property int $status
  * @property int $created_at
  * @property int $updated_at
+ * @property int|null $deleted_at
  */
 class Category extends \yii\db\ActiveRecord
 {
@@ -35,7 +36,7 @@ class Category extends \yii\db\ActiveRecord
         return [
             [['status'], 'default', 'value' => 1],
             [['name'], 'required'],
-            [['status', 'created_at', 'updated_at'], 'integer'],
+            [['status', 'created_at', 'updated_at', 'deleted_at'], 'integer'],
             [['name'], 'string', 'max' => 255],
         ];
     }
@@ -58,6 +59,11 @@ class Category extends \yii\db\ActiveRecord
         ];
     }
 
+    public static function find()
+    {
+        return new CategoriesQuery(get_called_class());
+    }
+
     /**
      * @return \yii\db\ActiveQuery
      */
@@ -68,7 +74,7 @@ class Category extends \yii\db\ActiveRecord
 
     public function softDelete()
     {
-        $this->status = 0;
+        $this->deleted_at = time();
         return $this->save(false);
     }
 

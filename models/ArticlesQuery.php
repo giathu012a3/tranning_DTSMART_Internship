@@ -14,6 +14,11 @@ class ArticlesQuery extends \yii\db\ActiveQuery
         return $this->andWhere('[[status]]=1');
     }
 
+    public function notDeleted()
+    {
+        return $this->andWhere(['articles.deleted_at' => null]);
+    }
+
     /**
      * {@inheritdoc}
      * @return Article[]|array

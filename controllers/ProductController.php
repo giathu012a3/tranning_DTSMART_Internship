@@ -20,11 +20,26 @@ class ProductController extends \yii\web\Controller
             $searchModel = new ProductSearch();
             $dataProvider = $searchModel->search(Yii::$app->request->queryParams, '');
 
+            $pagination = $dataProvider->getPagination();
+            $totalCount = $dataProvider->getTotalCount();
+            $pageCount = $pagination->getPageCount();
+            $currentPage = $pagination->getPage() + 1;
+
+            if ($totalCount > 0 && $currentPage > $pageCount) {
+                return [
+                    'status' => false,
+                    'data' => null,
+                    'message' => 'Trang không tồn tại',
+                ];
+            }
+
             $models = $dataProvider->getModels();
             $responseData = array_map(function ($item) {
                 $response = new ProductResponse();
                 ProductResponse::populateRecord($response, $item->attributes);
                 $response->populateRelation('category', $item->category);
+                $response->populateRelation('assets', $item->thumbnail ? [$item->thumbnail] : []);
+                $response->populateRelation('tags', $item->tags);
                 return $response;
             }, $models);
 
@@ -35,10 +50,10 @@ class ProductController extends \yii\web\Controller
                     'now' => date('d/m/Y'),
                 ],
                 'pagination' => [
-                    'total_count'  => (int) $dataProvider->getTotalCount(),
-                    'page_count'   => (int) $dataProvider->getPagination()->getPageCount(),
+                    'total_count' => (int) $dataProvider->getTotalCount(),
+                    'page_count' => (int) $dataProvider->getPagination()->getPageCount(),
                     'current_page' => (int) $dataProvider->getPagination()->getPage() + 1,
-                    'per_page'     => (int) $dataProvider->getPagination()->pageSize,
+                    'per_page' => (int) $dataProvider->getPagination()->pageSize,
                 ],
                 'message' => 'Product retrieved successfully',
             ];
@@ -54,7 +69,8 @@ class ProductController extends \yii\web\Controller
     public function actionView($id)
     {
         try {
-            $product = Product::find()->activeCategory()
+            $product = Product::find()
+                ->notDeleted()
                 ->withAsset()
                 ->with(['tags', 'articles'])
                 ->byId($id)
@@ -184,8 +200,7 @@ class ProductController extends \yii\web\Controller
     }
     public function actionDelete($id)
     {
-        $product = Product::find()->byId($id)->active()
-            ->one();
+        $product = Product::find()->byId($id)->notDeleted()->one();
 
         if (!$product) {
             return [

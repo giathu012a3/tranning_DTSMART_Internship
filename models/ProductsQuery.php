@@ -14,6 +14,11 @@ class ProductsQuery extends \yii\db\ActiveQuery
         return $this->andWhere('products.status=1');
     }
 
+    public function notDeleted()
+    {
+        return $this->andWhere(['products.deleted_at' => null]);
+    }
+
     /**
      * {@inheritdoc}
      * @return Product[]|array

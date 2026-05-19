@@ -10,12 +10,11 @@ class ArticleResponse extends Article
 
     public function fields()
     {
-        return [
+        $fields = [
             'id',
             'title',
             'slug',
             'excerpt',
-            'content',
             'status',
             'like_count',
             'author_id',
@@ -54,7 +53,10 @@ class ArticleResponse extends Article
                 }
                 return $tags;
             },
-            'products' => function ($model) {
+        ];
+
+        if ($this->isRelationPopulated('products')) {
+            $fields['products'] = function ($model) {
                 $products = [];
                 foreach ($model->products as $product) {
                     $products[] = [
@@ -64,7 +66,13 @@ class ArticleResponse extends Article
                     ];
                 }
                 return $products;
-            },
-        ];
+            };
+        }
+
+        if ($this->content !== null) {
+            $fields['content'] = 'content';
+        }
+
+        return $fields;
     }
 }

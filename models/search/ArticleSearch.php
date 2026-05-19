@@ -42,12 +42,27 @@ class ArticleSearch extends Article
      */
     public function search($params, $formName = null)
     {
-        $query = Article::find();
-
-        // add conditions that should always apply here
+        $query = Article::find()
+            ->select(['id', 'title', 'slug', 'excerpt', 'status', 'like_count', 'author_id', 'created_at', 'updated_at']) // Bỏ content
+            ->notDeleted()
+            ->with([
+                'thumbnail', 
+                'author', 
+                'tags',
+                'products' => function (\yii\db\ActiveQuery $q) {
+                    $q->select(['products.id', 'products.name', 'products.price']);
+                }
+            ]);
 
         $dataProvider = new ActiveDataProvider([
             'query' => $query,
+            'pagination' => [
+                'pageSize' => 10,
+                'validatePage' => true,
+            ],
+            'sort' => [
+                'defaultOrder' => ['id' => SORT_DESC],
+            ],
         ]);
 
         $this->load($params, $formName);

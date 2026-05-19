@@ -99,7 +99,6 @@ class OrderController extends Controller
         try {
             $order = Order::find()
                 ->byId($id)
-                ->byUser(Yii::$app->user->id)
                 ->notDeleted()
                 ->withDetails()
                 ->withCoupon()
@@ -138,7 +137,6 @@ class OrderController extends Controller
         try {
             $order = Order::find()
                 ->byId($id)
-                ->byUser(Yii::$app->user->id)
                 ->notDeleted()
                 ->one();
 

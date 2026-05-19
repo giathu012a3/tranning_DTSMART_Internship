@@ -8,10 +8,9 @@ class ProductResponse extends Product
 {
     public function fields()
     {
-        return [
+        $fields = [
             'id',
             'name',
-            'description',
             'status',
             'price',
             'stock',
@@ -48,5 +47,11 @@ class ProductResponse extends Product
                 return $tags;
             },
         ];
+
+        if ($this->description !== null) {
+            $fields['description'] = 'description';
+        }
+
+        return $fields;
     }
 }

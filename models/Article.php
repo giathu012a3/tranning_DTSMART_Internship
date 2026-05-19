@@ -153,7 +153,15 @@ class Article extends \yii\db\ActiveRecord
      */
     public function getAssets()
     {
-        return $this->hasMany(Asset::class, ['asset_id' => 'id']);
+        return $this->hasMany(Asset::class, ['asset_id' => 'id'])
+            ->onCondition(['asset_type' => 'article']);
+    }
+
+    public function getThumbnail()
+    {
+        return $this->hasOne(Asset::class, ['asset_id' => 'id'])
+            ->onCondition(['asset_type' => 'article'])
+            ->with('file');
     }
 
     /**
@@ -167,6 +175,12 @@ class Article extends \yii\db\ActiveRecord
      * {@inheritdoc}
      * @return ArticlesQuery the active query used by this AR class.
      */
+    public function softDelete(): bool
+    {
+        $this->deleted_at = time();
+        return $this->save(false);
+    }
+
     public static function find()
     {
         return new ArticlesQuery(get_called_class());

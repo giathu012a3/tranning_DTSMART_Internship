@@ -125,6 +125,13 @@ class Product extends \yii\db\ActiveRecord
             ->onCondition(['asset_type' => 'product']);
     }
 
+    public function getThumbnail()
+    {
+        return $this->hasOne(Asset::class, ['asset_id' => 'id'])
+            ->onCondition(['asset_type' => 'product'])
+            ->with('file');
+    }
+
     /**
      *  @return \yii\db\ActiveQuery
      */
@@ -155,7 +162,6 @@ class Product extends \yii\db\ActiveRecord
 
     public function softDelete()
     {
-        $this->status = 0;
         $this->deleted_at = time();
         return $this->save(false);
     }

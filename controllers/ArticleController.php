@@ -44,28 +44,42 @@ class ArticleController extends Controller
      */
     public function actionIndex()
     {
-        $searchModel = new ArticleSearch();
-        $dataProvider = $searchModel->search($this->request->queryParams, '');
+        try {
+            $searchModel = new ArticleSearch();
+            $dataProvider = $searchModel->search($this->request->queryParams, '');
 
-        $models = $dataProvider->getModels();
-        $dataProvider->query->andWhere(['status' => 1]);
-        $responseData = array_map(function ($item) {
-            $response = new ArticleResponse();
-            ArticleResponse::populateRecord($response, $item->attributes);
-            return $response;
-        }, $models);
-        return [
-            'status' => true,
-            'data' => [
-                'articles' => $responseData,
+            $models = $dataProvider->getModels();
+            $data = array_map(function ($item) {
+                $response = new ArticleResponse();
+                ArticleResponse::populateRecord($response, $item->attributes);
+                $response->populateRelation('assets', $item->thumbnail ? [$item->thumbnail] : []);
+                $response->populateRelation('author', $item->author);
+                $response->populateRelation('tags', $item->tags);
+                $response->populateRelation('products', $item->products);
+                return $response;
+            }, $models);
+
+            return [
+                'status' => true,
+                'data' => [
+                    'items' => $data,
+                    'now' => date('d/m/Y'),
+                ],
                 'pagination' => [
-                    'total_count' => $dataProvider->getTotalCount(),
-                    'current_page' => $dataProvider->pagination->getPage() + 1,
-                    'per_page' => $dataProvider->pagination->getPageSize(),
-                ]
-            ],
-            'message' => 'Lấy danh sách bài viết thành công',
-        ];
+                    'total_count' => (int) $dataProvider->getTotalCount(),
+                    'page_count' => (int) $dataProvider->getPagination()->getPageCount(),
+                    'current_page' => (int) $dataProvider->getPagination()->getPage() + 1,
+                    'per_page' => (int) $dataProvider->getPagination()->pageSize,
+                ],
+                'message' => 'Articles retrieved successfully',
+            ];
+        } catch (\Throwable $e) {
+            return [
+                'status' => false,
+                'data' => null,
+                'message' => 'Error retrieving articles: ' . $e->getMessage(),
+            ];
+        }
     }
 
     /**
@@ -76,8 +90,8 @@ class ArticleController extends Controller
      */
     public function actionView($id)
     {
-        $article = Article::find()->byId($id)->withAsset()->with(['tags', 'products', 'author'])->active()->one();
-        
+        $article = Article::find()->byId($id)->withAsset()->with(['tags', 'products', 'author'])->notDeleted()->one();
+
         if (!$article) {
             return [
                 'status' => false,
@@ -110,13 +124,15 @@ class ArticleController extends Controller
     public function actionCreate()
     {
         $form = new ArticleForm();
-        
+
         try {
             if ($form->load(Yii::$app->request->post(), '')) {
                 if ($form->save()) {
                     $article = $form->getArticle();
-                    
-                    $updatedArticle = Article::find()->withAsset()->with(['tags', 'products', 'author'])->byId($article->id)->one();
+
+                    $updatedArticle = Article::find()->withAsset()
+                    ->with(['tags', 'products', 'author'])
+                    ->byId($article->id)->notDeleted()->one();
                     $responseData = new ArticleResponse();
                     ArticleResponse::populateRecord($responseData, $updatedArticle->attributes);
                     $responseData->populateRelation('assets', $updatedArticle->assets);
@@ -134,7 +150,7 @@ class ArticleController extends Controller
                     ];
                 }
             }
-            
+
             return [
                 'status' => false,
                 'data' => $form->getErrors(),
@@ -184,7 +200,7 @@ class ArticleController extends Controller
                     ];
                 }
             }
-            
+
             return [
                 'status' => false,
                 'data' => $form->getErrors(),
@@ -208,22 +224,28 @@ class ArticleController extends Controller
      */
     public function actionDelete($id)
     {
-        $model = $this->findModel($id);
-        $model->status = 0;
-        $model->deleted_at = time();
-        
-        if ($model->save(false)) {
+        $article = Article::find()->byId($id)->notDeleted()->one();
+
+        if (!$article) {
+            return [
+                'status' => false,
+                'data' => null,
+                'message' => 'Article not found',
+            ];
+        }
+
+        if ($article->softDelete()) {
             return [
                 'status' => true,
                 'data' => null,
-                'message' => 'Article deleted successfully!'
+                'message' => 'Article deleted successfully',
             ];
         }
 
         return [
             'status' => false,
             'data' => null,
-            'message' => 'Failed to delete article'
+            'message' => 'Failed to delete article',
         ];
     }
 

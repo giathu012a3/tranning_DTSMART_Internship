@@ -42,7 +42,6 @@ class OrderSearch extends Order
     public function search($params, $formName = '')
     {
         $query = Order::find()
-            ->byUser(\Yii::$app->user->id)
             ->notDeleted()
             ->withDetails();
 

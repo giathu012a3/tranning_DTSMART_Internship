@@ -32,6 +32,11 @@ class CategoryForm extends Model
             [['name'], 'required'],
             [['status'], 'integer'],
             [['name'], 'string', 'max' => 255],
+            [['name'], 'unique', 'targetClass' => Category::class, 'targetAttribute' => 'name', 'filter' => function ($query) {
+                if (!$this->_category->isNewRecord) {
+                    $query->andWhere(['not', ['id' => $this->_category->id]]);
+                }
+            }, 'message' => 'This category name already exists.'],
         ];
     }
 
