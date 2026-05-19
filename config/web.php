@@ -92,6 +92,15 @@ $config = [
                     'controller' => 'article',
                     'prefix' => 'api',
                     'pluralize' => true,
+                    'extraPatterns' => [
+                        'POST {id}' => 'update',
+                    ]
+                ],
+                [
+                    'class' => 'yii\rest\UrlRule',
+                    'controller' => 'order',
+                    'prefix' => 'api',
+                    'pluralize' => true,
                 ],
 
 

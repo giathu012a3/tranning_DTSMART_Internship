@@ -41,11 +41,6 @@ class ArticleForm extends Model
         $this->status = $article->status;
         $this->author_id = $article->author_id;
 
-        if (!$article->isNewRecord) {
-            $this->tags = $article->getTags()->select('name')->column();
-            $this->product_ids = $article->getProducts()->select('id')->column();
-        }
-
         parent::__construct($config);
     }
 
@@ -56,9 +51,63 @@ class ArticleForm extends Model
             [['content'], 'string'],
             [['status', 'author_id'], 'integer'],
             [['title', 'excerpt'], 'string', 'max' => 255],
-            [['author_id'], 'exist', 'skipOnError' => true, 'targetClass' => User::class, 'targetAttribute' => ['author_id' => 'id']],
             [['tags', 'product_ids', 'deleted_image_ids'], 'safe'],
+            [['title'], 'validateAnyChange', 'skipOnEmpty' => false],
         ];
+    }
+
+    public function validateAnyChange($attribute, $params)
+    {
+        if (!$this->_article->isNewRecord) {
+            $titleUnchanged = ($this->title === $this->_article->title);
+            $contentUnchanged = ($this->content === $this->_article->content);
+            $excerptUnchanged = ($this->excerpt === $this->_article->excerpt);
+            $statusUnchanged = ((int)$this->status === (int)$this->_article->status);
+            $authorUnchanged = ((int)$this->author_id === (int)$this->_article->author_id);
+
+            if ($this->tags === null) {
+                $tagsUnchanged = true;
+            } else {
+                $targetTags = [];
+                if (is_array($this->tags)) {
+                    foreach ($this->tags as $name) {
+                        if (is_string($name)) {
+                            $name = trim($name);
+                            if (!empty($name) && strlen($name) <= 255) {
+                                $targetTags[] = $name;
+                            }
+                        }
+                    }
+                }
+                $targetTags = array_unique($targetTags);
+                $currentTags = \app\models\ArticleTag::find()
+                    ->alias('at')
+                    ->innerJoinWith('tag t')
+                    ->where(['at.article_id' => $this->_article->id])
+                    ->select('t.name')
+                    ->column();
+                $tagsUnchanged = (count($targetTags) === count($currentTags) && !array_diff($targetTags, $currentTags) && !array_diff($currentTags, $targetTags));
+            }
+
+            if ($this->product_ids === null) {
+                $productsUnchanged = true;
+            } else {
+                $targetProducts = [];
+                if (is_array($this->product_ids)) {
+                    $targetProducts = array_unique(array_filter(array_map('intval', $this->product_ids)));
+                }
+                $currentProducts = \app\models\ProductArticle::find()->where(['article_id' => $this->_article->id])->select('product_id')->column();
+                $productsUnchanged = (count($targetProducts) === count($currentProducts) && !array_diff($targetProducts, $currentProducts) && !array_diff($currentProducts, $targetProducts));
+            }
+
+            $noNewThumbnail = empty(\yii\web\UploadedFile::getInstanceByName('thumbnail'));
+            $noNewImages = empty(\yii\web\UploadedFile::getInstancesByName('image'));
+            $noDeletions = empty($this->deleted_image_ids);
+
+            if ($titleUnchanged && $contentUnchanged && $excerptUnchanged && $statusUnchanged && $authorUnchanged && $tagsUnchanged && $productsUnchanged && $noNewThumbnail && $noNewImages && $noDeletions) {
+                $this->addError('title', 'No changes detected. Please modify at least one field to update.');
+            }
+        }
     }
 
     public function getArticle()
@@ -74,13 +123,14 @@ class ArticleForm extends Model
 
         $transaction = Yii::$app->db->beginTransaction();
         try {
-            $this->_article->title     = $this->title;
-            $this->_article->content   = $this->content;
-            $this->_article->excerpt   = $this->excerpt;
-            $this->_article->status    = $this->status ?? 1;
+            $this->_article->title = $this->title;
+            $this->_article->content = $this->content;
+            $this->_article->excerpt = $this->excerpt;
+            $this->_article->status = $this->status ?? 1;
             $this->_article->author_id = $this->author_id;
 
-            $this->_article->scenario         = $this->_article->isNewRecord ? Article::SCENARIO_CREATE : Article::SCENARIO_UPDATE;
+            $isNewRecord = $this->_article->isNewRecord;
+            $this->_article->scenario = $isNewRecord ? Article::SCENARIO_CREATE : Article::SCENARIO_UPDATE;
             $this->_article->deleted_image_ids = $this->deleted_image_ids;
 
             if (!$this->_article->save()) {
@@ -88,8 +138,8 @@ class ArticleForm extends Model
                 return false;
             }
 
-            $this->syncTags();
-            $this->syncProducts();
+            $this->syncTags($isNewRecord);
+            $this->syncProducts($isNewRecord);
 
             $transaction->commit();
             return true;
@@ -99,33 +149,41 @@ class ArticleForm extends Model
         }
     }
 
-    private function syncTags()
+    private function syncTags($isNewRecord = false)
     {
         if ($this->tags === null)
             return;
 
-        $targetTagIds = [];
+        $tagNames = [];
         if (is_array($this->tags)) {
             foreach ($this->tags as $name) {
                 if (!is_string($name))
                     continue;
                 $name = trim($name);
-                if (empty($name) || strlen($name) > 255)
-                    continue;
-
-                $tag = Tag::findOne(['name' => $name]);
-                if (!$tag) {
-                    $tag = new Tag();
-                    $tag->name = $name;
-                    $tag->save();
+                if (!empty($name) && strlen($name) <= 255) {
+                    $tagNames[] = $name;
                 }
-                $targetTagIds[] = $tag->id;
             }
         }
-        $targetTagIds = array_unique($targetTagIds);
+        $tagNames = array_unique($tagNames);
+        $targetTagIds = [];
 
-        $currentTagIds = $this->_article->getTags()->select('id')->column();
+        if (!empty($tagNames)) {
+            $existingTags = Tag::find()->where(['in', 'name', $tagNames])->indexBy('name')->all();
+            foreach ($tagNames as $name) {
+                if (isset($existingTags[$name])) {
+                    $targetTagIds[] = $existingTags[$name]->id;
+                } else {
+                    $tag = new Tag();
+                    $tag->name = $name;
+                    if ($tag->save()) {
+                        $targetTagIds[] = $tag->id;
+                    }
+                }
+            }
+        }
 
+        $currentTagIds = $isNewRecord ? [] : \app\models\ArticleTag::find()->where(['article_id' => $this->_article->id])->select('tag_id')->column();
         $tagsToAdd = array_diff($targetTagIds, $currentTagIds);
         $tagsToRemove = array_diff($currentTagIds, $targetTagIds);
 
@@ -134,35 +192,30 @@ class ArticleForm extends Model
         }
 
         if (!empty($tagsToAdd)) {
+            $rows = [];
+            $time = time();
             foreach ($tagsToAdd as $tagId) {
-                $articleTag = new ArticleTag();
-                $articleTag->article_id = $this->_article->id;
-                $articleTag->tag_id = $tagId;
-                $articleTag->save(false);
+                $rows[] = [$this->_article->id, $tagId, $time, $time];
             }
+            Yii::$app->db->createCommand()->batchInsert(ArticleTag::tableName(), ['article_id', 'tag_id', 'created_at', 'updated_at'], $rows)->execute();
         }
     }
 
-    private function syncProducts()
+    private function syncProducts($isNewRecord = false)
     {
         if ($this->product_ids === null)
             return;
 
         $targetProductIds = [];
         if (is_array($this->product_ids)) {
-            foreach ($this->product_ids as $pId) {
-                if (!is_numeric($pId))
-                    continue;
-                $product = Product::find()->active()->andWhere(['id' => $pId])->one();
-                if ($product) {
-                    $targetProductIds[] = $product->id;
-                }
+            $ids = array_filter(array_map('intval', $this->product_ids));
+            if (!empty($ids)) {
+                $targetProductIds = Product::find()->active()->andWhere(['in', 'id', $ids])->select('id')->column();
             }
         }
         $targetProductIds = array_unique($targetProductIds);
 
-        $currentProductIds = $this->_article->getProducts()->select('id')->column();
-
+        $currentProductIds = $isNewRecord ? [] : \app\models\ProductArticle::find()->where(['article_id' => $this->_article->id])->select('product_id')->column();
         $productsToAdd = array_diff($targetProductIds, $currentProductIds);
         $productsToRemove = array_diff($currentProductIds, $targetProductIds);
 
@@ -171,12 +224,12 @@ class ArticleForm extends Model
         }
 
         if (!empty($productsToAdd)) {
+            $rows = [];
+            $time = time();
             foreach ($productsToAdd as $pId) {
-                $productArticle = new ProductArticle();
-                $productArticle->article_id = $this->_article->id;
-                $productArticle->product_id = $pId;
-                $productArticle->save(false);
+                $rows[] = [$this->_article->id, $pId, $time, $time];
             }
+            Yii::$app->db->createCommand()->batchInsert(ProductArticle::tableName(), ['article_id', 'product_id', 'created_at', 'updated_at'], $rows)->execute();
         }
     }
 }

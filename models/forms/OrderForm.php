@@ -24,6 +24,8 @@ class OrderForm extends Model
     private $_final_total = 0;
     private $_discount_amount = 0;
 
+    private $_products = [];
+
     public function rules()
     {
         return [
@@ -42,11 +44,27 @@ class OrderForm extends Model
             return;
         }
 
+        $productIds = [];
+        foreach ($this->items as $index => $item) {
+            if (!isset($item['product_id']) || !isset($item['quantity'])) {
+                $this->addError($attribute, "Item at index {$index} is missing product_id or quantity.");
+                continue;
+            }
+            $productIds[] = (int) $item['product_id'];
+        }
+
+        $this->_products = [];
+        if (!empty($productIds)) {
+            $this->_products = Product::find()
+                ->where(['id' => $productIds])
+                ->indexBy('id')
+                ->all();
+        }
+
         $this->_total = 0;
 
         foreach ($this->items as $index => $item) {
             if (!isset($item['product_id']) || !isset($item['quantity'])) {
-                $this->addError($attribute, "Item at index {$index} is missing product_id or quantity.");
                 continue;
             }
 
@@ -55,7 +73,7 @@ class OrderForm extends Model
                 continue;
             }
 
-            $product = Product::findOne($item['product_id']);
+            $product = $this->_products[$item['product_id']] ?? null;
             if (!$product || $product->status != 1) {
                 $this->addError($attribute, "Product ID {$item['product_id']} does not exist or is inactive.");
                 continue;
@@ -159,17 +177,17 @@ class OrderForm extends Model
 
         try {
             $order = new Order();
-            $order->user_id                  = $userId;
-            $order->membership_level_id      = $membershipLevelId;
-            $order->full_name                = $userAddress->full_name;
-            $order->phone                    = $userAddress->phone;
-            $order->address                  = $userAddress->address;
-            $order->email                    = $user->email;
-            $order->payment_method           = $this->payment_method;
+            $order->user_id = $userId;
+            $order->membership_level_id = $membershipLevelId;
+            $order->full_name = $userAddress->full_name;
+            $order->phone = $userAddress->phone;
+            $order->address = $userAddress->address;
+            $order->email = $user->email;
+            $order->payment_method = $this->payment_method;
             $order->membership_discount_rate = $membershipDiscountRate;
-            $order->total                    = $this->_total;
-            $order->discount_amount          = $this->_discount_amount;
-            $order->final_total              = $this->_final_total;
+            $order->total = $this->_total;
+            $order->discount_amount = $this->_discount_amount;
+            $order->final_total = $this->_final_total;
 
             if (!$order->save()) {
                 $this->addErrors($order->getErrors());
@@ -177,20 +195,20 @@ class OrderForm extends Model
                 return false;
             }
 
+            $orderDetailsRows = [];
+            $now = time();
+
             foreach ($this->items as $item) {
-                $product = Product::findOne($item['product_id']);
+                $product = $this->_products[$item['product_id']];
 
-                $orderDetail = new OrderDetail();
-                $orderDetail->order_id   = $order->id;
-                $orderDetail->product_id = $product->id;
-                $orderDetail->quantity   = $item['quantity'];
-                $orderDetail->price      = $product->price;
-
-                if (!$orderDetail->save()) {
-                    $this->addErrors($orderDetail->getErrors());
-                    $transaction->rollBack();
-                    return false;
-                }
+                $orderDetailsRows[] = [
+                    $order->id,
+                    $product->id,
+                    $item['quantity'],
+                    $product->price,
+                    $now,
+                    $now
+                ];
 
                 $affectedRows = Product::updateAllCounters(
                     ['stock' => -$item['quantity']],
@@ -203,14 +221,20 @@ class OrderForm extends Model
                 }
             }
 
+            Yii::$app->db->createCommand()->batchInsert(
+                OrderDetail::tableName(),
+                ['order_id', 'product_id', 'quantity', 'price', 'created_at', 'updated_at'],
+                $orderDetailsRows
+            )->execute();
+
             if ($this->_coupon) {
                 $couponUsage = new CouponUsage();
-                $couponUsage->coupon_id          = $this->_coupon->id;
-                $couponUsage->user_id            = $userId;
-                $couponUsage->order_id           = $order->id;
-                $couponUsage->applied_code       = $this->_coupon->code;
-                $couponUsage->applied_type       = $this->_coupon->type;
-                $couponUsage->applied_value      = $this->_coupon->value;
+                $couponUsage->coupon_id = $this->_coupon->id;
+                $couponUsage->user_id = $userId;
+                $couponUsage->order_id = $order->id;
+                $couponUsage->applied_code = $this->_coupon->code;
+                $couponUsage->applied_type = $this->_coupon->type;
+                $couponUsage->applied_value = $this->_coupon->value;
                 $couponUsage->applied_max_amount = $this->_coupon->max_amount ?? null;
                 if (!$couponUsage->save()) {
                     $this->addErrors($couponUsage->getErrors());

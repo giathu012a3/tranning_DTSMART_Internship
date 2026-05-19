@@ -19,6 +19,7 @@ class OrderController extends Controller
         $behaviors = parent::behaviors();
         $behaviors['authenticator'] = [
             'class' => HttpBearerAuth::class,
+            'except' => ['delete'],
         ];
         return $behaviors;
     }
@@ -32,7 +33,10 @@ class OrderController extends Controller
             if ($form->load($data, '')) {
                 $order = $form->save();
                 if ($order !== false) {
-                    $orderResponse = OrderResponse::findOne($order->id);
+                    $orderResponse = OrderResponse::find()
+                        ->byId($order->id)
+                        ->withDetails()
+                        ->one();
                     return [
                         'status' => true,
                         'data' => $orderResponse->toArray([], ['orderDetails']),

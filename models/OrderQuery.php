@@ -54,11 +54,22 @@ class OrderQuery extends \yii\db\ActiveQuery
 
     public function withDetails()
     {
-        return $this->with(['orderDetails', 'orderDetails.product']);
+        return $this->with([
+            'orderDetails' => function ($query) {
+                $query->select(['id', 'order_id', 'product_id', 'quantity', 'price']);
+            },
+            'orderDetails.product' => function ($query) {
+                $query->select(['id', 'name']);
+            }
+        ]);
     }
 
     public function withCoupon()
     {
-        return $this->with(['couponUsage']);
+        return $this->with([
+            'couponUsage' => function ($query) {
+                $query->select(['id', 'order_id', 'applied_code', 'applied_type', 'applied_value', 'applied_max_amount']);
+            }
+        ]);
     }
 }

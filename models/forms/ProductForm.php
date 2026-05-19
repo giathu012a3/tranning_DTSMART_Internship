@@ -38,10 +38,6 @@ class ProductForm extends Model
         $this->stock = $product->stock;
         $this->description = $product->description;
 
-        if (!$product->isNewRecord) {
-            $this->tags = $product->getTags()->select('name')->column();
-        }
-
         parent::__construct($config);
     }
 
@@ -54,7 +50,52 @@ class ProductForm extends Model
             [['description'], 'string'],
             [['name'], 'string', 'max' => 255],
             [['tags', 'deleted_image_ids'], 'safe'],
+            [['name'], 'validateAnyChange', 'skipOnEmpty' => false],
         ];
+    }
+
+    public function validateAnyChange($attribute, $params)
+    {
+        if (!$this->_product->isNewRecord) {
+            $nameUnchanged = ($this->name === $this->_product->name);
+            $priceUnchanged = ((float)$this->price === (float)$this->_product->price);
+            $categoryUnchanged = ((int)$this->category_id === (int)$this->_product->category_id);
+            $statusUnchanged = ((int)$this->status === (int)$this->_product->status);
+            $stockUnchanged = ((float)$this->stock === (float)$this->_product->stock);
+            $descriptionUnchanged = ($this->description === $this->_product->description);
+
+            if ($this->tags === null) {
+                $tagsUnchanged = true;
+            } else {
+                $targetTags = [];
+                if (is_array($this->tags)) {
+                    foreach ($this->tags as $name) {
+                        if (is_string($name)) {
+                            $name = trim($name);
+                            if (!empty($name) && strlen($name) <= 255) {
+                                $targetTags[] = $name;
+                            }
+                        }
+                    }
+                }
+                $targetTags = array_unique($targetTags);
+                $currentTags = \app\models\ProductTag::find()
+                    ->alias('pt')
+                    ->innerJoinWith('tag t')
+                    ->where(['pt.product_id' => $this->_product->id])
+                    ->select('t.name')
+                    ->column();
+                $tagsUnchanged = (count($targetTags) === count($currentTags) && !array_diff($targetTags, $currentTags) && !array_diff($currentTags, $targetTags));
+            }
+
+            $noNewThumbnail = empty(\yii\web\UploadedFile::getInstanceByName('thumbnail'));
+            $noNewImages = empty(\yii\web\UploadedFile::getInstancesByName('images'));
+            $noDeletions = empty($this->deleted_image_ids);
+
+            if ($nameUnchanged && $priceUnchanged && $categoryUnchanged && $statusUnchanged && $stockUnchanged && $descriptionUnchanged && $tagsUnchanged && $noNewThumbnail && $noNewImages && $noDeletions) {
+                $this->addError('name', 'No changes detected. Please modify at least one field to update.');
+            }
+        }
     }
 
     /**
@@ -80,7 +121,8 @@ class ProductForm extends Model
             $this->_product->stock       = $this->stock;
             $this->_product->description = $this->description;
 
-            $this->_product->scenario         = $this->_product->isNewRecord ? Product::SCENARIO_CREATE : Product::SCENARIO_UPDATE;
+            $isNewRecord = $this->_product->isNewRecord;
+            $this->_product->scenario         = $isNewRecord ? Product::SCENARIO_CREATE : Product::SCENARIO_UPDATE;
             $this->_product->deleted_image_ids = $this->deleted_image_ids;
 
             if (!$this->_product->save()) {
@@ -88,7 +130,7 @@ class ProductForm extends Model
                 return false;
             }
 
-            $this->syncTags();
+            $this->syncTags($isNewRecord);
 
             $transaction->commit();
             return true;
@@ -99,7 +141,7 @@ class ProductForm extends Model
     }
 
 
-    private function syncTags()
+    private function syncTags($isNewRecord = false)
     {
         if ($this->tags === null) {
             return;
@@ -134,7 +176,7 @@ class ProductForm extends Model
             }
         }
 
-        $currentTagIds = $this->_product->getTags()->select('id')->column();
+        $currentTagIds = $isNewRecord ? [] : \app\models\ProductTag::find()->where(['product_id' => $this->_product->id])->select('tag_id')->column();
 
         $tagsToAdd = array_diff($targetTagIds, $currentTagIds);
         $tagsToRemove = array_diff($currentTagIds, $targetTagIds);

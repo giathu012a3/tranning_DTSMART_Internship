@@ -16,8 +16,8 @@ class UploadAssetBehavior extends Behavior
     {
         return [
             ActiveRecord::EVENT_BEFORE_VALIDATE => 'beforeValidate',
-            ActiveRecord::EVENT_AFTER_INSERT    => 'afterSave',
-            ActiveRecord::EVENT_AFTER_UPDATE    => 'afterSave',
+            ActiveRecord::EVENT_AFTER_INSERT => 'afterSave',
+            ActiveRecord::EVENT_AFTER_UPDATE => 'afterSave',
         ];
     }
 
@@ -49,22 +49,38 @@ class UploadAssetBehavior extends Behavior
             $newThumbnail = UploadedFile::getInstanceByName('thumbnail');
             if ($newThumbnail) {
                 Asset::deleteAll([
-                    'asset_id'        => $model->id,
-                    'asset_type'      => $assetType,
+                    'asset_id' => $model->id,
+                    'asset_type' => $assetType,
                     'collection_name' => 'thumbnail',
                 ]);
             }
 
-            if (!empty($model->deleted_image_ids) && is_array($model->deleted_image_ids)) {
-                Asset::deleteAll([
-                    'and',
-                    [
-                        'asset_id'        => $model->id,
-                        'asset_type'      => $assetType,
-                        'collection_name' => 'image',
-                    ],
-                    ['in', 'id', $model->deleted_image_ids],
-                ]);
+            if (!empty($model->deleted_image_ids)) {
+                $ids = $model->deleted_image_ids;
+                if (!is_array($ids)) {
+                    $ids = array_filter(array_map('intval', explode(',', $ids)));
+                }
+                if (!empty($ids)) {
+                    $galleryCollections = [];
+                    foreach ($this->attributes as $attr => $folder) {
+                        if ($attr !== 'thumbnail' && !in_array($attr, $galleryCollections)) {
+                            $galleryCollections[] = $attr;
+                        }
+                    }
+                    if (empty($galleryCollections)) {
+                        $galleryCollections = ['image', 'images'];
+                    }
+
+                    Asset::deleteAll([
+                        'and',
+                        [
+                            'asset_id' => $model->id,
+                            'asset_type' => $assetType,
+                        ],
+                        ['in', 'collection_name', $galleryCollections],
+                        ['in', 'id', $ids],
+                    ]);
+                }
             }
         }
 

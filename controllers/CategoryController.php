@@ -4,13 +4,10 @@ namespace app\controllers;
 
 use app\models\Category;
 use app\models\forms\CategoryForm;
-
 use app\models\response\CategoryResponse;
 use app\models\search\CategorySearch;
 use Yii;
 use yii\web\Controller;
-use yii\web\NotFoundHttpException;
-use yii\filters\VerbFilter;
 
 
 /**
@@ -19,23 +16,6 @@ use yii\filters\VerbFilter;
 class CategoryController extends Controller
 {
     public $enableCsrfValidation = false;
-    /**
-     * @inheritDoc
-     */
-    public function behaviors()
-    {
-        return array_merge(
-            parent::behaviors(),
-            [
-                'verbs' => [
-                    'class' => VerbFilter::className(),
-                    'actions' => [
-                        'delete' => ['DELETE'],
-                    ],
-                ],
-            ]
-        );
-    }
 
     /**
      * Lists all Category models.

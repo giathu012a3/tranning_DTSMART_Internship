@@ -6,36 +6,16 @@ use app\models\Article;
 use app\models\forms\ArticleForm;
 use app\models\response\ArticleResponse;
 use app\models\search\ArticleSearch;
-use Attribute;
 use Yii;
 use yii\web\Controller;
-use yii\web\NotFoundHttpException;
-use yii\filters\VerbFilter;
-
-use function PHPUnit\Framework\once;
 
 /**
  * ArticleController implements the CRUD actions for Article model.
  */
 class ArticleController extends Controller
 {
-    /**
-     * @inheritDoc
-     */
-    public function behaviors()
-    {
-        return array_merge(
-            parent::behaviors(),
-            [
-                'verbs' => [
-                    'class' => VerbFilter::className(),
-                    'actions' => [
-                        'delete' => ['POST'],
-                    ],
-                ],
-            ]
-        );
-    }
+    public $enableCsrfValidation = false;
+
 
     /**
      * Lists all Article models.
