@@ -50,7 +50,63 @@ class ProductsQuery extends \yii\db\ActiveQuery
 
     public function withAsset()
     {
-        return $this->with(['assets.file']);
+        return $this->with(['assets' => function ($q) {
+            $q->select(['id', 'asset_id', 'file_id', 'collection_name', 'asset_type']);
+        }, 'assets.file' => function ($q) {
+            $q->select(['id', 'file_path', 'file_name', 'file_type', 'file_size']);
+        }]);
+    }
+
+    public function withThumbnailAsset()
+    {
+        return $this->with([
+            'assets' => function ($q) {
+                $q->andOnCondition(['collection_name' => 'thumbnail'])
+                  ->select(['id', 'asset_id', 'file_id', 'collection_name', 'asset_type']);
+            },
+            'assets.file' => function ($q) {
+                $q->select(['id', 'file_path', 'file_name', 'file_type', 'file_size']);
+            }
+        ]);
+    }
+
+    public function withThumbnail()
+    {
+        return $this->with([
+            'thumbnail' => function ($q) {
+                $q->select(['id', 'asset_id', 'file_id', 'collection_name', 'asset_type']);
+            },
+            'thumbnail.file' => function ($q) {
+                $q->select(['id', 'file_path', 'file_name', 'file_type', 'file_size']);
+            }
+        ]);
+    }
+
+    public function withTags()
+    {
+        return $this->with([
+            'tags' => function ($q) {
+                $q->select(['id', 'name', 'slug']);
+            }
+        ]);
+    }
+
+    public function withCategory()
+    {
+        return $this->with([
+            'category' => function ($q) {
+                $q->select(['id', 'name']);
+            }
+        ]);
+    }
+
+    public function withArticles()
+    {
+        return $this->with([
+            'articles' => function ($q) {
+                $q->select(['id', 'title', 'slug', 'excerpt']);
+            }
+        ]);
     }
 
     public function byId($id)

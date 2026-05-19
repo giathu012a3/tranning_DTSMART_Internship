@@ -43,12 +43,19 @@ class ProductSearch extends Product
     public function search($params, $formName = null)
     {
         $query = Product::find()
-            ->select(['products.id', 'products.name', 'products.price', 'products.stock', 'products.status', 'products.category_id', 'products.deleted_at'])
+            ->select([
+                'products.id',
+                'products.name',
+                'products.price',
+                'products.stock',
+                'products.status',
+                'products.category_id'
+            ])
             ->notDeleted()
-            ->joinWith('category', true)
-            ->with(['thumbnail', 'tags']);
+            ->withCategory()
+            ->withThumbnailAsset()
+            ->withTags();
 
-        // add conditions that should always apply here
 
         $dataProvider = new ActiveDataProvider([
             'query' => $query,

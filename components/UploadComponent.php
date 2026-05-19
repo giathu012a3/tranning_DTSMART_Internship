@@ -13,6 +13,9 @@ class UploadComponent extends Component
 
     public function processUploads($model, $attributes = [])
     {
+        $assetType = strtolower((new \ReflectionClass($model))->getShortName());
+        $time = time();
+
         foreach ($attributes as $attribute => $folder) {
             $files = UploadedFile::getInstancesByName($attribute);
             if (empty($files)) {
@@ -30,56 +33,66 @@ class UploadComponent extends Component
             }
 
             if (!empty($files)) {
+                $filesData = [];
+                $filePaths = [];
+
                 foreach ($files as $file) {
-                    $this->saveToSystem($file, $folder, $attribute, $model);
+                    $fileName = time() . '_' . Yii::$app->security->generateRandomString(5) . '.' . $file->extension;
+                    $relativePath = 'uploads/' . $folder . '/' . $fileName;
+                    $absolutePath = Yii::getAlias('@webroot/') . $relativePath;
+
+                    if (!is_dir(dirname($absolutePath))) {
+                        if (!mkdir(dirname($absolutePath), 0777, true)) {
+                            throw new \Exception("Cannot create directory: " . dirname($absolutePath));
+                        }
+                    }
+
+                    if ($file->saveAs($absolutePath)) {
+                        $filesData[] = [
+                            $relativePath,
+                            $fileName,
+                            $file->type,
+                            $file->size,
+                            1, // status
+                            $time,
+                            $time
+                        ];
+                        $filePaths[] = $relativePath;
+                    } else {
+                        throw new \Exception("Cannot save as physical file. error (code): " . $file->error);
+                    }
+                }
+
+                if (!empty($filesData)) {
+                    Yii::$app->db->createCommand()->batchInsert(
+                        File::tableName(), 
+                        ['file_path', 'file_name', 'file_type', 'file_size', 'status', 'created_at', 'updated_at'], 
+                        $filesData
+                    )->execute();
+
+                    $insertedFiles = File::find()->where(['in', 'file_path', $filePaths])->all();
+
+                    $assetsData = [];
+                    foreach ($insertedFiles as $insertedFile) {
+                        $assetsData[] = [
+                            $model->id,
+                            $assetType,
+                            $insertedFile->id,
+                            $attribute,
+                            $time,
+                            $time
+                        ];
+                    }
+
+                    if (!empty($assetsData)) {
+                        Yii::$app->db->createCommand()->batchInsert(
+                            Asset::tableName(),
+                            ['asset_id', 'asset_type', 'file_id', 'collection_name', 'created_at', 'updated_at'],
+                            $assetsData
+                        )->execute();
+                    }
                 }
             }
-        }
-    }
-
-    protected function saveToSystem($file, $folder, $collectionName, $model)
-    {
-        $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-        if (!in_array(strtolower($file->extension), $allowedExtensions)) {
-            throw new \Exception("Error: Only allow uploading image (jpg, png, webp...). Your file is: " . $file->extension);
-        }
-
-        if ($file->size > 5242880) {
-            throw new \Exception("The file size is too large! Please upload the image below 5MB.");
-        }
-
-        $fileName = time() . '_' . Yii::$app->security->generateRandomString(5) . '.' . $file->extension;
-        $relativePath = 'uploads/' . $folder . '/' . $fileName;
-        $absolutePath = Yii::getAlias('@webroot/') . $relativePath;
-
-        if (!is_dir(dirname($absolutePath))) {
-            if (!mkdir(dirname($absolutePath), 0777, true)) {
-                throw new \Exception("Cannot create directory: " . dirname($absolutePath));
-            }
-        }
-
-        if ($file->saveAs($absolutePath)) {
-            $fileModel = new File();
-            $fileModel->file_path = $relativePath;
-            $fileModel->file_name = $fileName;
-            $fileModel->file_type = $file->type;
-            $fileModel->file_size = $file->size;
-
-            if (!$fileModel->save()) {
-                throw new \Exception("Table saving error File: " . json_encode($fileModel->getErrors()));
-            }
-
-            $asset = new Asset();
-            $asset->asset_id = $model->id;
-            $asset->asset_type = strtolower((new \ReflectionClass($model))->getShortName());
-            $asset->file_id = $fileModel->id;
-            $asset->collection_name = $collectionName;
-
-            if (!$asset->save()) {
-                throw new \Exception("Table saving error Asset: " . json_encode($asset->getErrors()));
-            }
-        } else {
-            throw new \Exception("Cannot save as physical file. error (code): " . $file->error);
         }
     }
 }

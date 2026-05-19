@@ -32,7 +32,9 @@ class CategoryForm extends Model
             [['name'], 'required'],
             [['status'], 'integer'],
             [['name'], 'string', 'max' => 255],
+            [['name', 'status'], 'validateAnyChange', 'skipOnEmpty' => false],
             [['name'], 'unique', 'targetClass' => Category::class, 'targetAttribute' => 'name', 'filter' => function ($query) {
+                $query->andWhere(['deleted_at' => null]);
                 if (!$this->_category->isNewRecord) {
                     $query->andWhere(['not', ['id' => $this->_category->id]]);
                 }
@@ -46,6 +48,18 @@ class CategoryForm extends Model
     public function getCategory()
     {
         return $this->_category;
+    }
+
+    public function validateAnyChange($attribute, $params)
+    {
+        if (!$this->_category->isNewRecord) {
+            $nameUnchanged = ($this->name === $this->_category->name);
+            $statusUnchanged = ((int)$this->status === (int)$this->_category->status);
+
+            if ($nameUnchanged && $statusUnchanged) {
+                $this->addError('name', 'No changes detected. Please modify at least one field to update.');
+            }
+        }
     }
 
     public function save()

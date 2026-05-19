@@ -1,0 +1,80 @@
+<?php
+
+namespace app\behaviors;
+
+use app\models\Asset;
+use Yii;
+use yii\base\Behavior;
+use yii\db\ActiveRecord;
+use yii\web\UploadedFile;
+
+class UploadAssetBehavior extends Behavior
+{
+    public $attributes = [];
+
+    public function events()
+    {
+        return [
+            ActiveRecord::EVENT_BEFORE_VALIDATE => 'beforeValidate',
+            ActiveRecord::EVENT_AFTER_INSERT    => 'afterSave',
+            ActiveRecord::EVENT_AFTER_UPDATE    => 'afterSave',
+        ];
+    }
+
+    public function beforeValidate($event)
+    {
+        $model = $this->owner;
+        foreach ($this->attributes as $attribute => $folder) {
+            $files = UploadedFile::getInstancesByName($attribute);
+            if (!empty($files)) {
+                $model->$attribute = $files;
+            } else {
+                $file = UploadedFile::getInstanceByName($attribute);
+                if ($file) {
+                    $model->$attribute = $file;
+                }
+            }
+        }
+    }
+
+    public function afterSave($event)
+    {
+        /** @var ActiveRecord $model */
+        $model = $this->owner;
+        $assetType = strtolower((new \ReflectionClass($model))->getShortName());
+
+        $isInsert = $event->name === ActiveRecord::EVENT_AFTER_INSERT;
+
+        if (!$isInsert) {
+            $newThumbnail = UploadedFile::getInstanceByName('thumbnail');
+            if ($newThumbnail) {
+                Asset::deleteAll([
+                    'asset_id'        => $model->id,
+                    'asset_type'      => $assetType,
+                    'collection_name' => 'thumbnail',
+                ]);
+            }
+
+            if (!empty($model->deleted_image_ids) && is_array($model->deleted_image_ids)) {
+                Asset::deleteAll([
+                    'and',
+                    [
+                        'asset_id'        => $model->id,
+                        'asset_type'      => $assetType,
+                        'collection_name' => 'image',
+                    ],
+                    ['in', 'id', $model->deleted_image_ids],
+                ]);
+            }
+        }
+
+        if (!empty($this->attributes)) {
+            try {
+                Yii::$app->uploader->processUploads($model, $this->attributes);
+            } catch (\Exception $e) {
+                Yii::error('UploadAssetBehavior: ' . $e->getMessage(), __METHOD__);
+                throw $e;
+            }
+        }
+    }
+}

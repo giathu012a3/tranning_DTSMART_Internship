@@ -2,7 +2,7 @@
 
 namespace app\models;
 
-use app\behaviors\UploadBehavior;
+use app\behaviors\UploadAssetBehavior;
 use Override;
 use Yii;
 use yii\behaviors\SluggableBehavior;
@@ -31,6 +31,12 @@ use yii\behaviors\TimestampBehavior;
  */
 class Article extends \yii\db\ActiveRecord
 {
+    const SCENARIO_CREATE = 'create';
+    const SCENARIO_UPDATE = 'update';
+
+    public $deleted_image_ids;
+    public $thumbnail;
+    public $image;
 
 
     /**
@@ -56,6 +62,9 @@ class Article extends \yii\db\ActiveRecord
             [['title', 'slug', 'excerpt'], 'string', 'max' => 255],
             [['slug'], 'unique'],
             [['author_id'], 'exist', 'skipOnError' => true, 'targetClass' => User::class, 'targetAttribute' => ['author_id' => 'id']],
+            [['thumbnail'], 'required', 'on' => self::SCENARIO_CREATE, 'message' => 'Article thumbnail is required.'],
+            [['thumbnail'], 'file', 'skipOnEmpty' => true, 'extensions' => 'jpg, jpeg, png, webp', 'maxSize' => 5242880],
+            [['image'], 'file', 'skipOnEmpty' => true, 'extensions' => 'jpg, jpeg, png, webp', 'maxSize' => 5242880, 'maxFiles' => 10],
         ];
     }
 
@@ -69,6 +78,13 @@ class Article extends \yii\db\ActiveRecord
                 'ensureUnique' => true,
             ],
             TimestampBehavior::class,
+            [
+                'class' => UploadAssetBehavior::class,
+                'attributes' => [
+                    'thumbnail' => 'articles',
+                    'image'     => 'article_gallery',
+                ],
+            ],
         ];
     }
 

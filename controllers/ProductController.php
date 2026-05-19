@@ -20,25 +20,14 @@ class ProductController extends \yii\web\Controller
             $searchModel = new ProductSearch();
             $dataProvider = $searchModel->search(Yii::$app->request->queryParams, '');
 
-            $pagination = $dataProvider->getPagination();
-            $totalCount = $dataProvider->getTotalCount();
-            $pageCount = $pagination->getPageCount();
-            $currentPage = $pagination->getPage() + 1;
-
-            if ($totalCount > 0 && $currentPage > $pageCount) {
-                return [
-                    'status' => false,
-                    'data' => null,
-                    'message' => 'Trang không tồn tại',
-                ];
-            }
-
             $models = $dataProvider->getModels();
             $responseData = array_map(function ($item) {
                 $response = new ProductResponse();
                 ProductResponse::populateRecord($response, $item->attributes);
                 $response->populateRelation('category', $item->category);
-                $response->populateRelation('assets', $item->thumbnail ? [$item->thumbnail] : []);
+
+                $thumbnail = !empty($item->assets) ? $item->assets[0] : null;
+                $response->populateRelation('assets', $thumbnail ? [$thumbnail] : []);
                 $response->populateRelation('tags', $item->tags);
                 return $response;
             }, $models);
@@ -72,7 +61,9 @@ class ProductController extends \yii\web\Controller
             $product = Product::find()
                 ->notDeleted()
                 ->withAsset()
-                ->with(['tags', 'articles'])
+                ->withCategory()
+                ->withTags()
+                ->withArticles()
                 ->byId($id)
                 ->one();
 
@@ -116,7 +107,13 @@ class ProductController extends \yii\web\Controller
                 if ($form->save()) {
                     $product = $form->getProduct();
 
-                    $updatedProduct = Product::find()->withAsset()->with(['tags', 'articles'])->byId($product->id)->one();
+                    $updatedProduct = Product::find()
+                        ->withAsset()
+                        ->withCategory()
+                        ->withTags()
+                        ->withArticles()
+                        ->byId($product->id)
+                        ->one();
                     $responseData = new ProductResponse();
                     ProductResponse::populateRecord($responseData, $updatedProduct->attributes);
                     $responseData->populateRelation('assets', $updatedProduct->assets);
@@ -151,7 +148,7 @@ class ProductController extends \yii\web\Controller
 
     public function actionUpdate($id)
     {
-        $product = Product::find()->byId($id)->one();
+        $product = Product::find()->byId($id)->notDeleted()->one();
 
         if (!$product) {
             return [

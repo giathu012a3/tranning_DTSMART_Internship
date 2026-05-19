@@ -46,8 +46,22 @@ class ProductResponse extends Product
                 }
                 return $tags;
             },
+            'articles' => function ($model) {
+                if (!$model->isRelationPopulated('articles')) {
+                    return [];
+                }
+                $articles = [];
+                foreach ($model->articles as $article) {
+                    $articles[] = [
+                        'id' => $article->id,
+                        'title' => $article->title,
+                        'slug' => $article->slug,
+                        'excerpt' => $article->excerpt,
+                    ];
+                }
+                return $articles;
+            },
         ];
-
         if ($this->description !== null) {
             $fields['description'] = 'description';
         }

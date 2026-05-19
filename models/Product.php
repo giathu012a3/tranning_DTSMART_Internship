@@ -2,7 +2,7 @@
 
 namespace app\models;
 
-use app\behaviors\UploadBehavior;
+use app\behaviors\UploadAssetBehavior;
 use app\models\ProductsQuery;
 use Yii;
 use yii\behaviors\TimestampBehavior;
@@ -23,6 +23,12 @@ use yii\behaviors\TimestampBehavior;
  */
 class Product extends \yii\db\ActiveRecord
 {
+    const SCENARIO_CREATE = 'create';
+    const SCENARIO_UPDATE = 'update';
+
+    public $deleted_image_ids;
+    public $thumbnail;
+    public $images;
 
 
     /**
@@ -47,13 +53,31 @@ class Product extends \yii\db\ActiveRecord
             [['description'], 'string'],
             [['name'], 'string', 'max' => 255],
             [['category_id'], 'exist', 'skipOnError' => true, 'targetClass' => Category::class, 'targetAttribute' => ['category_id' => 'id']],
+            [['thumbnail'], 'required', 'on' => self::SCENARIO_CREATE, 'message' => 'Product thumbnail is required.'],
+            [['thumbnail'], 'file', 'skipOnEmpty' => true, 'extensions' => 'jpg, jpeg, png, webp', 'maxSize' => 5242880],
+            [['images'], 'file', 'skipOnEmpty' => true, 'extensions' => 'jpg, jpeg, png, webp', 'maxSize' => 5242880, 'maxFiles' => 10],
         ];
+    }
+
+    public function scenarios()
+    {
+        $scenarios = parent::scenarios();
+        $scenarios[self::SCENARIO_CREATE] = ['name', 'price', 'stock', 'category_id', 'status', 'description', 'thumbnail', 'images'];
+        $scenarios[self::SCENARIO_UPDATE] = ['name', 'price', 'stock', 'category_id', 'status', 'description', 'thumbnail', 'images', 'deleted_image_ids'];
+        return $scenarios;
     }
 
     public function behaviors()
     {
         return [
-            TimestampBehavior::class
+            TimestampBehavior::class,
+            [
+                'class' => UploadAssetBehavior::class,
+                'attributes' => [
+                    'thumbnail' => 'products',
+                    'images'    => 'product_gallery',
+                ],
+            ],
         ];
     }
 
@@ -165,5 +189,4 @@ class Product extends \yii\db\ActiveRecord
         $this->deleted_at = time();
         return $this->save(false);
     }
-
 }

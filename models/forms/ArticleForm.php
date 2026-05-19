@@ -2,7 +2,6 @@
 
 namespace app\models\forms;
 
-use app\models\Asset;
 use Yii;
 use yii\base\Model;
 use app\models\Article;
@@ -11,8 +10,6 @@ use app\models\Tag;
 use app\models\Product;
 use app\models\ArticleTag;
 use app\models\ProductArticle;
-use app\components\UploadComponent;
-use yii\web\UploadedFile;
 
 /**
  * ArticleForm gánh vác việc xác thực dữ liệu và logic nghiệp vụ cho Bài viết
@@ -77,44 +74,19 @@ class ArticleForm extends Model
 
         $transaction = Yii::$app->db->beginTransaction();
         try {
-            $this->_article->title = $this->title;
-            $this->_article->content = $this->content;
-            $this->_article->excerpt = $this->excerpt;
-            $this->_article->status = $this->status ?? 1;
+            $this->_article->title     = $this->title;
+            $this->_article->content   = $this->content;
+            $this->_article->excerpt   = $this->excerpt;
+            $this->_article->status    = $this->status ?? 1;
             $this->_article->author_id = $this->author_id;
+
+            $this->_article->scenario         = $this->_article->isNewRecord ? Article::SCENARIO_CREATE : Article::SCENARIO_UPDATE;
+            $this->_article->deleted_image_ids = $this->deleted_image_ids;
 
             if (!$this->_article->save()) {
                 $this->addErrors($this->_article->getErrors());
                 return false;
             }
-
-            if (!$this->_article->isNewRecord) {
-                $newThumbnail = UploadedFile::getInstanceByName('thumbnail');
-                if ($newThumbnail) {
-                    Asset::deleteAll([
-                        'asset_id' => $this->_article->id,
-                        'asset_type' => 'article',
-                        'collection_name' => 'thumbnail'
-                    ]);
-                }
-
-                if (!empty($this->deleted_image_ids) && is_array($this->deleted_image_ids)) {
-                    Asset::deleteAll([
-                        'and',
-                        [
-                            'asset_id' => $this->_article->id,
-                            'asset_type' => 'article',
-                            'collection_name' => 'image'
-                        ],
-                        ['in', 'id', $this->deleted_image_ids]
-                    ]);
-                }
-            }
-
-            Yii::$app->uploader->processUploads($this->_article, [
-                'thumbnail' => 'articles',
-                'image' => 'article_gallery'
-            ]);
 
             $this->syncTags();
             $this->syncProducts();

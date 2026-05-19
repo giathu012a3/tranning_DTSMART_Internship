@@ -155,7 +155,7 @@ class CategoryController extends Controller
     public function actionUpdate($id)
     {
         try {
-            $category = Category::findOne($id);
+            $category = Category::find()->byId($id)->notDeleted()->one();
 
             if (!$category) {
                 return [
@@ -166,7 +166,7 @@ class CategoryController extends Controller
             }
 
             $form = new CategoryForm($category);
-            $data = Yii::$app->request->getBodyParams();
+            $data = Yii::$app->request->post();
 
             if ($form->load($data, '')) {
                 if ($form->save()) {

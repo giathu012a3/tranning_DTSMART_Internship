@@ -8,8 +8,6 @@ use app\models\Product;
 use app\models\Tag;
 use app\models\ProductTag;
 use app\models\Category;
-use app\models\Asset;
-use yii\web\UploadedFile;
 
 class ProductForm extends Model
 {
@@ -51,10 +49,10 @@ class ProductForm extends Model
     {
         return [
             [['name', 'price', 'category_id', 'stock'], 'required'],
-            [['price', 'category_id', 'status', 'stock'], 'integer'],
+            [['price', 'stock'], 'number'],
+            [['category_id', 'status'], 'integer'],
             [['description'], 'string'],
             [['name'], 'string', 'max' => 255],
-            [['category_id'], 'exist', 'skipOnError' => true, 'targetClass' => Category::class, 'targetAttribute' => ['category_id' => 'id']],
             [['tags', 'deleted_image_ids'], 'safe'],
         ];
     }
@@ -75,46 +73,20 @@ class ProductForm extends Model
 
         $transaction = Yii::$app->db->beginTransaction();
         try {
-
-            $this->_product->name = $this->name;
-            $this->_product->price = $this->price;
+            $this->_product->name        = $this->name;
+            $this->_product->price       = $this->price;
             $this->_product->category_id = $this->category_id;
-            $this->_product->status = $this->status ?? 1;
-            $this->_product->stock = $this->stock;
+            $this->_product->status      = $this->status ?? 1;
+            $this->_product->stock       = $this->stock;
             $this->_product->description = $this->description;
+
+            $this->_product->scenario         = $this->_product->isNewRecord ? Product::SCENARIO_CREATE : Product::SCENARIO_UPDATE;
+            $this->_product->deleted_image_ids = $this->deleted_image_ids;
 
             if (!$this->_product->save()) {
                 $this->addErrors($this->_product->getErrors());
                 return false;
             }
-
-            if (!$this->_product->isNewRecord) {
-                $newThumbnail = UploadedFile::getInstanceByName('thumbnail');
-                if ($newThumbnail) {
-                    Asset::deleteAll([
-                        'asset_id' => $this->_product->id,
-                        'asset_type' => 'product',
-                        'collection_name' => 'thumbnail'
-                    ]);
-                }
-
-                if (!empty($this->deleted_image_ids) && is_array($this->deleted_image_ids)) {
-                    Asset::deleteAll([
-                        'and',
-                        [
-                            'asset_id' => $this->_product->id,
-                            'asset_type' => 'product',
-                            'collection_name' => 'image'
-                        ],
-                        ['in', 'id', $this->deleted_image_ids]
-                    ]);
-                }
-            }
-
-            Yii::$app->uploader->processUploads($this->_product, [
-                'thumbnail' => 'products',
-                'images' => 'product_gallery'
-            ]);
 
             $this->syncTags();
 
@@ -133,25 +105,34 @@ class ProductForm extends Model
             return;
         }
 
-        $targetTagIds = [];
+        $tagNames = [];
         if (is_array($this->tags)) {
             foreach ($this->tags as $name) {
-                if (!is_string($name))
-                    continue;
+                if (!is_string($name)) continue;
                 $name = trim($name);
-                if (empty($name) || strlen($name) > 255)
-                    continue;
-
-                $tag = Tag::findOne(['name' => $name]);
-                if (!$tag) {
-                    $tag = new Tag();
-                    $tag->name = $name;
-                    $tag->save();
+                if (!empty($name) && strlen($name) <= 255) {
+                    $tagNames[] = $name;
                 }
-                $targetTagIds[] = $tag->id;
             }
         }
-        $targetTagIds = array_unique($targetTagIds);
+        $tagNames = array_unique($tagNames);
+        $targetTagIds = [];
+
+        if (!empty($tagNames)) {
+            $existingTags = Tag::find()->where(['in', 'name', $tagNames])->indexBy('name')->all();
+
+            foreach ($tagNames as $name) {
+                if (isset($existingTags[$name])) {
+                    $targetTagIds[] = $existingTags[$name]->id;
+                } else {
+                    $tag = new Tag();
+                    $tag->name = $name;
+                    if ($tag->save()) {
+                        $targetTagIds[] = $tag->id;
+                    }
+                }
+            }
+        }
 
         $currentTagIds = $this->_product->getTags()->select('id')->column();
 
@@ -166,12 +147,12 @@ class ProductForm extends Model
         }
 
         if (!empty($tagsToAdd)) {
+            $rows = [];
+            $time = time();
             foreach ($tagsToAdd as $tagId) {
-                $productTag = new ProductTag();
-                $productTag->product_id = $this->_product->id;
-                $productTag->tag_id = $tagId;
-                $productTag->save(false);
+                $rows[] = [$this->_product->id, $tagId, $time, $time];
             }
+            Yii::$app->db->createCommand()->batchInsert(ProductTag::tableName(), ['product_id', 'tag_id', 'created_at', 'updated_at'], $rows)->execute();
         }
     }
 }

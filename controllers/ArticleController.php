@@ -90,7 +90,7 @@ class ArticleController extends Controller
      */
     public function actionView($id)
     {
-        $article = Article::find()->byId($id)->withAsset()->with(['tags', 'products', 'author'])->notDeleted()->one();
+        $article = Article::find()->byId($id)->withAsset()->withTags()->withProducts()->withAuthor()->notDeleted()->one();
 
         if (!$article) {
             return [
@@ -131,8 +131,10 @@ class ArticleController extends Controller
                     $article = $form->getArticle();
 
                     $updatedArticle = Article::find()->withAsset()
-                    ->with(['tags', 'products', 'author'])
-                    ->byId($article->id)->notDeleted()->one();
+                        ->withTags()
+                        ->withProducts()
+                        ->withAuthor()
+                        ->byId($article->id)->notDeleted()->one();
                     $responseData = new ArticleResponse();
                     ArticleResponse::populateRecord($responseData, $updatedArticle->attributes);
                     $responseData->populateRelation('assets', $updatedArticle->assets);
@@ -167,7 +169,7 @@ class ArticleController extends Controller
 
     public function actionUpdate($id)
     {
-        $article = Article::find()->byId($id)->one();
+        $article = Article::find()->byId($id)->notDeleted()->one();
 
         if (!$article) {
             return [
@@ -182,7 +184,12 @@ class ArticleController extends Controller
         try {
             if ($form->load(Yii::$app->request->post(), '')) {
                 if ($form->save()) {
-                    $updatedArticle = Article::find()->withAsset()->with(['tags', 'products', 'author'])->byId($id)->one();
+                    $updatedArticle = Article::find()->withAsset()
+                        ->withTags()
+                        ->withProducts()
+                        ->withAuthor()
+                        ->byId($id)
+                        ->one();
                     $responseData = new ArticleResponse();
                     ArticleResponse::populateRecord($responseData, $updatedArticle->attributes);
                     $responseData->populateRelation('assets', $updatedArticle->assets);
