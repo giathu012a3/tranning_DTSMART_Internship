@@ -50,7 +50,13 @@ class ArticleForm extends Model
             [['title', 'content', 'author_id'], 'required'],
             [['content'], 'string'],
             [['status', 'author_id'], 'integer'],
-            [['author_id'], 'exist', 'skipOnError' => true, 'targetClass' => \app\models\User::class, 'targetAttribute' => ['author_id' => 'id']],
+            [
+                ['author_id'],
+                'exist',
+                'skipOnError' => true,
+                'targetClass' => \app\models\User::class,
+                'targetAttribute' => ['author_id' => 'id']
+            ],
             [['title', 'excerpt'], 'string', 'max' => 255],
             [['tags', 'product_ids', 'deleted_image_ids'], 'safe'],
             [['title'], 'validateAnyChange', 'skipOnEmpty' => false],
@@ -87,7 +93,9 @@ class ArticleForm extends Model
                     ->where(['at.article_id' => $this->_article->id])
                     ->select('t.name')
                     ->column();
-                $tagsUnchanged = (count($targetTags) === count($currentTags) && !array_diff($targetTags, $currentTags) && !array_diff($currentTags, $targetTags));
+                $tagsUnchanged = (count($targetTags) === count($currentTags)
+                    && !array_diff($targetTags, $currentTags)
+                    && !array_diff($currentTags, $targetTags));
             }
 
             if ($this->product_ids === null) {
@@ -97,15 +105,26 @@ class ArticleForm extends Model
                 if (is_array($this->product_ids)) {
                     $targetProducts = array_unique(array_filter(array_map('intval', $this->product_ids)));
                 }
-                $currentProducts = \app\models\ProductArticle::find()->where(['article_id' => $this->_article->id])->select('product_id')->column();
-                $productsUnchanged = (count($targetProducts) === count($currentProducts) && !array_diff($targetProducts, $currentProducts) && !array_diff($currentProducts, $targetProducts));
+                $currentProducts = \app\models\ProductArticle::find()
+                    ->where(['article_id' => $this->_article->id])
+                    ->select('product_id')->column();
+                $productsUnchanged = (count($targetProducts) === count($currentProducts) &&
+                    !array_diff($targetProducts, $currentProducts) &&
+                    !array_diff($currentProducts, $targetProducts));
             }
 
             $noNewThumbnail = empty(\yii\web\UploadedFile::getInstanceByName('thumbnail'));
-            $noNewImages = empty(\yii\web\UploadedFile::getInstancesByName('images')) && empty(\yii\web\UploadedFile::getInstanceByName('images'));
+            $noNewImages = empty(\yii\web\UploadedFile::getInstancesByName('images')) &&
+                empty(\yii\web\UploadedFile::getInstanceByName('images'));
             $noDeletions = empty($this->deleted_image_ids);
 
-            if ($titleUnchanged && $contentUnchanged && $excerptUnchanged && $statusUnchanged && $authorUnchanged && $tagsUnchanged && $productsUnchanged && $noNewThumbnail && $noNewImages && $noDeletions) {
+            if (
+                $titleUnchanged && $contentUnchanged &&
+                $excerptUnchanged && $statusUnchanged &&
+                $authorUnchanged && $tagsUnchanged &&
+                $productsUnchanged && $noNewThumbnail &&
+                $noNewImages && $noDeletions
+            ) {
                 $this->addError('title', 'No changes detected. Please modify at least one field to update.');
             }
         }
@@ -170,7 +189,9 @@ class ArticleForm extends Model
         $targetTagIds = [];
 
         if (!empty($tagNames)) {
-            $existingTags = Tag::find()->where(['in', 'name', $tagNames])->indexBy('name')->all();
+            $existingTags = Tag::find()
+                ->where(['in', 'name', $tagNames])
+                ->indexBy('name')->all();
             foreach ($tagNames as $name) {
                 if (isset($existingTags[$name])) {
                     $targetTagIds[] = $existingTags[$name]->id;
@@ -198,7 +219,9 @@ class ArticleForm extends Model
             foreach ($tagsToAdd as $tagId) {
                 $rows[] = [$this->_article->id, $tagId, $time, $time];
             }
-            Yii::$app->db->createCommand()->batchInsert(ArticleTag::tableName(), ['article_id', 'tag_id', 'created_at', 'updated_at'], $rows)->execute();
+            Yii::$app->db->createCommand()
+                ->batchInsert(ArticleTag::tableName(), ['article_id', 'tag_id', 'created_at', 'updated_at'], $rows)
+                ->execute();
         }
     }
 
@@ -230,7 +253,9 @@ class ArticleForm extends Model
             foreach ($productsToAdd as $pId) {
                 $rows[] = [$this->_article->id, $pId, $time, $time];
             }
-            Yii::$app->db->createCommand()->batchInsert(ProductArticle::tableName(), ['article_id', 'product_id', 'created_at', 'updated_at'], $rows)->execute();
+            Yii::$app->db->createCommand()
+                ->batchInsert(ProductArticle::tableName(), ['article_id', 'product_id', 'created_at', 'updated_at'], $rows)
+                ->execute();
         }
     }
 }

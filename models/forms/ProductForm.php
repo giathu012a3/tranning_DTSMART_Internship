@@ -187,8 +187,8 @@ class ProductForm extends Model
         }
 
         $currentTagIds = $isNewRecord ? [] : \app\models\ProductTag::find()
-                                                ->where(['product_id' => $this->_product->id])
-                                                ->select('tag_id')->column();
+            ->where(['product_id' => $this->_product->id])
+            ->select('tag_id')->column();
 
         $tagsToAdd = array_diff($targetTagIds, $currentTagIds);
         $tagsToRemove = array_diff($currentTagIds, $targetTagIds);
@@ -206,7 +206,9 @@ class ProductForm extends Model
             foreach ($tagsToAdd as $tagId) {
                 $rows[] = [$this->_product->id, $tagId, $time, $time];
             }
-            Yii::$app->db->createCommand()->batchInsert(ProductTag::tableName(), ['product_id', 'tag_id', 'created_at', 'updated_at'], $rows)->execute();
+            Yii::$app->db->createCommand()
+                ->batchInsert(ProductTag::tableName(), ['product_id', 'tag_id', 'created_at', 'updated_at'], $rows)
+                ->execute();
         }
     }
 }

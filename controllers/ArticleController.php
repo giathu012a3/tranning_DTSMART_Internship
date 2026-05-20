@@ -71,7 +71,14 @@ class ArticleController extends Controller
      */
     public function actionView($id)
     {
-        $article = Article::find()->byId($id)->withAsset()->withTags()->withProducts()->withAuthor()->notDeleted()->one();
+        $article = Article::find()
+            ->byId($id)
+            ->withAsset()
+            ->withTags()
+            ->withProducts()
+            ->withAuthor()
+            ->notDeleted()
+            ->one();
 
         if (!$article) {
             return [

@@ -137,7 +137,10 @@ class CategoryController extends Controller
     public function actionUpdate($id)
     {
         try {
-            $category = Category::find()->byId($id)->notDeleted()->one();
+            $category = Category::find()
+                ->byId($id)
+                ->notDeleted()
+                ->one();
 
             if (!$category) {
                 return [
@@ -188,7 +191,10 @@ class CategoryController extends Controller
     public function actionDelete($id)
     {
         try {
-            $category = Category::find()->byId($id)->notDeleted()->one();
+            $category = Category::find()
+                ->byId($id)
+                ->notDeleted()
+                ->one();
 
             if (!$category) {
                 return [

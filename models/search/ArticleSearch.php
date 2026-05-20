@@ -43,23 +43,57 @@ class ArticleSearch extends Article
     public function search($params, $formName = null)
     {
         $query = Article::find()
-            ->select(['id', 'title', 'slug', 'excerpt', 'status', 'like_count', 'author_id', 'created_at', 'updated_at']) // Bỏ content
+            ->select([
+                'id',
+                'title',
+                'slug',
+                'excerpt',
+                'status',
+                'like_count',
+                'author_id',
+                'created_at',
+                'updated_at'
+            ])
             ->notDeleted()
             ->with([
                 'thumbnail' => function ($q) {
-                    $q->select(['id', 'asset_id', 'file_id', 'collection_name', 'asset_type'])->cache(3600);
+                    $q->select([
+                        'id',
+                        'asset_id',
+                        'file_id',
+                        'collection_name',
+                        'asset_type'
+                    ])->cache(3600);
                 },
                 'thumbnail.file' => function ($q) {
-                    $q->select(['id', 'file_path', 'file_name', 'file_type', 'file_size'])->cache(3600);
+                    $q->select([
+                        'id',
+                        'file_path',
+                        'file_name',
+                        'file_type',
+                        'file_size'
+                    ])->cache(3600);
                 },
                 'author' => function ($q) {
-                    $q->select(['id', 'username', 'email'])->cache(3600);
+                    $q->select([
+                        'id',
+                        'username',
+                        'email'
+                    ])->cache(3600);
                 },
                 'tags' => function ($q) {
-                    $q->select(['id', 'name', 'slug'])->cache(3600);
+                    $q->select([
+                        'id',
+                        'name',
+                        'slug'
+                    ])->cache(3600);
                 },
                 'products' => function ($q) {
-                    $q->select(['products.id', 'products.name', 'products.price'])->cache(600);
+                    $q->select([
+                        'products.id',
+                        'products.name',
+                        'products.price'
+                    ])->cache(600);
                 }
             ]);
 
@@ -96,7 +130,7 @@ class ArticleSearch extends Article
             ->andFilterWhere(['like', 'content', $this->content])
             ->andFilterWhere(['like', 'slug', $this->slug])
             ->andFilterWhere(['like', 'excerpt', $this->excerpt])
-            ->andFilterWhere(['like','slug', $this->keyword]);
+            ->andFilterWhere(['like', 'slug', $this->keyword]);
 
         return $dataProvider;
     }

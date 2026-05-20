@@ -50,7 +50,6 @@ class OrderController extends Controller
                 'data' => $form->getErrors(),
                 'message' => 'Failed to process your order. Please check your input.'
             ];
-
         } catch (\Throwable $th) {
             return [
                 'status' => false,
@@ -126,7 +125,6 @@ class OrderController extends Controller
                 'data'    => $response->toArray([], ['orderDetails', 'couponUsage']),
                 'message' => 'Order retrieved successfully.',
             ];
-
         } catch (\Throwable $th) {
             return [
                 'status'  => false,
@@ -165,7 +163,6 @@ class OrderController extends Controller
                 'data'    => null,
                 'message' => 'Failed to delete order.',
             ];
-
         } catch (\Throwable $th) {
             return [
                 'status'  => false,

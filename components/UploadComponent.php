@@ -27,7 +27,6 @@ class UploadComponent extends Component
                 if ($file) $files = [$file];
             }
 
-            // Fallback for form models
             if (empty($files)) {
                 $files = UploadedFile::getInstances($model, $attribute);
                 if (empty($files)) {
@@ -54,7 +53,7 @@ class UploadComponent extends Component
                             $fileName,
                             $file->type,
                             $file->size,
-                            1, // status
+                            1,
                             $time,
                             $time
                         ];
@@ -69,8 +68,8 @@ class UploadComponent extends Component
 
         if (!empty($allFilesData)) {
             Yii::$app->db->createCommand()->batchInsert(
-                File::tableName(), 
-                ['file_path', 'file_name', 'file_type', 'file_size', 'status', 'created_at', 'updated_at'], 
+                File::tableName(),
+                ['file_path', 'file_name', 'file_type', 'file_size', 'status', 'created_at', 'updated_at'],
                 $allFilesData
             )->execute();
 

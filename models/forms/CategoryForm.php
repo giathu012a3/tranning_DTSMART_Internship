@@ -33,12 +33,19 @@ class CategoryForm extends Model
             [['status'], 'integer'],
             [['name'], 'string', 'max' => 255],
             [['name', 'status'], 'validateAnyChange', 'skipOnEmpty' => false],
-            [['name'], 'unique', 'targetClass' => Category::class, 'targetAttribute' => 'name', 'filter' => function ($query) {
-                $query->andWhere(['deleted_at' => null]);
-                if (!$this->_category->isNewRecord) {
-                    $query->andWhere(['not', ['id' => $this->_category->id]]);
-                }
-            }, 'message' => 'This category name already exists.'],
+            [
+                ['name'],
+                'unique',
+                'targetClass' => Category::class,
+                'targetAttribute' => 'name',
+                'filter' => function ($query) {
+                    $query->andWhere(['deleted_at' => null]);
+                    if (!$this->_category->isNewRecord) {
+                        $query->andWhere(['not', ['id' => $this->_category->id]]);
+                    }
+                },
+                'message' => 'This category name already exists.'
+            ],
         ];
     }
 

@@ -60,18 +60,61 @@ class Article extends \yii\db\ActiveRecord
             [['content'], 'string'],
             [['like_count', 'author_id', 'status', 'created_at', 'updated_at', 'deleted_at'], 'integer'],
             [['title', 'slug', 'excerpt'], 'string', 'max' => 255],
-            [['author_id'], 'exist', 'skipOnError' => true, 'targetClass' => User::class, 'targetAttribute' => ['author_id' => 'id']],
-            [['thumbnail'], 'required', 'on' => self::SCENARIO_CREATE, 'message' => 'Article thumbnail is required.'],
-            [['thumbnail'], 'file', 'skipOnEmpty' => true, 'extensions' => 'jpg, jpeg, png, webp', 'maxSize' => 5242880],
-            [['images'], 'file', 'skipOnEmpty' => true, 'extensions' => 'jpg, jpeg, png, webp', 'maxSize' => 5242880, 'maxFiles' => 10],
+            [
+                ['author_id'],
+                'exist',
+                'skipOnError' => true,
+                'targetClass' => User::class,
+                'targetAttribute' => ['author_id' => 'id']
+            ],
+            [
+                ['thumbnail'],
+                'required',
+                'on' => self::SCENARIO_CREATE,
+                'message' => 'Article thumbnail is required.'
+            ],
+            [
+                ['thumbnail'],
+                'file',
+                'skipOnEmpty' => true,
+                'extensions' => 'jpg, jpeg, png, webp',
+                'maxSize' => 5242880
+            ],
+            [
+                ['images'],
+                'file',
+                'skipOnEmpty' => true,
+                'extensions' => 'jpg, jpeg, png, webp',
+                'maxSize' => 5242880,
+                'maxFiles' => 10
+            ],
         ];
     }
 
     public function scenarios()
     {
         $scenarios = parent::scenarios();
-        $scenarios[self::SCENARIO_CREATE] = ['title', 'content', 'slug', 'excerpt', 'author_id', 'status', 'thumbnail', 'images'];
-        $scenarios[self::SCENARIO_UPDATE] = ['title', 'content', 'slug', 'excerpt', 'author_id', 'status', 'thumbnail', 'images', 'deleted_image_ids'];
+        $scenarios[self::SCENARIO_CREATE] = [
+            'title',
+            'content',
+            'slug',
+            'excerpt',
+            'author_id',
+            'status',
+            'thumbnail',
+            'images'
+        ];
+        $scenarios[self::SCENARIO_UPDATE] = [
+            'title',
+            'content',
+            'slug',
+            'excerpt',
+            'author_id',
+            'status',
+            'thumbnail',
+            'images',
+            'deleted_image_ids'
+        ];
         return $scenarios;
     }
 
