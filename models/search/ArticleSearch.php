@@ -46,11 +46,20 @@ class ArticleSearch extends Article
             ->select(['id', 'title', 'slug', 'excerpt', 'status', 'like_count', 'author_id', 'created_at', 'updated_at']) // Bỏ content
             ->notDeleted()
             ->with([
-                'thumbnail', 
-                'author', 
-                'tags',
-                'products' => function (\yii\db\ActiveQuery $q) {
-                    $q->select(['products.id', 'products.name', 'products.price']);
+                'thumbnail' => function ($q) {
+                    $q->select(['id', 'asset_id', 'file_id', 'collection_name', 'asset_type'])->cache(3600);
+                },
+                'thumbnail.file' => function ($q) {
+                    $q->select(['id', 'file_path', 'file_name', 'file_type', 'file_size'])->cache(3600);
+                },
+                'author' => function ($q) {
+                    $q->select(['id', 'username', 'email'])->cache(3600);
+                },
+                'tags' => function ($q) {
+                    $q->select(['id', 'name', 'slug'])->cache(3600);
+                },
+                'products' => function ($q) {
+                    $q->select(['products.id', 'products.name', 'products.price'])->cache(600);
                 }
             ]);
 

@@ -163,7 +163,13 @@ class ProductController extends \yii\web\Controller
         try {
             if ($form->load(Yii::$app->request->post(), '')) {
                 if ($form->save()) {
-                    $updatedProduct = Product::find()->withAsset()->with(['tags', 'articles'])->byId($id)->one();
+                    $updatedProduct = Product::find()
+                        ->withAsset()
+                        ->withCategory()
+                        ->withTags()
+                        ->withArticles()
+                        ->byId($id)
+                        ->one();
                     $responseData = new ProductResponse();
                     ProductResponse::populateRecord($responseData, $updatedProduct->attributes);
                     $responseData->populateRelation('assets', $updatedProduct->assets);

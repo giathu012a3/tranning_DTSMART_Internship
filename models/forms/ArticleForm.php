@@ -143,7 +143,7 @@ class ArticleForm extends Model
 
             $transaction->commit();
             return true;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             $transaction->rollBack();
             throw $e;
         }

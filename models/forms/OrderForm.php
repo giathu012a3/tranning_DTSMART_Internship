@@ -252,7 +252,7 @@ class OrderForm extends Model
 
             $transaction->commit();
             return $order;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             $transaction->rollBack();
             throw $e;
         }

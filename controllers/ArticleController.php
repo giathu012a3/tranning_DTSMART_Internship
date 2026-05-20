@@ -8,6 +8,7 @@ use app\models\response\ArticleResponse;
 use app\models\search\ArticleSearch;
 use Yii;
 use yii\web\Controller;
+use yii\web\NotFoundHttpException;
 
 /**
  * ArticleController implements the CRUD actions for Article model.
@@ -110,11 +111,14 @@ class ArticleController extends Controller
                 if ($form->save()) {
                     $article = $form->getArticle();
 
-                    $updatedArticle = Article::find()->withAsset()
+                    $updatedArticle = Article::find()
+                        ->withAsset()
                         ->withTags()
                         ->withProducts()
                         ->withAuthor()
-                        ->byId($article->id)->notDeleted()->one();
+                        ->byId($article->id)
+                        ->notDeleted()
+                        ->one();
                     $responseData = new ArticleResponse();
                     ArticleResponse::populateRecord($responseData, $updatedArticle->attributes);
                     $responseData->populateRelation('assets', $updatedArticle->assets);
@@ -164,11 +168,13 @@ class ArticleController extends Controller
         try {
             if ($form->load(Yii::$app->request->post(), '')) {
                 if ($form->save()) {
-                    $updatedArticle = Article::find()->withAsset()
+                    $updatedArticle = Article::find()
+                        ->withAsset()
                         ->withTags()
                         ->withProducts()
                         ->withAuthor()
                         ->byId($id)
+                        ->notDeleted()
                         ->one();
                     $responseData = new ArticleResponse();
                     ArticleResponse::populateRecord($responseData, $updatedArticle->attributes);

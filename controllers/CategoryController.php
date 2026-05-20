@@ -8,6 +8,8 @@ use app\models\response\CategoryResponse;
 use app\models\search\CategorySearch;
 use Yii;
 use yii\web\Controller;
+use yii\web\NotFoundHttpException;
+
 
 
 /**
