@@ -50,6 +50,7 @@ class ArticleForm extends Model
             [['title', 'content', 'author_id'], 'required'],
             [['content'], 'string'],
             [['status', 'author_id'], 'integer'],
+            [['author_id'], 'exist', 'skipOnError' => true, 'targetClass' => \app\models\User::class, 'targetAttribute' => ['author_id' => 'id']],
             [['title', 'excerpt'], 'string', 'max' => 255],
             [['tags', 'product_ids', 'deleted_image_ids'], 'safe'],
             [['title'], 'validateAnyChange', 'skipOnEmpty' => false],
@@ -101,7 +102,7 @@ class ArticleForm extends Model
             }
 
             $noNewThumbnail = empty(\yii\web\UploadedFile::getInstanceByName('thumbnail'));
-            $noNewImages = empty(\yii\web\UploadedFile::getInstancesByName('image'));
+            $noNewImages = empty(\yii\web\UploadedFile::getInstancesByName('images')) && empty(\yii\web\UploadedFile::getInstanceByName('images'));
             $noDeletions = empty($this->deleted_image_ids);
 
             if ($titleUnchanged && $contentUnchanged && $excerptUnchanged && $statusUnchanged && $authorUnchanged && $tagsUnchanged && $productsUnchanged && $noNewThumbnail && $noNewImages && $noDeletions) {

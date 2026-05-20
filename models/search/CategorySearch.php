@@ -44,9 +44,7 @@ class CategorySearch extends Category
     {
         $query = Category::find()
             ->select(['id', 'name', 'status', 'created_at'])
-            ->notDeleted()
-            ->cache(3600)
-            ->asArray();
+            ->notDeleted();
 
         // add conditions that should always apply here
 

@@ -36,7 +36,7 @@ class Article extends \yii\db\ActiveRecord
 
     public $deleted_image_ids;
     public $thumbnail;
-    public $image;
+    public $images;
 
 
     /**
@@ -63,15 +63,15 @@ class Article extends \yii\db\ActiveRecord
             [['author_id'], 'exist', 'skipOnError' => true, 'targetClass' => User::class, 'targetAttribute' => ['author_id' => 'id']],
             [['thumbnail'], 'required', 'on' => self::SCENARIO_CREATE, 'message' => 'Article thumbnail is required.'],
             [['thumbnail'], 'file', 'skipOnEmpty' => true, 'extensions' => 'jpg, jpeg, png, webp', 'maxSize' => 5242880],
-            [['image'], 'file', 'skipOnEmpty' => true, 'extensions' => 'jpg, jpeg, png, webp', 'maxSize' => 5242880, 'maxFiles' => 10],
+            [['images'], 'file', 'skipOnEmpty' => true, 'extensions' => 'jpg, jpeg, png, webp', 'maxSize' => 5242880, 'maxFiles' => 10],
         ];
     }
 
     public function scenarios()
     {
         $scenarios = parent::scenarios();
-        $scenarios[self::SCENARIO_CREATE] = ['title', 'content', 'slug', 'excerpt', 'author_id', 'status', 'thumbnail', 'image'];
-        $scenarios[self::SCENARIO_UPDATE] = ['title', 'content', 'slug', 'excerpt', 'author_id', 'status', 'thumbnail', 'image', 'deleted_image_ids'];
+        $scenarios[self::SCENARIO_CREATE] = ['title', 'content', 'slug', 'excerpt', 'author_id', 'status', 'thumbnail', 'images'];
+        $scenarios[self::SCENARIO_UPDATE] = ['title', 'content', 'slug', 'excerpt', 'author_id', 'status', 'thumbnail', 'images', 'deleted_image_ids'];
         return $scenarios;
     }
 
@@ -89,7 +89,7 @@ class Article extends \yii\db\ActiveRecord
                 'class' => UploadAssetBehavior::class,
                 'attributes' => [
                     'thumbnail' => 'articles',
-                    'image'     => 'article_gallery',
+                    'images'    => 'article_gallery',
                 ],
             ],
         ];
@@ -208,5 +208,4 @@ class Article extends \yii\db\ActiveRecord
     {
         return new ArticlesQuery(get_called_class());
     }
-
 }

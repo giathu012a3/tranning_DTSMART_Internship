@@ -45,7 +45,9 @@ class ProductForm extends Model
     {
         return [
             [['name', 'price', 'category_id', 'stock'], 'required'],
-            [['price', 'stock'], 'number'],
+            [['stock'], 'number', 'min' => 0],
+            [['price'], 'number'],
+            [['price'], 'compare', 'compareValue' => 0, 'operator' => '>', 'type' => 'number', 'message' => 'Price must be greater than 0.'],
             [['category_id', 'status'], 'integer'],
             [['description'], 'string'],
             [['name'], 'string', 'max' => 255],
@@ -85,14 +87,22 @@ class ProductForm extends Model
                     ->where(['pt.product_id' => $this->_product->id])
                     ->select('t.name')
                     ->column();
-                $tagsUnchanged = (count($targetTags) === count($currentTags) && !array_diff($targetTags, $currentTags) && !array_diff($currentTags, $targetTags));
+                $tagsUnchanged = (count($targetTags) === count($currentTags) &&
+                    !array_diff($targetTags, $currentTags) &&
+                    !array_diff($currentTags, $targetTags));
             }
 
             $noNewThumbnail = empty(\yii\web\UploadedFile::getInstanceByName('thumbnail'));
-            $noNewImages = empty(\yii\web\UploadedFile::getInstancesByName('images'));
+            $noNewImages = empty(\yii\web\UploadedFile::getInstancesByName('images')) && empty(\yii\web\UploadedFile::getInstanceByName('images'));
             $noDeletions = empty($this->deleted_image_ids);
 
-            if ($nameUnchanged && $priceUnchanged && $categoryUnchanged && $statusUnchanged && $stockUnchanged && $descriptionUnchanged && $tagsUnchanged && $noNewThumbnail && $noNewImages && $noDeletions) {
+            if (
+                $nameUnchanged && $priceUnchanged &&
+                $categoryUnchanged && $statusUnchanged &&
+                $stockUnchanged && $descriptionUnchanged &&
+                $tagsUnchanged && $noNewThumbnail &&
+                $noNewImages && $noDeletions
+            ) {
                 $this->addError('name', 'No changes detected. Please modify at least one field to update.');
             }
         }
@@ -176,7 +186,9 @@ class ProductForm extends Model
             }
         }
 
-        $currentTagIds = $isNewRecord ? [] : \app\models\ProductTag::find()->where(['product_id' => $this->_product->id])->select('tag_id')->column();
+        $currentTagIds = $isNewRecord ? [] : \app\models\ProductTag::find()
+                                                ->where(['product_id' => $this->_product->id])
+                                                ->select('tag_id')->column();
 
         $tagsToAdd = array_diff($targetTagIds, $currentTagIds);
         $tagsToRemove = array_diff($currentTagIds, $targetTagIds);

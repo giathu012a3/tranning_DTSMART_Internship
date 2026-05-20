@@ -67,6 +67,10 @@ class UploadAssetBehavior extends Behavior
                             $galleryCollections[] = $attr;
                         }
                     }
+                    if (in_array('images', $galleryCollections) || in_array('image', $galleryCollections)) {
+                        if (!in_array('images', $galleryCollections)) $galleryCollections[] = 'images';
+                        if (!in_array('image', $galleryCollections)) $galleryCollections[] = 'image';
+                    }
                     if (empty($galleryCollections)) {
                         $galleryCollections = ['image', 'images'];
                     }
@@ -78,7 +82,11 @@ class UploadAssetBehavior extends Behavior
                             'asset_type' => $assetType,
                         ],
                         ['in', 'collection_name', $galleryCollections],
-                        ['in', 'id', $ids],
+                        [
+                            'or',
+                            ['in', 'id', $ids],
+                            ['in', 'file_id', $ids]
+                        ],
                     ]);
                 }
             }

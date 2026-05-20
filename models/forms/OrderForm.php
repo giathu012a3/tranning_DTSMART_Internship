@@ -56,7 +56,8 @@ class OrderForm extends Model
         $this->_products = [];
         if (!empty($productIds)) {
             $this->_products = Product::find()
-                ->where(['id' => $productIds])
+                ->notDeleted()
+                ->andWhere(['id' => $productIds])
                 ->indexBy('id')
                 ->all();
         }
@@ -243,10 +244,25 @@ class OrderForm extends Model
                 }
             }
 
-            if ($membershipLevelId) {
+            if ($userId) {
                 $pointsEarned = (int) floor($this->_final_total / 10000);
                 if ($pointsEarned > 0) {
                     User::updateAllCounters(['total_points' => $pointsEarned], ['id' => $userId]);
+
+                    // Auto-upgrade membership level based on new total points
+                    $updatedUser = User::findOne($userId);
+                    if ($updatedUser) {
+                        $newLevel = MembershipLevel::find()
+                            ->where(['status' => 1])
+                            ->andWhere(['<=', 'points_required', $updatedUser->total_points])
+                            ->orderBy(['points_required' => SORT_DESC])
+                            ->one();
+
+                        if ($newLevel && $newLevel->id !== $updatedUser->member_ship_id) {
+                            $updatedUser->member_ship_id = $newLevel->id;
+                            $updatedUser->save(false);
+                        }
+                    }
                 }
             }
 

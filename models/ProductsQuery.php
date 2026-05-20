@@ -62,12 +62,10 @@ class ProductsQuery extends \yii\db\ActiveQuery
         return $this->with([
             'assets' => function ($q) {
                 $q->andOnCondition(['collection_name' => 'thumbnail'])
-                    ->select(['id', 'asset_id', 'file_id', 'collection_name', 'asset_type'])
-                    ->cache(3600);
+                    ->select(['id', 'asset_id', 'file_id', 'collection_name', 'asset_type']);
             },
             'assets.file' => function ($q) {
-                $q->select(['id', 'file_path', 'file_name', 'file_type', 'file_size'])
-                    ->cache(3600);
+                $q->select(['id', 'file_path', 'file_name', 'file_type', 'file_size']);
             }
         ]);
     }
@@ -88,7 +86,7 @@ class ProductsQuery extends \yii\db\ActiveQuery
     {
         return $this->with([
             'tags' => function ($q) {
-                $q->select(['id', 'name', 'slug'])->cache(3600);
+                $q->select(['id', 'name', 'slug']);
             }
         ]);
     }
@@ -97,7 +95,7 @@ class ProductsQuery extends \yii\db\ActiveQuery
     {
         return $this->with([
             'category' => function ($q) {
-                $q->select(['id', 'name'])->cache(3600);
+                $q->select(['id', 'name']);
             }
         ]);
     }

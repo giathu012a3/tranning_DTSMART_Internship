@@ -33,7 +33,7 @@ class CategoryController extends Controller
             $model = $dataProvider->getModels();
             $data = array_map(function ($item) {
                 $response = new CategoryResponse();
-                CategoryResponse::populateRecord($response, $item);
+                CategoryResponse::populateRecord($response, $item->attributes);
                 return $response;
             }, $model);
             return [

@@ -77,5 +77,4 @@ class Category extends \yii\db\ActiveRecord
         $this->deleted_at = time();
         return $this->save(false);
     }
-
 }

@@ -161,7 +161,8 @@ class ProductController extends \yii\web\Controller
         $form = new ProductForm($product);
 
         try {
-            if ($form->load(Yii::$app->request->post(), '')) {
+            if (Yii::$app->request->isPost) {
+                $form->load(Yii::$app->request->post(), '');
                 if ($form->save()) {
                     $updatedProduct = Product::find()
                         ->withAsset()

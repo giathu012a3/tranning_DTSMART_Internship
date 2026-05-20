@@ -166,7 +166,8 @@ class ArticleController extends Controller
         $form = new ArticleForm($article);
 
         try {
-            if ($form->load(Yii::$app->request->post(), '')) {
+            if (Yii::$app->request->isPost) {
+                $form->load(Yii::$app->request->post(), '');
                 if ($form->save()) {
                     $updatedArticle = Article::find()
                         ->withAsset()
