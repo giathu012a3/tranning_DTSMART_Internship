@@ -7,7 +7,7 @@ use yii\base\Model;
 use app\models\Product;
 use app\models\Tag;
 use app\models\ProductTag;
-use app\models\Category;
+use yii\web\UploadedFile;
 
 class ProductForm extends Model
 {
@@ -47,7 +47,14 @@ class ProductForm extends Model
             [['name', 'price', 'category_id', 'stock'], 'required'],
             [['stock'], 'number', 'min' => 0],
             [['price'], 'number'],
-            [['price'], 'compare', 'compareValue' => 0, 'operator' => '>', 'type' => 'number', 'message' => 'Price must be greater than 0.'],
+            [
+                ['price'],
+                'compare',
+                'compareValue' => 0,
+                'operator' => '>',
+                'type' => 'number',
+                'message' => 'Price must be greater than 0.'
+            ],
             [['category_id', 'status'], 'integer'],
             [['description'], 'string'],
             [['name'], 'string', 'max' => 255],
@@ -81,7 +88,7 @@ class ProductForm extends Model
                     }
                 }
                 $targetTags = array_unique($targetTags);
-                $currentTags = \app\models\ProductTag::find()
+                $currentTags = ProductTag::find()
                     ->alias('pt')
                     ->innerJoinWith('tag t')
                     ->where(['pt.product_id' => $this->_product->id])
@@ -92,8 +99,8 @@ class ProductForm extends Model
                     !array_diff($currentTags, $targetTags));
             }
 
-            $noNewThumbnail = empty(\yii\web\UploadedFile::getInstanceByName('thumbnail'));
-            $noNewImages = empty(\yii\web\UploadedFile::getInstancesByName('images')) && empty(\yii\web\UploadedFile::getInstanceByName('images'));
+            $noNewThumbnail = empty(UploadedFile::getInstanceByName('thumbnail'));
+            $noNewImages = empty(UploadedFile::getInstancesByName('images')) && empty(UploadedFile::getInstanceByName('images'));
             $noDeletions = empty($this->deleted_image_ids);
 
             if (
@@ -127,7 +134,7 @@ class ProductForm extends Model
             $this->_product->name        = $this->name;
             $this->_product->price       = $this->price;
             $this->_product->category_id = $this->category_id;
-            $this->_product->status      = $this->status ?? 1;
+            $this->_product->status      = $this->status;
             $this->_product->stock       = $this->stock;
             $this->_product->description = $this->description;
 
@@ -186,7 +193,7 @@ class ProductForm extends Model
             }
         }
 
-        $currentTagIds = $isNewRecord ? [] : \app\models\ProductTag::find()
+        $currentTagIds = $isNewRecord ? [] : ProductTag::find()
             ->where(['product_id' => $this->_product->id])
             ->select('tag_id')->column();
 
@@ -204,10 +211,20 @@ class ProductForm extends Model
             $rows = [];
             $time = time();
             foreach ($tagsToAdd as $tagId) {
-                $rows[] = [$this->_product->id, $tagId, $time, $time];
+                $rows[] = [
+                    $this->_product->id,
+                    $tagId,
+                    $time,
+                    $time
+                ];
             }
             Yii::$app->db->createCommand()
-                ->batchInsert(ProductTag::tableName(), ['product_id', 'tag_id', 'created_at', 'updated_at'], $rows)
+                ->batchInsert(ProductTag::tableName(), [
+                    'product_id',
+                    'tag_id',
+                    'created_at',
+                    'updated_at'
+                ], $rows)
                 ->execute();
         }
     }

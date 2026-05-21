@@ -49,7 +49,9 @@ class ProductSearch extends Product
                 'products.price',
                 'products.stock',
                 'products.status',
-                'products.category_id'
+                'products.category_id',
+                'products.created_at',
+                'products.updated_at'
             ])
             ->notDeleted()
             ->withCategory()

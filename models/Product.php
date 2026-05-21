@@ -50,22 +50,72 @@ class Product extends \yii\db\ActiveRecord
             [['name', 'price', 'stock', 'category_id'], 'required'],
             [['stock'], 'number', 'min' => 0],
             [['price'], 'number'],
-            [['price'], 'compare', 'compareValue' => 0, 'operator' => '>', 'type' => 'number', 'message' => 'Price must be greater than 0.'],
+            [
+                ['price'],
+                'compare',
+                'compareValue' => 0,
+                'operator' => '>',
+                'type' => 'number',
+                'message' => 'Price must be greater than 0.'
+            ],
             [['status', 'category_id', 'created_at', 'updated_at', 'deleted_at'], 'integer'],
             [['description'], 'string'],
             [['name'], 'string', 'max' => 255],
-            [['category_id'], 'exist', 'skipOnError' => true, 'targetClass' => Category::class, 'targetAttribute' => ['category_id' => 'id']],
-            [['thumbnail'], 'required', 'on' => self::SCENARIO_CREATE, 'message' => 'Product thumbnail is required.'],
-            [['thumbnail'], 'file', 'skipOnEmpty' => true, 'extensions' => 'jpg, jpeg, png, webp', 'maxSize' => 5242880],
-            [['images'], 'file', 'skipOnEmpty' => true, 'extensions' => 'jpg, jpeg, png, webp', 'maxSize' => 5242880, 'maxFiles' => 10],
+            [
+                ['category_id'],
+                'exist',
+                'skipOnError' => true,
+                'targetClass' => Category::class,
+                'targetAttribute' => ['category_id' => 'id']
+            ],
+            [
+                ['thumbnail'],
+                'required',
+                'on' => self::SCENARIO_CREATE,
+                'message' => 'Product thumbnail is required.'
+            ],
+            [
+                ['thumbnail'],
+                'file',
+                'skipOnEmpty' => true,
+                'extensions' => 'jpg, jpeg, png, webp',
+                'maxSize' => 5242880
+            ],
+            [
+                ['images'],
+                'file',
+                'skipOnEmpty' => true,
+                'extensions' => 'jpg, jpeg, png, webp',
+                'maxSize' => 5242880,
+                'maxFiles' => 10
+            ],
         ];
     }
 
     public function scenarios()
     {
         $scenarios = parent::scenarios();
-        $scenarios[self::SCENARIO_CREATE] = ['name', 'price', 'stock', 'category_id', 'status', 'description', 'thumbnail', 'images'];
-        $scenarios[self::SCENARIO_UPDATE] = ['name', 'price', 'stock', 'category_id', 'status', 'description', 'thumbnail', 'images', 'deleted_image_ids'];
+        $scenarios[self::SCENARIO_CREATE] = [
+            'name',
+            'price',
+            'stock',
+            'category_id',
+            'status',
+            'description',
+            'thumbnail',
+            'images'
+        ];
+        $scenarios[self::SCENARIO_UPDATE] = [
+            'name',
+            'price',
+            'stock',
+            'category_id',
+            'status',
+            'description',
+            'thumbnail',
+            'images',
+            'deleted_image_ids'
+        ];
         return $scenarios;
     }
 

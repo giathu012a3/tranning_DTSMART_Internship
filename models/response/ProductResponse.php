@@ -18,6 +18,22 @@ class ProductResponse extends Product
             'category_name' => function ($model) {
                 return $model->category ? $model->category->name : 'N/A';
             },
+            'created_at',
+            'updated_at',
+            'created_date' => function ($model) {
+                return $model->created_at ? date('d/m/Y H:i:s', $model->created_at) : null;
+            },
+            'updated_date' => function ($model) {
+                return $model->updated_at ? date('d/m/Y H:i:s', $model->updated_at) : null;
+            },
+            'thumbnail_path' => function ($model) {
+                foreach ($model->assets as $asset) {
+                    if ($asset->collection_name === 'thumbnail' && $asset->file) {
+                        return $asset->file->file_path;
+                    }
+                }
+                return null;
+            },
             'attachments' => function ($model) {
                 $data = [];
                 foreach ($model->assets as $asset) {
@@ -46,10 +62,9 @@ class ProductResponse extends Product
                 }
                 return $tags;
             },
-            'articles' => function ($model) {
-                if (!$model->isRelationPopulated('articles')) {
-                    return [];
-                }
+        ];
+        if ($this->isRelationPopulated('articles') ) {
+            $fields['articles'] = function ($model) {
                 $articles = [];
                 foreach ($model->articles as $article) {
                     $articles[] = [
@@ -60,8 +75,8 @@ class ProductResponse extends Product
                     ];
                 }
                 return $articles;
-            },
-        ];
+            };
+        }
         if ($this->description !== null) {
             $fields['description'] = 'description';
         }

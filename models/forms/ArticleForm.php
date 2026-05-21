@@ -10,6 +10,7 @@ use app\models\Tag;
 use app\models\Product;
 use app\models\ArticleTag;
 use app\models\ProductArticle;
+use yii\web\UploadedFile;
 
 /**
  * ArticleForm gánh vác việc xác thực dữ liệu và logic nghiệp vụ cho Bài viết
@@ -54,12 +55,16 @@ class ArticleForm extends Model
                 ['author_id'],
                 'exist',
                 'skipOnError' => true,
-                'targetClass' => \app\models\User::class,
+                'targetClass' => User::class,
                 'targetAttribute' => ['author_id' => 'id']
             ],
             [['title', 'excerpt'], 'string', 'max' => 255],
             [['tags', 'product_ids', 'deleted_image_ids'], 'safe'],
-            [['title'], 'validateAnyChange', 'skipOnEmpty' => false],
+            [
+                ['title'],
+                'validateAnyChange',
+                'skipOnEmpty' => false
+            ],
         ];
     }
 
@@ -87,7 +92,7 @@ class ArticleForm extends Model
                     }
                 }
                 $targetTags = array_unique($targetTags);
-                $currentTags = \app\models\ArticleTag::find()
+                $currentTags = ArticleTag::find()
                     ->alias('at')
                     ->innerJoinWith('tag t')
                     ->where(['at.article_id' => $this->_article->id])
@@ -105,17 +110,19 @@ class ArticleForm extends Model
                 if (is_array($this->product_ids)) {
                     $targetProducts = array_unique(array_filter(array_map('intval', $this->product_ids)));
                 }
-                $currentProducts = \app\models\ProductArticle::find()
+                $currentProducts = ProductArticle::find()
                     ->where(['article_id' => $this->_article->id])
-                    ->select('product_id')->column();
+                    ->select('product_id')
+                    ->column();
+
                 $productsUnchanged = (count($targetProducts) === count($currentProducts) &&
                     !array_diff($targetProducts, $currentProducts) &&
                     !array_diff($currentProducts, $targetProducts));
             }
 
-            $noNewThumbnail = empty(\yii\web\UploadedFile::getInstanceByName('thumbnail'));
-            $noNewImages = empty(\yii\web\UploadedFile::getInstancesByName('images')) &&
-                empty(\yii\web\UploadedFile::getInstanceByName('images'));
+            $noNewThumbnail = empty(UploadedFile::getInstanceByName('thumbnail'));
+            $noNewImages = empty(UploadedFile::getInstancesByName('images')) &&
+                empty(UploadedFile::getInstanceByName('images'));
             $noDeletions = empty($this->deleted_image_ids);
 
             if (
@@ -205,7 +212,7 @@ class ArticleForm extends Model
             }
         }
 
-        $currentTagIds = $isNewRecord ? [] : \app\models\ArticleTag::find()->where(['article_id' => $this->_article->id])->select('tag_id')->column();
+        $currentTagIds = $isNewRecord ? [] : ArticleTag::find()->where(['article_id' => $this->_article->id])->select('tag_id')->column();
         $tagsToAdd = array_diff($targetTagIds, $currentTagIds);
         $tagsToRemove = array_diff($currentTagIds, $targetTagIds);
 
@@ -220,7 +227,12 @@ class ArticleForm extends Model
                 $rows[] = [$this->_article->id, $tagId, $time, $time];
             }
             Yii::$app->db->createCommand()
-                ->batchInsert(ArticleTag::tableName(), ['article_id', 'tag_id', 'created_at', 'updated_at'], $rows)
+                ->batchInsert(ArticleTag::tableName(), [
+                    'article_id',
+                    'tag_id',
+                    'created_at',
+                    'updated_at'
+                ], $rows)
                 ->execute();
         }
     }
@@ -234,27 +246,44 @@ class ArticleForm extends Model
         if (is_array($this->product_ids)) {
             $ids = array_filter(array_map('intval', $this->product_ids));
             if (!empty($ids)) {
-                $targetProductIds = Product::find()->active()->andWhere(['in', 'id', $ids])->select('id')->column();
+                $targetProductIds = Product::find()
+                    ->active()
+                    ->andWhere(['in', 'id', $ids])
+                    ->select('id')
+                    ->column();
             }
         }
         $targetProductIds = array_unique($targetProductIds);
 
-        $currentProductIds = $isNewRecord ? [] : \app\models\ProductArticle::find()->where(['article_id' => $this->_article->id])->select('product_id')->column();
+        $currentProductIds = $isNewRecord ? [] : ProductArticle::find()->where(['article_id' => $this->_article->id])->select('product_id')->column();
         $productsToAdd = array_diff($targetProductIds, $currentProductIds);
         $productsToRemove = array_diff($currentProductIds, $targetProductIds);
 
         if (!empty($productsToRemove)) {
-            ProductArticle::deleteAll(['article_id' => $this->_article->id, 'product_id' => $productsToRemove]);
+            ProductArticle::deleteAll([
+                'article_id' => $this->_article->id,
+                'product_id' => $productsToRemove
+            ]);
         }
 
         if (!empty($productsToAdd)) {
             $rows = [];
             $time = time();
             foreach ($productsToAdd as $pId) {
-                $rows[] = [$this->_article->id, $pId, $time, $time];
+                $rows[] = [
+                    $this->_article->id,
+                    $pId,
+                    $time,
+                    $time
+                ];
             }
             Yii::$app->db->createCommand()
-                ->batchInsert(ProductArticle::tableName(), ['article_id', 'product_id', 'created_at', 'updated_at'], $rows)
+                ->batchInsert(ProductArticle::tableName(), [
+                    'article_id',
+                    'product_id',
+                    'created_at',
+                    'updated_at'
+                ], $rows)
                 ->execute();
         }
     }
