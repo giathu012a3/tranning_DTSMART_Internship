@@ -89,7 +89,7 @@ class ProductController extends \yii\web\Controller
                 ],
                 'message' => 'Product retrieved successfully',
             ];
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return [
                 'status' => false,
                 'data' => null,
@@ -137,7 +137,7 @@ class ProductController extends \yii\web\Controller
                 'data' => $form->getErrors(),
                 'message' => 'Validation failed: ' . json_encode($form->errors),
             ];
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return [
                 'status' => false,
                 'data' => null,

@@ -102,6 +102,15 @@ $config = [
                     'prefix' => 'api',
                     'pluralize' => true,
                 ],
+                [
+                    'class' => 'yii\rest\UrlRule',
+                    'controller' => 'cart',
+                    'prefix' => 'api',
+                    'pluralize' => true,
+                    'extraPatterns' => [
+                        'DELETE' => 'clear',
+                    ],
+                ],
 
 
             ],

@@ -95,7 +95,7 @@ class UploadAssetBehavior extends Behavior
         if (!empty($this->attributes)) {
             try {
                 Yii::$app->uploader->processUploads($model, $this->attributes);
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
                 Yii::error('UploadAssetBehavior: ' . $e->getMessage(), __METHOD__);
                 throw $e;
             }
