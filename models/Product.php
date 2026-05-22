@@ -29,6 +29,7 @@ class Product extends \yii\db\ActiveRecord
     public $deleted_image_ids;
     public $thumbnail;
     public $images;
+    public $articles_count;
 
 
     /**

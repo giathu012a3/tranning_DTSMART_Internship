@@ -6,28 +6,28 @@ use app\models\Order;
 
 class OrderResponse extends Order
 {
+    public $items_count;
+
     public function fields()
     {
-        return [
+        $fields = [
             'id',
             'user_id',
             'full_name',
-            'email',
             'phone',
-            'address',
-            'total',
-            'discount_amount',
             'final_total',
-            'payment_method',
             'status',
             'created_at',
         ];
-    }
 
-    public function extraFields()
-    {
-        return [
-            'orderDetails' => function ($model) {
+        if ($this->isRelationPopulated('orderDetails')) {
+            $fields[] = 'email';
+            $fields[] = 'address';
+            $fields[] = 'total';
+            $fields[] = 'discount_amount';
+            $fields[] = 'payment_method';
+
+            $fields['orderDetails'] = function ($model) {
                 $items = [];
                 foreach ($model->orderDetails as $detail) {
                     $items[] = [
@@ -38,8 +38,9 @@ class OrderResponse extends Order
                     ];
                 }
                 return $items;
-            },
-            'couponUsage' => function ($model) {
+            };
+
+            $fields['couponUsage'] = function ($model) {
                 if (!$model->couponUsage) {
                     return null;
                 }
@@ -49,8 +50,16 @@ class OrderResponse extends Order
                     'discount_value'   => $model->couponUsage->applied_value,
                     'max_discount'     => $model->couponUsage->applied_max_amount,
                 ];
-            },
-        ];
+            };
+        } else {
+            $fields['items_count'] = function ($model) {
+                return $model->items_count !== null 
+                    ? (int) $model->items_count 
+                    : ($model->isRelationPopulated('orderDetails') ? count($model->orderDetails) : (int) $model->getOrderDetails()->count());
+            };
+        }
+
+        return $fields;
     }
 
     /**
@@ -63,6 +72,10 @@ class OrderResponse extends Order
     {
         $response = new self();
         self::populateRecord($response, $order->attributes);
+
+        if (isset($order->items_count)) {
+            $response->items_count = $order->items_count;
+        }
 
         if ($order->isRelationPopulated('orderDetails')) {
             $response->populateRelation('orderDetails', $order->orderDetails);

@@ -33,7 +33,7 @@ class OrderController extends BaseApiController
                     $orderResponse = OrderResponse::fromModel($updatedOrder);
                     return [
                         'status' => true,
-                        'data' => $orderResponse->toArray([], ['orderDetails']),
+                        'data' => $orderResponse->toArray(),
                         'message' => 'Order created successfully. Thank you for your purchase!'
                     ];
                 }
@@ -63,7 +63,7 @@ class OrderController extends BaseApiController
             $dataProvider = $searchModel->search(Yii::$app->request->queryParams, '');
 
             $data = array_map(function ($model) {
-                return OrderResponse::fromModel($model)->toArray([], ['orderDetails']);
+                return OrderResponse::fromModel($model)->toArray();
             }, $dataProvider->getModels());
 
             return [
@@ -110,7 +110,7 @@ class OrderController extends BaseApiController
 
             return [
                 'status'  => true,
-                'data'    => $response->toArray([], ['orderDetails', 'couponUsage']),
+                'data'    => $response->toArray(),
                 'message' => 'Order retrieved successfully.',
             ];
         } catch (\Throwable $th) {
@@ -128,6 +128,7 @@ class OrderController extends BaseApiController
             $order = Order::find()
                 ->byId($id)
                 ->notDeleted()
+                ->withDetails()
                 ->one();
 
             if (!$order) {
@@ -145,7 +146,7 @@ class OrderController extends BaseApiController
                 if ($order->save()) {
                     return [
                         'status' => true,
-                        'data' => OrderResponse::fromModel($order)->toArray([], ['orderDetails']),
+                        'data' => OrderResponse::fromModel($order)->toArray(),
                         'message' => 'Order updated successfully.',
                     ];
                 }

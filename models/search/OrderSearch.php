@@ -42,8 +42,13 @@ class OrderSearch extends Order
     public function search($params, $formName = '')
     {
         $query = Order::find()
-            ->notDeleted()
-            ->withDetails();
+            ->select([
+                'orders.*',
+                'items_count' => \app\models\OrderDetail::find()
+                    ->select('COUNT(*)')
+                    ->where('order_id = orders.id')
+            ])
+            ->notDeleted();
 
         $dataProvider = new ActiveDataProvider([
             'query' => $query,

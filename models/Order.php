@@ -33,6 +33,8 @@ class Order extends \yii\db\ActiveRecord
 {
     const SCENARIO_UPDATE = 'update';
 
+    public $items_count;
+
     public function scenarios()
     {
         $scenarios = parent::scenarios();

@@ -30,7 +30,7 @@ class UserOrderController extends BaseApiController
                     $orderResponse = OrderResponse::fromModel($updatedOrder);
                     return [
                         'status' => true,
-                        'data' => $orderResponse->toArray([], ['orderDetails']),
+                        'data' => $orderResponse->toArray(),
                         'message' => 'Order created successfully. Thank you for your purchase!'
                     ];
                 }
@@ -59,7 +59,7 @@ class UserOrderController extends BaseApiController
             $dataProvider = $searchModel->search($queryParams, '');
 
             $data = array_map(function ($model) {
-                return OrderResponse::fromModel($model)->toArray([], ['orderDetails']);
+                return OrderResponse::fromModel($model)->toArray();
             }, $dataProvider->getModels());
 
             return [
@@ -108,7 +108,7 @@ class UserOrderController extends BaseApiController
 
             return [
                 'status'  => true,
-                'data'    => $response->toArray([], ['orderDetails', 'couponUsage']),
+                'data'    => $response->toArray(),
                 'message' => 'Order retrieved successfully.',
             ];
         } catch (\Throwable $th) {
