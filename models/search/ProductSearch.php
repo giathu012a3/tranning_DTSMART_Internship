@@ -51,11 +51,14 @@ class ProductSearch extends Product
                 'products.status',
                 'products.category_id',
                 'products.created_at',
-                'products.updated_at'
+                'products.updated_at',
+                'articles_count' => \app\models\ProductArticle::find()
+                    ->select('COUNT(*)')
+                    ->where('product_id = products.id')
             ])
             ->notDeleted()
             ->withCategory()
-            ->withThumbnailAsset()
+            ->withAsset()
             ->withTags();
 
 

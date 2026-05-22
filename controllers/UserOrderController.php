@@ -8,22 +8,19 @@ use app\models\forms\OrderForm;
 use app\models\response\OrderResponse;
 use app\models\search\OrderSearch;
 
-class OrderController extends BaseApiController
+
+class UserOrderController extends BaseApiController
 {
-    public function behaviors()
-    {
-        $behaviors = parent::behaviors();
-        $behaviors['authenticator']['except'] = ['delete'];
-        return $behaviors;
-    }
 
     public function actionCreate()
     {
         try {
             $form = new OrderForm();
+            $form->scenario = OrderForm::SCENARIO_CHECKOUT;
             $data = Yii::$app->request->post();
 
             if ($form->load($data, '')) {
+                $form->user_id = Yii::$app->user->id;
                 $order = $form->save();
                 if ($order !== false) {
                     $updatedOrder = Order::find()
@@ -53,14 +50,13 @@ class OrderController extends BaseApiController
         }
     }
 
-    /**
-     * Lists orders.
-     */
     public function actionIndex()
     {
         try {
             $searchModel = new OrderSearch();
-            $dataProvider = $searchModel->search(Yii::$app->request->queryParams, '');
+            $queryParams = Yii::$app->request->queryParams;
+            $queryParams['user_id'] = Yii::$app->user->id;
+            $dataProvider = $searchModel->search($queryParams, '');
 
             $data = array_map(function ($model) {
                 return OrderResponse::fromModel($model)->toArray([], ['orderDetails']);
@@ -88,12 +84,14 @@ class OrderController extends BaseApiController
             ];
         }
     }
+
     public function actionView($id)
     {
         try {
             $order = Order::find()
                 ->byId($id)
                 ->notDeleted()
+                ->andWhere(['user_id' => Yii::$app->user->id])
                 ->withDetails()
                 ->withCoupon()
                 ->one();
@@ -118,87 +116,6 @@ class OrderController extends BaseApiController
                 'status'  => false,
                 'data'    => null,
                 'message' => 'Error retrieving order: ' . $th->getMessage(),
-            ];
-        }
-    }
-
-    public function actionUpdate($id)
-    {
-        try {
-            $order = Order::find()
-                ->byId($id)
-                ->notDeleted()
-                ->one();
-
-            if (!$order) {
-                return [
-                    'status' => false,
-                    'data' => null,
-                    'message' => 'Order not found.',
-                ];
-            }
-
-            $order->scenario = Order::SCENARIO_UPDATE;
-            $data = Yii::$app->request->post();
-
-            if ($order->load($data, '')) {
-                if ($order->save()) {
-                    return [
-                        'status' => true,
-                        'data' => OrderResponse::fromModel($order)->toArray([], ['orderDetails']),
-                        'message' => 'Order updated successfully.',
-                    ];
-                }
-            }
-
-            return [
-                'status' => false,
-                'data' => $order->getErrors(),
-                'message' => 'Validation failed: ' . json_encode($order->errors),
-            ];
-        } catch (\Throwable $th) {
-            return [
-                'status' => false,
-                'data' => null,
-                'message' => 'Error updating order: ' . $th->getMessage(),
-            ];
-        }
-    }
-
-    public function actionDelete($id)
-    {
-        try {
-            $order = Order::find()
-                ->byId($id)
-                ->notDeleted()
-                ->one();
-
-            if (!$order) {
-                return [
-                    'status'  => false,
-                    'data'    => null,
-                    'message' => 'Order not found.',
-                ];
-            }
-
-            if ($order->softDelete()) {
-                return [
-                    'status'  => true,
-                    'data'    => null,
-                    'message' => 'Order deleted successfully.',
-                ];
-            }
-
-            return [
-                'status'  => false,
-                'data'    => null,
-                'message' => 'Failed to delete order.',
-            ];
-        } catch (\Throwable $th) {
-            return [
-                'status'  => false,
-                'data'    => null,
-                'message' => 'Error deleting order: ' . $th->getMessage(),
             ];
         }
     }

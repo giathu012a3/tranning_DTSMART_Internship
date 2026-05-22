@@ -104,6 +104,12 @@ $config = [
                 ],
                 [
                     'class' => 'yii\rest\UrlRule',
+                    'controller' => 'user-order',
+                    'prefix' => 'api',
+                    'pluralize' => true,
+                ],
+                [
+                    'class' => 'yii\rest\UrlRule',
                     'controller' => 'cart',
                     'prefix' => 'api',
                     'pluralize' => true,

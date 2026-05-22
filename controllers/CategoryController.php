@@ -30,12 +30,10 @@ class CategoryController extends Controller
             $searchModel = new CategorySearch();
             $dataProvider = $searchModel->search($this->request->queryParams, '');
 
-            $model = $dataProvider->getModels();
+            $models = $dataProvider->getModels();
             $data = array_map(function ($item) {
-                $response = new CategoryResponse();
-                CategoryResponse::populateRecord($response, $item->attributes);
-                return $response;
-            }, $model);
+                return CategoryResponse::fromModel($item);
+            }, $models);
             return [
                 'status' => true,
                 'data' => [
@@ -76,8 +74,7 @@ class CategoryController extends Controller
                     'message' => 'Category not found or inactive',
                 ];
             }
-            $response = new CategoryResponse();
-            CategoryResponse::populateRecord($response, $category->attributes);
+            $response = CategoryResponse::fromModel($category);
             return [
                 'status' => true,
                 'data' => $response,
@@ -104,8 +101,7 @@ class CategoryController extends Controller
             $data = Yii::$app->request->post();
 
             if ($form->load($data, '') && $form->save()) {
-                $response = new CategoryResponse();
-                CategoryResponse::populateRecord($response, $form->getCategory()->attributes);
+                $response = CategoryResponse::fromModel($form->getCategory());
                 return [
                     'status' => true,
                     'data' => $response,
@@ -155,8 +151,7 @@ class CategoryController extends Controller
 
             if ($form->load($data, '')) {
                 if ($form->save()) {
-                    $response = new CategoryResponse();
-                    CategoryResponse::populateRecord($response, $form->getCategory()->attributes);
+                    $response = CategoryResponse::fromModel($form->getCategory());
                     return [
                         'status' => true,
                         'data' => [

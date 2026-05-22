@@ -22,14 +22,7 @@ class ProductController extends \yii\web\Controller
 
             $models = $dataProvider->getModels();
             $responseData = array_map(function ($item) {
-                $response = new ProductResponse();
-                ProductResponse::populateRecord($response, $item->attributes);
-                $response->populateRelation('category', $item->category);
-
-                $thumbnail = !empty($item->assets) ? $item->assets[0] : null;
-                $response->populateRelation('assets', $thumbnail ? [$thumbnail] : []);
-                $response->populateRelation('tags', $item->tags);
-                return $response;
+                return ProductResponse::fromModel($item);
             }, $models);
 
             return [
@@ -60,10 +53,6 @@ class ProductController extends \yii\web\Controller
         try {
             $product = Product::find()
                 ->notDeleted()
-                ->withAsset()
-                ->withCategory()
-                ->withTags()
-                ->withArticles()
                 ->byId($id)
                 ->one();
 
@@ -75,16 +64,10 @@ class ProductController extends \yii\web\Controller
                 ];
             }
 
-            $reponeseData = new ProductResponse();
-            ProductResponse::populateRecord($reponeseData, $product->attributes);
-            $reponeseData->populateRelation('assets', $product->assets);
-            $reponeseData->populateRelation('category', $product->category);
-            $reponeseData->populateRelation('tags', $product->tags);
-            $reponeseData->populateRelation('articles', $product->articles);
             return [
                 'status' => true,
                 'data' => [
-                    'product' => $reponeseData,
+                    'product' => $this->getProductResponse($product),
                     'now' => date('d/m/Y'),
                 ],
                 'message' => 'Product retrieved successfully',
@@ -105,26 +88,10 @@ class ProductController extends \yii\web\Controller
         try {
             if ($form->load(Yii::$app->request->post(), '')) {
                 if ($form->save()) {
-                    $product = $form->getProduct();
-
-                    $updatedProduct = Product::find()
-                        ->withAsset()
-                        ->withCategory()
-                        ->withTags()
-                        ->withArticles()
-                        ->byId($product->id)
-                        ->one();
-                    $responseData = new ProductResponse();
-                    ProductResponse::populateRecord($responseData, $updatedProduct->attributes);
-                    $responseData->populateRelation('assets', $updatedProduct->assets);
-                    $responseData->populateRelation('category', $updatedProduct->category);
-                    $responseData->populateRelation('tags', $updatedProduct->tags);
-                    $responseData->populateRelation('articles', $updatedProduct->articles);
-
                     return [
                         'status' => true,
                         'data' => [
-                            'product' => $responseData,
+                            'product' => $this->getProductResponse($form->getProduct()),
                             'now' => date('d/m/Y'),
                         ],
                         'message' => 'Product created successfully',
@@ -164,24 +131,10 @@ class ProductController extends \yii\web\Controller
             if (Yii::$app->request->isPost) {
                 $form->load(Yii::$app->request->post(), '');
                 if ($form->save()) {
-                    $updatedProduct = Product::find()
-                        ->withAsset()
-                        ->withCategory()
-                        ->withTags()
-                        ->withArticles()
-                        ->byId($id)
-                        ->one();
-                    $responseData = new ProductResponse();
-                    ProductResponse::populateRecord($responseData, $updatedProduct->attributes);
-                    $responseData->populateRelation('assets', $updatedProduct->assets);
-                    $responseData->populateRelation('category', $updatedProduct->category);
-                    $responseData->populateRelation('tags', $updatedProduct->tags);
-                    $responseData->populateRelation('articles', $updatedProduct->articles);
-
                     return [
                         'status' => true,
                         'data' => [
-                            'product' => $responseData,
+                            'product' => $this->getProductResponse($product),
                             'now' => date('d/m/Y'),
                         ],
                         'message' => 'Product updated successfully',
@@ -202,6 +155,7 @@ class ProductController extends \yii\web\Controller
             ];
         }
     }
+
     public function actionDelete($id)
     {
         $product = Product::find()->byId($id)->notDeleted()->one();
@@ -234,5 +188,24 @@ class ProductController extends \yii\web\Controller
                 'message' => 'Error delete product: ' . $e->getMessage(),
             ];
         }
+    }
+
+    /**
+     * Helper to get a fully eager-loaded ProductResponse object.
+     *
+     * @param Product $product
+     * @return ProductResponse
+     */
+    private function getProductResponse(Product $product)
+    {
+        $updatedProduct = Product::find()
+            ->withAsset()
+            ->withCategory()
+            ->withTags()
+            ->withArticles()
+            ->byId($product->id)
+            ->one();
+
+        return ProductResponse::fromModel($updatedProduct);
     }
 }

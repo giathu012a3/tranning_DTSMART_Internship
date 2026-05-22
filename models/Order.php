@@ -31,7 +31,14 @@ use yii\behaviors\TimestampBehavior;
  */
 class Order extends \yii\db\ActiveRecord
 {
+    const SCENARIO_UPDATE = 'update';
 
+    public function scenarios()
+    {
+        $scenarios = parent::scenarios();
+        $scenarios[self::SCENARIO_UPDATE] = ['status', 'payment_method', 'full_name', 'phone', 'address', 'email'];
+        return $scenarios;
+    }
 
     /**
      * {@inheritdoc}
@@ -98,12 +105,61 @@ class Order extends \yii\db\ActiveRecord
     }
 
     /**
-     * Soft delete: set deleted_at to current timestamp.
+     * Soft delete: set deleted_at to current timestamp and restore product stock.
      */
     public function softDelete(): bool
     {
-        $this->deleted_at = time();
-        return $this->save(false);
+        if ($this->deleted_at !== null) {
+            return true;
+        }
+
+        $transaction = Yii::$app->db->beginTransaction();
+        try {
+            $this->deleted_at = time();
+            if ($this->save(false)) {
+                // 1. Restore product stock
+                foreach ($this->orderDetails as $detail) {
+                    Product::updateAllCounters(
+                        ['stock' => $detail->quantity],
+                        ['id' => $detail->product_id]
+                    );
+                }
+
+                // 2. Deduct earned points and recalculate membership level
+                if ($this->user_id) {
+                    $pointsEarned = (int) floor($this->final_total / 10000);
+                    if ($pointsEarned > 0) {
+                        $user = User::findOne($this->user_id);
+                        if ($user) {
+                            $user->total_points = max(0, ($user->total_points ?? 0) - $pointsEarned);
+
+                            // Find the appropriate membership level based on new points
+                            $newLevel = MembershipLevel::find()
+                                ->where(['status' => 1])
+                                ->andWhere(['<=', 'points_required', $user->total_points])
+                                ->orderBy(['points_required' => SORT_DESC])
+                                ->one();
+
+                            $user->member_ship_id = $newLevel ? $newLevel->id : null;
+                            $user->save(false);
+                        }
+                    }
+                }
+
+                // 3. Remove coupon usage to restore coupon availability
+                if ($this->couponUsage) {
+                    $this->couponUsage->delete();
+                }
+
+                $transaction->commit();
+                return true;
+            }
+            $transaction->rollBack();
+            return false;
+        } catch (\Throwable $e) {
+            $transaction->rollBack();
+            throw $e;
+        }
     }
 
     /**

@@ -12,26 +12,65 @@ use app\models\CouponUsage;
 use app\models\MembershipLevel;
 use app\models\User;
 use app\models\UserAddress;
+use app\models\Cart;
+use app\models\CartDetail;
 
 class OrderForm extends Model
 {
+    const SCENARIO_CHECKOUT = 'checkout';
+
     public $payment_method;
     public $coupon_code;
     public $address_id;
     public $items;
+    public $user_id;
     private $_coupon = null;
     private $_total = 0;
     private $_final_total = 0;
     private $_discount_amount = 0;
 
     private $_products = [];
+    private $_isCheckoutFromCart = false;
+    private $_cartId = null;
+
+    public function beforeValidate()
+    {
+        if ($this->scenario === self::SCENARIO_CHECKOUT && empty($this->items)) {
+            $userId = $this->user_id ?: Yii::$app->user->id;
+            if ($userId) {
+                $cart = Cart::findOne(['user_id' => $userId]);
+                if ($cart) {
+                    $this->_cartId = $cart->id;
+                    $details = CartDetail::findAll(['cart_id' => $cart->id]);
+                    $items = [];
+                    foreach ($details as $detail) {
+                        $items[] = [
+                            'product_id' => $detail->product_id,
+                            'quantity' => $detail->quantity,
+                        ];
+                    }
+                    $this->items = $items;
+                    $this->_isCheckoutFromCart = true;
+                }
+            }
+        }
+        return parent::beforeValidate();
+    }
 
     public function rules()
     {
         return [
-            [['payment_method', 'items'], 'required'],
+            [['payment_method', 'items'], 'required', 'except' => self::SCENARIO_CHECKOUT],
+            [['payment_method'], 'required', 'on' => self::SCENARIO_CHECKOUT],
             [['payment_method', 'coupon_code'], 'string', 'max' => 255],
-            [['address_id'], 'integer'],
+            [['address_id', 'user_id'], 'integer'],
+            [
+                ['user_id'],
+                'exist',
+                'skipOnError' => true,
+                'targetClass' => User::class,
+                'targetAttribute' => ['user_id' => 'id']
+            ],
             ['items', 'validateItems'],
             ['coupon_code', 'validateCoupon'],
         ];
@@ -40,18 +79,52 @@ class OrderForm extends Model
     public function validateItems($attribute, $params)
     {
         if (!is_array($this->items) || empty($this->items)) {
-            $this->addError($attribute, 'Order items cannot be empty.');
+            if ($this->scenario === self::SCENARIO_CHECKOUT) {
+                $this->addError($attribute, 'Your cart is empty. Please add items to your cart before checking out.');
+            } else {
+                $this->addError($attribute, 'Items must be a non-empty array of products.');
+            }
             return;
         }
 
-        $productIds = [];
+        $groupedItems = [];
         foreach ($this->items as $index => $item) {
-            if (!isset($item['product_id']) || !isset($item['quantity'])) {
-                $this->addError($attribute, "Item at index {$index} is missing product_id or quantity.");
+            $itemForm = new OrderItemForm();
+            if (!$itemForm->load($item, '') || !$itemForm->validate()) {
+                foreach ($itemForm->getErrors() as $messages) {
+                    foreach ($messages as $message) {
+                        $this->addError($attribute, "Item at index {$index}: {$message}");
+                    }
+                }
                 continue;
             }
-            $productIds[] = (int) $item['product_id'];
+
+            $productId = (int)$itemForm->product_id;
+            $quantity = (int)$itemForm->quantity;
+
+            if (isset($groupedItems[$productId])) {
+                $groupedItems[$groupedItems[$productId]['index']]['quantity'] += $quantity;
+            } else {
+                $groupedItems[$productId] = [
+                    'index' => $index,
+                    'product_id' => $productId,
+                    'quantity' => $quantity,
+                ];
+            }
         }
+
+        if ($this->hasErrors($attribute)) {
+            return;
+        }
+
+        $cleanItems = [];
+        foreach ($groupedItems as $item) {
+            unset($item['index']);
+            $cleanItems[] = $item;
+        }
+        $this->items = $cleanItems;
+
+        $productIds = array_column($this->items, 'product_id');
 
         $this->_products = [];
         if (!empty($productIds)) {
@@ -64,16 +137,7 @@ class OrderForm extends Model
 
         $this->_total = 0;
 
-        foreach ($this->items as $index => $item) {
-            if (!isset($item['product_id']) || !isset($item['quantity'])) {
-                continue;
-            }
-
-            if (!is_numeric($item['quantity']) || $item['quantity'] <= 0) {
-                $this->addError($attribute, "Quantity for Product ID {$item['product_id']} must be greater than 0.");
-                continue;
-            }
-
+        foreach ($this->items as $item) {
             $product = $this->_products[$item['product_id']] ?? null;
             if (!$product || $product->status != 1) {
                 $this->addError($attribute, "Product ID {$item['product_id']} does not exist or is inactive.");
@@ -81,7 +145,7 @@ class OrderForm extends Model
             }
 
             if ($product->stock < $item['quantity']) {
-                $this->addError($attribute, "Product '{$product->name}' does not have enough stock. Requested: {$item['quantity']}, Available: {$product->stock}.");
+                $this->addError($attribute, "Product '{$product->name}' does not have enough stock. Requested (total): {$item['quantity']}, Available: {$product->stock}.");
                 continue;
             }
 
@@ -95,7 +159,9 @@ class OrderForm extends Model
             return;
         }
 
-        $coupon = Coupon::find()->where(['code' => $this->coupon_code, 'status' => 1])->one();
+        $coupon = Coupon::find()
+            ->where(['code' => $this->coupon_code, 'status' => 1])
+            ->one();
 
         if (!$coupon) {
             $this->addError($attribute, 'Invalid coupon code.');
@@ -114,7 +180,9 @@ class OrderForm extends Model
         }
 
         if ($coupon->usage_limit > 0) {
-            $usageCount = CouponUsage::find()->where(['coupon_id' => $coupon->id])->count();
+            $usageCount = CouponUsage::find()
+                ->where(['coupon_id' => $coupon->id])
+                ->count();
             if ($usageCount >= $coupon->usage_limit) {
                 $this->addError($attribute, 'This coupon has reached its usage limit.');
                 return;
@@ -130,7 +198,7 @@ class OrderForm extends Model
             return false;
         }
 
-        $userId = Yii::$app->user->id;
+        $userId = $this->user_id ?: Yii::$app->user->id;
 
         $addressQuery = UserAddress::find()->where(['user_id' => $userId, 'status' => 1]);
         if ($this->address_id) {
@@ -141,7 +209,7 @@ class OrderForm extends Model
         $userAddress = $addressQuery->one();
 
         if (!$userAddress) {
-            $this->addError('address_id', 'No shipping address found. Please add a default address to your account first.');
+            $this->addError('address_id', 'No shipping address found for this user. Please select or add a valid address.');
             return false;
         }
 
@@ -247,23 +315,28 @@ class OrderForm extends Model
             if ($userId) {
                 $pointsEarned = (int) floor($this->_final_total / 10000);
                 if ($pointsEarned > 0) {
-                    User::updateAllCounters(['total_points' => $pointsEarned], ['id' => $userId]);
+                    $user = User::findOne($userId);
+                    if ($user) {
+                        $user->total_points = ($user->total_points ?? 0) + $pointsEarned;
 
-                    // Auto-upgrade membership level based on new total points
-                    $updatedUser = User::findOne($userId);
-                    if ($updatedUser) {
                         $newLevel = MembershipLevel::find()
                             ->where(['status' => 1])
-                            ->andWhere(['<=', 'points_required', $updatedUser->total_points])
+                            ->andWhere(['<=', 'points_required', $user->total_points])
                             ->orderBy(['points_required' => SORT_DESC])
                             ->one();
 
-                        if ($newLevel && $newLevel->id !== $updatedUser->member_ship_id) {
-                            $updatedUser->member_ship_id = $newLevel->id;
-                            $updatedUser->save(false);
+                        if ($newLevel && $newLevel->id !== $user->member_ship_id) {
+                            $user->member_ship_id = $newLevel->id;
                         }
+
+                        $user->save(false);
                     }
                 }
+            }
+
+            // Clear cart items upon successful order creation from cart
+            if ($this->_isCheckoutFromCart && $this->_cartId) {
+                CartDetail::deleteAll(['cart_id' => $this->_cartId]);
             }
 
             $transaction->commit();

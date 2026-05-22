@@ -38,6 +38,12 @@ class Category extends \yii\db\ActiveRecord
             [['name'], 'required'],
             [['status', 'created_at', 'updated_at', 'deleted_at'], 'integer'],
             [['name'], 'string', 'max' => 255],
+            [
+                ['name'],
+                'unique',
+                'filter' => ['deleted_at' => null],
+                'message' => 'This category name already exists.'
+            ],
         ];
     }
 

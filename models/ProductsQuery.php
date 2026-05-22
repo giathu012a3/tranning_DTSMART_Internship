@@ -36,18 +36,6 @@ class ProductsQuery extends \yii\db\ActiveQuery
     {
         return parent::one($db);
     }
-
-
-    public function activeCategory()
-    {
-        return $this->innerJoinWith('category')
-            ->andOnCondition(['categories.status' => 1]);
-    }
-    public function Category()
-    {
-        return $this->innerJoinWith('category');
-    }
-
     public function withAsset()
     {
         return $this->with(['assets' => function ($q) {
@@ -57,30 +45,6 @@ class ProductsQuery extends \yii\db\ActiveQuery
         }]);
     }
 
-    public function withThumbnailAsset()
-    {
-        return $this->with([
-            'assets' => function ($q) {
-                $q->andOnCondition(['collection_name' => 'thumbnail'])
-                    ->select(['id', 'asset_id', 'file_id', 'collection_name', 'asset_type']);
-            },
-            'assets.file' => function ($q) {
-                $q->select(['id', 'file_path', 'file_name', 'file_type', 'file_size']);
-            }
-        ]);
-    }
-
-    public function withThumbnail()
-    {
-        return $this->with([
-            'thumbnail' => function ($q) {
-                $q->select(['id', 'asset_id', 'file_id', 'collection_name', 'asset_type']);
-            },
-            'thumbnail.file' => function ($q) {
-                $q->select(['id', 'file_path', 'file_name', 'file_type', 'file_size']);
-            }
-        ]);
-    }
 
     public function withTags()
     {
@@ -95,7 +59,7 @@ class ProductsQuery extends \yii\db\ActiveQuery
     {
         return $this->with([
             'category' => function ($q) {
-                $q->select(['id', 'name']);
+                $q->select(['id', 'name'])->andOnCondition(['categories.deleted_at' => null]);
             }
         ]);
     }

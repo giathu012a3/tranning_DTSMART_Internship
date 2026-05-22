@@ -25,6 +25,9 @@ class CartForm extends Model
             $this->_cartDetail = $cartDetail;
             $this->quantity = $cartDetail->quantity;
             $this->product_id = $cartDetail->product_id;
+            $this->scenario = self::SCENARIO_UPDATE;
+        } else {
+            $this->scenario = self::SCENARIO_ADD;
         }
         parent::__construct($config);
     }
@@ -62,7 +65,10 @@ class CartForm extends Model
         $cart = Cart::findOne(['user_id' => $userId]);
         $existingQty = 0;
         if ($cart) {
-            $existingItem = CartDetail::findOne(['cart_id' => $cart->id, 'product_id' => $this->product_id]);
+            $existingItem = CartDetail::find()
+                ->byCartId($cart->id)
+                ->byProductId($this->product_id)
+                ->one();
             if ($existingItem) {
                 $existingQty = $existingItem->quantity;
             }
@@ -117,7 +123,10 @@ class CartForm extends Model
 
                 $this->_cart = $cart;
 
-                $detail = CartDetail::findOne(['cart_id' => $cart->id, 'product_id' => $this->product_id]);
+                $detail = CartDetail::find()
+                    ->byCartId($cart->id)
+                    ->byProductId($this->product_id)
+                    ->one();
                 if ($detail) {
                     $detail->quantity += $this->quantity;
                 } else {

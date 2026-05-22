@@ -44,19 +44,22 @@ class ArticleSearch extends Article
     {
         $query = Article::find()
             ->select([
-                'id',
-                'title',
-                'slug',
-                'excerpt',
-                'status',
-                'like_count',
-                'author_id',
-                'created_at',
-                'updated_at'
+                'articles.id',
+                'articles.title',
+                'articles.slug',
+                'articles.excerpt',
+                'articles.status',
+                'articles.like_count',
+                'articles.author_id',
+                'articles.created_at',
+                'articles.updated_at',
+                'comment_count' => \app\models\ArticleComment::find()
+                    ->select('COUNT(*)')
+                    ->where('article_id = articles.id')
             ])
             ->notDeleted()
             ->with([
-                'thumbnail' => function ($q) {
+                'assets' => function ($q) {
                     $q->select([
                         'id',
                         'asset_id',
@@ -65,7 +68,7 @@ class ArticleSearch extends Article
                         'asset_type'
                     ])->cache(3600);
                 },
-                'thumbnail.file' => function ($q) {
+                'assets.file' => function ($q) {
                     $q->select([
                         'id',
                         'file_path',

@@ -3,25 +3,13 @@
 namespace app\controllers;
 
 use Yii;
-use yii\web\Controller;
-use yii\filters\auth\HttpBearerAuth;
 use app\models\Cart;
 use app\models\CartDetail;
 use app\models\forms\CartForm;
 use app\models\response\CartResponse;
 
-class CartController extends Controller
+class CartController extends BaseApiController
 {
-    public $enableCsrfValidation = false;
-
-    public function behaviors()
-    {
-        $behaviors = parent::behaviors();
-        $behaviors['authenticator'] = [
-            'class' => HttpBearerAuth::class,
-        ];
-        return $behaviors;
-    }
 
     public function actionIndex()
     {
@@ -34,13 +22,9 @@ class CartController extends Controller
                 $cart->save(false);
             }
 
-            $response = new CartResponse();
-            CartResponse::populateRecord($response, $cart->attributes);
-            $response->populateRelation('cartDetails', $cart->cartDetails);
-
             return [
                 'status' => true,
-                'data' => $response,
+                'data' => $this->getCartResponse($cart),
                 'message' => 'Cart retrieved successfully',
             ];
         } catch (\Throwable $e) {
@@ -56,18 +40,13 @@ class CartController extends Controller
     {
         try {
             $form = new CartForm();
-            $form->scenario = CartForm::SCENARIO_ADD;
             $data = Yii::$app->request->post();
 
             if ($form->load($data, '') && $form->save()) {
                 $cart = $form->getCart();
-                $response = new CartResponse();
-                CartResponse::populateRecord($response, $cart->attributes);
-                $response->populateRelation('cartDetails', $cart->cartDetails);
-
                 return [
                     'status' => true,
-                    'data' => $response,
+                    'data' => $this->getCartResponse($cart),
                     'message' => 'Item added to cart successfully',
                 ];
             }
@@ -101,18 +80,13 @@ class CartController extends Controller
             }
 
             $form = new CartForm($cartDetail);
-            $form->scenario = CartForm::SCENARIO_UPDATE;
             $data = Yii::$app->request->post();
 
             if ($form->load($data, '') && $form->save()) {
                 $cart = $form->getCart();
-                $response = new CartResponse();
-                CartResponse::populateRecord($response, $cart->attributes);
-                $response->populateRelation('cartDetails', $cart->cartDetails);
-
                 return [
                     'status' => true,
-                    'data' => $response,
+                    'data' => $this->getCartResponse($cart),
                     'message' => 'Cart updated successfully',
                 ];
             }
@@ -150,13 +124,9 @@ class CartController extends Controller
             if ($cartDetail->delete()) {
                 $cart->touch('updated_at');
 
-                $response = new CartResponse();
-                CartResponse::populateRecord($response, $cart->attributes);
-                $response->populateRelation('cartDetails', $cart->cartDetails);
-
                 return [
                     'status' => true,
-                    'data' => $response,
+                    'data' => $this->getCartResponse($cart),
                     'message' => 'Item removed from cart successfully',
                 ];
             }
@@ -192,13 +162,9 @@ class CartController extends Controller
             CartDetail::deleteAll(['cart_id' => $cart->id]);
             $cart->touch('updated_at');
 
-            $response = new CartResponse();
-            CartResponse::populateRecord($response, $cart->attributes);
-            $response->populateRelation('cartDetails', []);
-
             return [
                 'status' => true,
-                'data' => $response,
+                'data' => $this->getCartResponse($cart),
                 'message' => 'Cart cleared successfully',
             ];
         } catch (\Throwable $e) {
@@ -208,5 +174,21 @@ class CartController extends Controller
                 'message' => 'Error: ' . $e->getMessage(),
             ];
         }
+    }
+
+    /**
+     * Helper method to eager load cartDetails and their products to avoid N+1 queries.
+     *
+     * @param Cart $cart
+     * @return CartResponse
+     */
+    private function getCartResponse(Cart $cart)
+    {
+        $cartWithRelations = Cart::find()
+            ->byId($cart->id)
+            ->withDetails()
+            ->one();
+
+        return CartResponse::fromModel($cartWithRelations);
     }
 }

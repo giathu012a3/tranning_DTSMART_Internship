@@ -73,4 +73,13 @@ class Cart extends \yii\db\ActiveRecord
     {
         return $this->hasMany(CartDetail::class, ['cart_id' => 'id']);
     }
+
+    /**
+     * {@inheritdoc}
+     * @return CartsQuery the active query used by this AR class.
+     */
+    public static function find()
+    {
+        return new CartsQuery(get_called_class());
+    }
 }

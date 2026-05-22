@@ -11,12 +11,20 @@ use Yii;
  * @property int $cart_id
  * @property int $product_id
  * @property int $quantity
+ * @property int $created_at
+ * @property int $updated_at
  *
  * @property Cart $cart
  */
 class CartDetail extends \yii\db\ActiveRecord
 {
 
+    public function behaviors()
+    {
+        return [
+            \yii\behaviors\TimestampBehavior::class,
+        ];
+    }
 
     /**
      * {@inheritdoc}
@@ -33,7 +41,7 @@ class CartDetail extends \yii\db\ActiveRecord
     {
         return [
             [['cart_id', 'product_id', 'quantity'], 'required'],
-            [['cart_id', 'product_id', 'quantity'], 'integer'],
+            [['cart_id', 'product_id', 'quantity', 'created_at', 'updated_at'], 'integer'],
         ];
     }
 
@@ -47,6 +55,8 @@ class CartDetail extends \yii\db\ActiveRecord
             'cart_id' => 'Cart ID',
             'product_id' => 'Product ID',
             'quantity' => 'Quantity',
+            'created_at' => 'Created At',
+            'updated_at' => 'Updated At',
         ];
     }
 
@@ -64,5 +74,14 @@ class CartDetail extends \yii\db\ActiveRecord
     public function getProduct()
     {
         return $this->hasOne(Product::class, ['id' => 'product_id']);
+    }
+
+    /**
+     * {@inheritdoc}
+     * @return CartDetailsQuery the active query used by this AR class.
+     */
+    public static function find()
+    {
+        return new CartDetailsQuery(get_called_class());
     }
 }

@@ -31,13 +31,7 @@ class ArticleController extends Controller
 
             $models = $dataProvider->getModels();
             $data = array_map(function ($item) {
-                $response = new ArticleResponse();
-                ArticleResponse::populateRecord($response, $item->attributes);
-                $response->populateRelation('assets', $item->thumbnail ? [$item->thumbnail] : []);
-                $response->populateRelation('author', $item->author);
-                $response->populateRelation('tags', $item->tags);
-                $response->populateRelation('products', $item->products);
-                return $response;
+                return ArticleResponse::fromModel($item);
             }, $models);
 
             return [
@@ -87,12 +81,7 @@ class ArticleController extends Controller
                 'message' => 'Article not found',
             ];
         }
-        $responseData = new ArticleResponse();
-        ArticleResponse::populateRecord($responseData, $article->attributes);
-        $responseData->populateRelation('assets', $article->assets);
-        $responseData->populateRelation('author', $article->author);
-        $responseData->populateRelation('tags', $article->tags);
-        $responseData->populateRelation('products', $article->products);
+        $responseData = ArticleResponse::fromModel($article);
 
         return [
             'status' => true,
@@ -126,12 +115,7 @@ class ArticleController extends Controller
                         ->byId($article->id)
                         ->notDeleted()
                         ->one();
-                    $responseData = new ArticleResponse();
-                    ArticleResponse::populateRecord($responseData, $updatedArticle->attributes);
-                    $responseData->populateRelation('assets', $updatedArticle->assets);
-                    $responseData->populateRelation('author', $updatedArticle->author);
-                    $responseData->populateRelation('tags', $updatedArticle->tags);
-                    $responseData->populateRelation('products', $updatedArticle->products);
+                    $responseData = ArticleResponse::fromModel($updatedArticle);
 
                     return [
                         'status' => true,
@@ -184,12 +168,7 @@ class ArticleController extends Controller
                         ->byId($id)
                         ->notDeleted()
                         ->one();
-                    $responseData = new ArticleResponse();
-                    ArticleResponse::populateRecord($responseData, $updatedArticle->attributes);
-                    $responseData->populateRelation('assets', $updatedArticle->assets);
-                    $responseData->populateRelation('author', $updatedArticle->author);
-                    $responseData->populateRelation('tags', $updatedArticle->tags);
-                    $responseData->populateRelation('products', $updatedArticle->products);
+                    $responseData = ArticleResponse::fromModel($updatedArticle);
 
                     return [
                         'status' => true,

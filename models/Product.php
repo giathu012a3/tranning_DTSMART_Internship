@@ -62,6 +62,12 @@ class Product extends \yii\db\ActiveRecord
             [['description'], 'string'],
             [['name'], 'string', 'max' => 255],
             [
+                ['name'],
+                'unique',
+                'filter' => ['deleted_at' => null],
+                'message' => 'This product name already exists.'
+            ],
+            [
                 ['category_id'],
                 'exist',
                 'skipOnError' => true,
@@ -204,7 +210,7 @@ class Product extends \yii\db\ActiveRecord
     public function getThumbnail()
     {
         return $this->hasOne(Asset::class, ['asset_id' => 'id'])
-            ->onCondition(['asset_type' => 'product'])
+            ->onCondition(['asset_type' => 'product', 'collection_name' => 'thumbnail'])
             ->with('file');
     }
 

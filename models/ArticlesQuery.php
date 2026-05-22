@@ -54,19 +54,6 @@ class ArticlesQuery extends \yii\db\ActiveQuery
         ]);
     }
 
-    public function withThumbnailAsset()
-    {
-        return $this->with([
-            'assets' => function ($q) {
-                $q->andOnCondition(['collection_name' => 'thumbnail'])
-                  ->select(['id', 'asset_id', 'file_id', 'collection_name', 'asset_type']);
-            },
-            'assets.file' => function ($q) {
-                $q->select(['id', 'file_path', 'file_name', 'file_type', 'file_size']);
-            }
-        ]);
-    }
-
     public function withTags()
     {
         return $this->with([

@@ -15,4 +15,18 @@ class CategoryResponse extends Category
             'created_at',
         ];
     }
+
+    /**
+     * Factory method to create CategoryResponse from a Category model.
+     *
+     * @param Category $category
+     * @return self
+     */
+    public static function fromModel(Category $category)
+    {
+        $response = new self();
+        self::populateRecord($response, $category->attributes);
+
+        return $response;
+    }
 }

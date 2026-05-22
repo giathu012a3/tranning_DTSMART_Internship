@@ -52,4 +52,25 @@ class OrderResponse extends Order
             },
         ];
     }
+
+    /**
+     * Factory method to create OrderResponse from an Order model.
+     *
+     * @param Order $order
+     * @return self
+     */
+    public static function fromModel(Order $order)
+    {
+        $response = new self();
+        self::populateRecord($response, $order->attributes);
+
+        if ($order->isRelationPopulated('orderDetails')) {
+            $response->populateRelation('orderDetails', $order->orderDetails);
+        }
+        if ($order->isRelationPopulated('couponUsage')) {
+            $response->populateRelation('couponUsage', $order->couponUsage);
+        }
+
+        return $response;
+    }
 }

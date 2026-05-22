@@ -13,12 +13,6 @@ class CartResponse extends Cart
             'user_id',
             'created_at',
             'updated_at',
-            'created_date' => function ($model) {
-                return $model->created_at ? date('d/m/Y H:i:s', $model->created_at) : null;
-            },
-            'updated_date' => function ($model) {
-                return $model->updated_at ? date('d/m/Y H:i:s', $model->updated_at) : null;
-            },
             'items' => function ($model) {
                 $items = [];
                 foreach ($model->cartDetails as $detail) {
@@ -53,5 +47,23 @@ class CartResponse extends Cart
                 return (float)$totalPrice;
             },
         ];
+    }
+
+    /**
+     * Factory method to create CartResponse from a Cart model.
+     *
+     * @param Cart $cart
+     * @return self
+     */
+    public static function fromModel(Cart $cart)
+    {
+        $response = new self();
+        self::populateRecord($response, $cart->attributes);
+
+        if ($cart->isRelationPopulated('cartDetails')) {
+            $response->populateRelation('cartDetails', $cart->cartDetails);
+        }
+
+        return $response;
     }
 }

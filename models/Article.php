@@ -226,7 +226,7 @@ class Article extends \yii\db\ActiveRecord
     public function getThumbnail()
     {
         return $this->hasOne(Asset::class, ['asset_id' => 'id'])
-            ->onCondition(['asset_type' => 'article'])
+            ->onCondition(['asset_type' => 'article', 'collection_name' => 'thumbnail'])
             ->with('file');
     }
 

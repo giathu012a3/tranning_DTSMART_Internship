@@ -58,6 +58,18 @@ class ProductForm extends Model
             [['category_id', 'status'], 'integer'],
             [['description'], 'string'],
             [['name'], 'string', 'max' => 255],
+            [
+                ['name'],
+                'unique',
+                'targetClass' => Product::class,
+                'filter' => function ($query) {
+                    if (!$this->_product->isNewRecord) {
+                        $query->andWhere(['not', ['id' => $this->_product->id]]);
+                    }
+                    $query->andWhere(['deleted_at' => null]);
+                },
+                'message' => 'This product name already exists.'
+            ],
             [['tags', 'deleted_image_ids'], 'safe'],
             [['name'], 'validateAnyChange', 'skipOnEmpty' => false],
         ];
