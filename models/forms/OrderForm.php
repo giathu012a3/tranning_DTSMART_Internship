@@ -292,7 +292,14 @@ class OrderForm extends Model
 
             Yii::$app->db->createCommand()->batchInsert(
                 OrderDetail::tableName(),
-                ['order_id', 'product_id', 'quantity', 'price', 'created_at', 'updated_at'],
+                [
+                    'order_id',
+                    'product_id',
+                    'quantity',
+                    'price',
+                    'created_at',
+                    'updated_at'
+                ],
                 $orderDetailsRows
             )->execute();
 
@@ -334,7 +341,6 @@ class OrderForm extends Model
                 }
             }
 
-            // Clear cart items upon successful order creation from cart
             if ($this->_isCheckoutFromCart && $this->_cartId) {
                 CartDetail::deleteAll(['cart_id' => $this->_cartId]);
             }

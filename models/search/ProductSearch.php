@@ -5,12 +5,14 @@ namespace app\models\search;
 use yii\base\Model;
 use yii\data\ActiveDataProvider;
 use app\models\Product;
+use app\models\ProductArticle;
 
 /**
  * ProductSearch represents the model behind the search form of `app\models\Product`.
  */
 class ProductSearch extends Product
 {
+    public $category;
     /**
      * {@inheritdoc}
      */
@@ -18,7 +20,7 @@ class ProductSearch extends Product
     {
         return [
             [['id', 'status', 'category_id', 'created_at', 'updated_at', 'deleted_at'], 'integer'],
-            [['name', 'description', 'category.name'], 'safe'],
+            [['name', 'description', 'category'], 'safe'],
             [['price', 'stock'], 'number'],
         ];
     }
@@ -52,12 +54,12 @@ class ProductSearch extends Product
                 'products.category_id',
                 'products.created_at',
                 'products.updated_at',
-                'articles_count' => \app\models\ProductArticle::find()
+                'articles_count' => ProductArticle::find()
                     ->select('COUNT(*)')
                     ->where('product_id = products.id')
             ])
             ->notDeleted()
-            ->withCategory()
+            ->joinWith(['category'])
             ->withAsset()
             ->withTags();
 
@@ -83,17 +85,18 @@ class ProductSearch extends Product
 
         // grid filtering conditions
         $query->andFilterWhere([
-            'id' => $this->id,
-            'price' => $this->price,
-            'stock' => $this->stock,
-            'status' => $this->status,
-            'category_id' => $this->category_id,
-            'created_at' => $this->created_at,
-            'updated_at' => $this->updated_at,
-            'deleted_at' => $this->deleted_at,
+            'products.id' => $this->id,
+            'products.price' => $this->price,
+            'products.stock' => $this->stock,
+            'products.status' => $this->status,
+            'products.category_id' => $this->category_id,
+            'products.created_at' => $this->created_at,
+            'products.updated_at' => $this->updated_at,
+            'products.deleted_at' => $this->deleted_at,
         ]);
 
-        $query->andFilterWhere(['like', 'name', $this->name]);
+        $query->andFilterWhere(['like', 'products.name', $this->name]);
+        $query->andFilterWhere(['like', 'categories.name', $this->category]);
         // ->andFilterWhere(['like', 'category.id', $this->category->id]);
 
         return $dataProvider;

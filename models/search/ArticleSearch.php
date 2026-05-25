@@ -5,6 +5,7 @@ namespace app\models\search;
 use yii\base\Model;
 use yii\data\ActiveDataProvider;
 use app\models\Article;
+use app\models\ArticleComment;
 
 /**
  * ArticleSearch represents the model behind the search form of `app\models\Article`.
@@ -12,6 +13,8 @@ use app\models\Article;
 class ArticleSearch extends Article
 {
     public $keyword;
+    public $author_name;
+    public $tag_name;
     /**
      * {@inheritdoc}
      */
@@ -19,7 +22,7 @@ class ArticleSearch extends Article
     {
         return [
             [['id', 'like_count', 'author_id', 'status', 'created_at', 'updated_at'], 'integer'],
-            [['title', 'content', 'slug', 'excerpt'], 'safe'],
+            [['title', 'content', 'slug', 'excerpt', 'author_name', 'tag_name'], 'safe'],
         ];
     }
 
@@ -53,52 +56,14 @@ class ArticleSearch extends Article
                 'articles.author_id',
                 'articles.created_at',
                 'articles.updated_at',
-                'comment_count' => \app\models\ArticleComment::find()
+                'comment_count' => ArticleComment::find()
                     ->select('COUNT(*)')
                     ->where('article_id = articles.id')
             ])
+            ->joinWith(['author', 'tags'])
             ->notDeleted()
-            ->with([
-                'assets' => function ($q) {
-                    $q->select([
-                        'id',
-                        'asset_id',
-                        'file_id',
-                        'collection_name',
-                        'asset_type'
-                    ])->cache(3600);
-                },
-                'assets.file' => function ($q) {
-                    $q->select([
-                        'id',
-                        'file_path',
-                        'file_name',
-                        'file_type',
-                        'file_size'
-                    ])->cache(3600);
-                },
-                'author' => function ($q) {
-                    $q->select([
-                        'id',
-                        'username',
-                        'email'
-                    ])->cache(3600);
-                },
-                'tags' => function ($q) {
-                    $q->select([
-                        'id',
-                        'name',
-                        'slug'
-                    ])->cache(3600);
-                },
-                'products' => function ($q) {
-                    $q->select([
-                        'products.id',
-                        'products.name',
-                        'products.price'
-                    ])->cache(600);
-                }
-            ]);
+            ->withAsset()
+            ->withProducts();
 
         $dataProvider = new ActiveDataProvider([
             'query' => $query,
@@ -107,7 +72,7 @@ class ArticleSearch extends Article
                 'validatePage' => true,
             ],
             'sort' => [
-                'defaultOrder' => ['id' => SORT_DESC],
+                'defaultOrder' => ['articles.id' => SORT_DESC],
             ],
         ]);
 
@@ -121,19 +86,21 @@ class ArticleSearch extends Article
 
         // grid filtering conditions
         $query->andFilterWhere([
-            'id' => $this->id,
-            'like_count' => $this->like_count,
-            'author_id' => $this->author_id,
-            'status' => $this->status,
-            'created_at' => $this->created_at,
-            'updated_at' => $this->updated_at,
+            'articles.id' => $this->id,
+            'articles.like_count' => $this->like_count,
+            'articles.author_id' => $this->author_id,
+            'articles.status' => $this->status,
+            'articles.created_at' => $this->created_at,
+            'articles.updated_at' => $this->updated_at,
         ]);
 
-        $query->andFilterWhere(['like', 'title', $this->title])
-            ->andFilterWhere(['like', 'content', $this->content])
-            ->andFilterWhere(['like', 'slug', $this->slug])
-            ->andFilterWhere(['like', 'excerpt', $this->excerpt])
-            ->andFilterWhere(['like', 'slug', $this->keyword]);
+        $query->andFilterWhere(['like', 'articles.title', $this->title])
+            ->andFilterWhere(['like', 'articles.content', $this->content])
+            ->andFilterWhere(['like', 'articles.slug', $this->slug])
+            ->andFilterWhere(['like', 'articles.excerpt', $this->excerpt])
+            ->andFilterWhere(['like', 'articles.slug', $this->keyword])
+            ->andFilterWhere(['like', 'users.username', $this->author_name])
+            ->andFilterWhere(['like', 'tags.name', $this->tag_name]);
 
         return $dataProvider;
     }
