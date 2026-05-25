@@ -2,7 +2,6 @@
 
 namespace app\models;
 
-use Override;
 use Yii;
 use yii\behaviors\TimestampBehavior;
 
@@ -75,7 +74,12 @@ class Category extends \yii\db\ActiveRecord
      */
     public function getProducts()
     {
-        return $this->hasMany(Product::class, ['category_id' => 'id']);
+        return $this->hasMany(Product::class, ['category_id' => 'id'])->notDeleted();
+    }
+
+    public function getActiveProducts()
+    {
+        return $this->getProducts()->active();
     }
 
     public function softDelete()

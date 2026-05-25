@@ -67,12 +67,8 @@ class UploadAssetBehavior extends Behavior
                             $galleryCollections[] = $attr;
                         }
                     }
-                    if (in_array('images', $galleryCollections) || in_array('image', $galleryCollections)) {
-                        if (!in_array('images', $galleryCollections)) $galleryCollections[] = 'images';
-                        if (!in_array('image', $galleryCollections)) $galleryCollections[] = 'image';
-                    }
                     if (empty($galleryCollections)) {
-                        $galleryCollections = ['image', 'images'];
+                        $galleryCollections = ['images'];
                     }
 
                     Asset::deleteAll([

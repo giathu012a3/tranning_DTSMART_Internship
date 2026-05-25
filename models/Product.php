@@ -180,7 +180,12 @@ class Product extends \yii\db\ActiveRecord
      */
     public function getArticles()
     {
-        return $this->hasMany(Article::class, ['id' => 'article_id'])->via('productArticles')->active();
+        return $this->hasMany(Article::class, ['id' => 'article_id'])->via('productArticles')->notDeleted();
+    }
+
+    public function getActiveArticles()
+    {
+        return $this->getArticles()->active();
     }
 
     /**

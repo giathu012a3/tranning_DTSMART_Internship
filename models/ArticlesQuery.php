@@ -76,7 +76,7 @@ class ArticlesQuery extends \yii\db\ActiveQuery
     {
         return $this->with([
             'products' => function ($q) {
-                $q->select(['products.id', 'products.name', 'products.price', 'products.status', 'products.category_id']);
+                $q->select(['products.id', 'products.name', 'products.price', 'products.status', 'products.category_id'])->active();
             }
         ]);
     }
