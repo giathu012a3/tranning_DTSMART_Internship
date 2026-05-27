@@ -190,4 +190,16 @@ class User extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
     {
         return $this->access_token === $authKey;
     }
+
+    public function updateMembershipLevel()
+    {
+        $newLevel = MembershipLevel::find()
+            ->active()
+            ->byPoints($this->total_points)
+            ->one();
+
+        if ($newLevel && $newLevel->id !== $this->member_ship_id) {
+            $this->member_ship_id = $newLevel->id;
+        }
+    }
 }

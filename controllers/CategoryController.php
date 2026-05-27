@@ -154,11 +154,8 @@ class CategoryController extends Controller
                     $response = CategoryResponse::fromModel($form->getCategory());
                     return [
                         'status' => true,
-                        'data' => [
-                            'data' => $response,
-                            'now' => date('d/m/Y')
-                        ],
-                        'message' => 'Category updated successfully'
+                        'data' => $response,
+                        'message' => 'Category updated successfully',
                     ];
                 }
             }

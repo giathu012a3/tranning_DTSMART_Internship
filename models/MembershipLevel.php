@@ -78,5 +78,12 @@ class MembershipLevel extends \yii\db\ActiveRecord
         return $this->hasMany(Order::class, ['membership_level_id' => 'id']);
     }
 
-
+    /**
+     * {@inheritdoc}
+     * @return MembershipLevelsQuery the active query used by this AR class.
+     */
+    public static function find()
+    {
+        return new MembershipLevelsQuery(get_called_class());
+    }
 }

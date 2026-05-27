@@ -91,10 +91,8 @@ class OrderForm extends Model
         foreach ($this->items as $index => $item) {
             $itemForm = new OrderItemForm();
             if (!$itemForm->load($item, '') || !$itemForm->validate()) {
-                foreach ($itemForm->getErrors() as $messages) {
-                    foreach ($messages as $message) {
-                        $this->addError($attribute, "Item at index {$index}: {$message}");
-                    }
+                foreach ($itemForm->firstErrors as $message) {
+                    $this->addError($attribute, "Item at index {$index}: {$message}");
                 }
                 continue;
             }
@@ -326,16 +324,7 @@ class OrderForm extends Model
                     if ($user) {
                         $user->total_points = ($user->total_points ?? 0) + $pointsEarned;
 
-                        $newLevel = MembershipLevel::find()
-                            ->where(['status' => 1])
-                            ->andWhere(['<=', 'points_required', $user->total_points])
-                            ->orderBy(['points_required' => SORT_DESC])
-                            ->one();
-
-                        if ($newLevel && $newLevel->id !== $user->member_ship_id) {
-                            $user->member_ship_id = $newLevel->id;
-                        }
-
+                        $user->updateMembershipLevel();
                         $user->save(false);
                     }
                 }

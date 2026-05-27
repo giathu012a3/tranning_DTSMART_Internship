@@ -17,9 +17,14 @@ class CartController extends BaseApiController
             $userId = Yii::$app->user->id;
             $cart = Cart::findOne(['user_id' => $userId]);
             if (!$cart) {
-                $cart = new Cart();
-                $cart->user_id = $userId;
-                $cart->save(false);
+               return[
+                'status'=>false,
+                'data' => [
+                    'items'=>[],
+                    'total_price'=>0,
+                    'total_items'=>0
+                ]
+               ];
             }
 
             return [

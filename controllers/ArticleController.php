@@ -27,7 +27,7 @@ class ArticleController extends Controller
     {
         try {
             $searchModel = new ArticleSearch();
-            $dataProvider = $searchModel->search($this->request->queryParams, '');
+            $dataProvider = $searchModel->search(Yii::$app->request->queryParams, '');
 
             $models = $dataProvider->getModels();
             $data = array_map(function ($item) {
@@ -65,32 +65,39 @@ class ArticleController extends Controller
      */
     public function actionView($id)
     {
-        $article = Article::find()
-            ->byId($id)
-            ->withAsset()
-            ->withTags()
-            ->withProducts()
-            ->withAuthor()
-            ->notDeleted()
-            ->one();
+        try {
+            $article = Article::find()
+                ->byId($id)
+                ->withAsset()
+                ->withTags()
+                ->withProducts()
+                ->withAuthor()
+                ->notDeleted()
+                ->one();
 
-        if (!$article) {
+            if (!$article) {
+                return [
+                    'status' => false,
+                    'data' => null,
+                    'message' => 'Article not found',
+                ];
+            }
+
+            return [
+                'status' => true,
+                'data' => [
+                    'article' => ArticleResponse::fromModel($article),
+                    'now' => date('d/m/Y'),
+                ],
+                'message' => 'Article retrieved successfully',
+            ];
+        } catch (\Throwable $e) {
             return [
                 'status' => false,
                 'data' => null,
-                'message' => 'Article not found',
+                'message' => 'Error retrieving article: ' . $e->getMessage(),
             ];
         }
-        $responseData = ArticleResponse::fromModel($article);
-
-        return [
-            'status' => true,
-            'data' => [
-                'article' => $responseData,
-                'now' => date('d/m/Y'),
-            ],
-            'message' => 'Article retrieved successfully',
-        ];
     }
 
     /**
@@ -204,29 +211,37 @@ class ArticleController extends Controller
      */
     public function actionDelete($id)
     {
-        $article = Article::find()->byId($id)->notDeleted()->one();
+        try {
+            $article = Article::find()->byId($id)->notDeleted()->one();
 
-        if (!$article) {
+            if (!$article) {
+                return [
+                    'status' => false,
+                    'data' => null,
+                    'message' => 'Article not found',
+                ];
+            }
+
+            if ($article->softDelete()) {
+                return [
+                    'status' => true,
+                    'data' => null,
+                    'message' => 'Article deleted successfully',
+                ];
+            }
+
             return [
                 'status' => false,
                 'data' => null,
-                'message' => 'Article not found',
+                'message' => 'Failed to delete article',
             ];
-        }
-
-        if ($article->softDelete()) {
+        } catch (\Throwable $e) {
             return [
-                'status' => true,
+                'status' => false,
                 'data' => null,
-                'message' => 'Article deleted successfully',
+                'message' => 'Error deleting article: ' . $e->getMessage(),
             ];
         }
-
-        return [
-            'status' => false,
-            'data' => null,
-            'message' => 'Failed to delete article',
-        ];
     }
 
 }

@@ -40,7 +40,12 @@ class Cart extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['user_id'], 'required'],
+            [['user_id'], 'required'],  
+            [
+                ['user_id'],
+                'unique',
+                'message' => 'User already has a cart.'
+            ],
             [['user_id', 'created_at', 'updated_at'], 'integer'],
         ];
     }
