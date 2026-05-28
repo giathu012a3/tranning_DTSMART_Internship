@@ -12,9 +12,6 @@ use Yii;
  * @property int $permission_id
  * @property int $created_at
  * @property int $updated_at
- *
- * @property Role $role
- * @property Permission $permission
  */
 class RolePermission extends \yii\db\ActiveRecord
 {
@@ -53,19 +50,4 @@ class RolePermission extends \yii\db\ActiveRecord
         ];
     }
 
-    /**
-     * @return \yii\db\ActiveQuery
-     */
-    public function getRole()
-    {
-        return $this->hasOne(Role::class, ['id' => 'role_id']);
-    }
-
-    /**
-     * @return \yii\db\ActiveQuery
-     */
-    public function getPermission()
-    {
-        return $this->hasOne(Permission::class, ['id' => 'permission_id']);
-    }
 }

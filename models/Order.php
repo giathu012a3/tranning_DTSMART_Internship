@@ -3,7 +3,6 @@
 namespace app\models;
 
 use Yii;
-use yii\behaviors\TimestampBehavior;
 
 /**
  * This is the model class for table "orders".
@@ -15,6 +14,7 @@ use yii\behaviors\TimestampBehavior;
  * @property string $phone
  * @property string $address
  * @property int|null $membership_level_id
+ * @property float|null $membership_discount_rate
  * @property float $discount_amount
  * @property float $total
  * @property float $final_total
@@ -22,24 +22,11 @@ use yii\behaviors\TimestampBehavior;
  * @property int $status
  * @property int $created_at
  * @property int $updated_at
- *
- * @property User $user
- * @property MembershipLevel $membershipLevel
- * @property OrderDetail[] $orderDetails
- * @property CouponUsage $couponUsage
+ * @property int|null $deleted_at
  */
 class Order extends \yii\db\ActiveRecord
 {
-    const SCENARIO_UPDATE = 'update';
 
-    public $items_count;
-
-    public function scenarios()
-    {
-        $scenarios = parent::scenarios();
-        $scenarios[self::SCENARIO_UPDATE] = ['status', 'payment_method', 'full_name', 'phone', 'address', 'email'];
-        return $scenarios;
-    }
 
     /**
      * {@inheritdoc}
@@ -51,15 +38,6 @@ class Order extends \yii\db\ActiveRecord
 
     /**
      * {@inheritdoc}
-     * @return OrderQuery the active query used by this AR class.
-     */
-    public static function find()
-    {
-        return new OrderQuery(get_called_class());
-    }
-
-    /**
-     * {@inheritdoc}
      */
     public function rules()
     {
@@ -67,17 +45,10 @@ class Order extends \yii\db\ActiveRecord
             [['membership_level_id', 'deleted_at'], 'default', 'value' => null],
             [['membership_discount_rate'], 'default', 'value' => 0.00],
             [['status'], 'default', 'value' => 1],
-            [['user_id', 'full_name', 'email', 'phone', 'address', 'discount_amount', 'total', 'final_total', 'payment_method'], 'required'],
+            [['user_id', 'full_name', 'email', 'phone', 'address', 'discount_amount', 'total', 'final_total', 'payment_method', 'created_at', 'updated_at'], 'required'],
             [['user_id', 'membership_level_id', 'status', 'created_at', 'updated_at', 'deleted_at'], 'integer'],
             [['membership_discount_rate', 'discount_amount', 'total', 'final_total'], 'number'],
             [['full_name', 'email', 'phone', 'address', 'payment_method'], 'string', 'max' => 255],
-        ];
-    }
-
-    public function behaviors()
-    {
-        return [
-            TimestampBehavior::class,
         ];
     }
 
@@ -102,88 +73,16 @@ class Order extends \yii\db\ActiveRecord
             'status' => 'Status',
             'created_at' => 'Created At',
             'updated_at' => 'Updated At',
+            'deleted_at' => 'Deleted At',
         ];
     }
 
     /**
-     * Soft delete: set deleted_at to current timestamp and restore product stock.
+     * {@inheritdoc}
+     * @return OrderQuery the active query used by this AR class.
      */
-    public function softDelete(): bool
+    public static function find()
     {
-        if ($this->deleted_at !== null) {
-            return true;
-        }
-
-        $transaction = Yii::$app->db->beginTransaction();
-        try {
-            $this->deleted_at = time();
-            if ($this->save(false)) {
-                foreach ($this->orderDetails as $detail) {
-                    Product::updateAllCounters(
-                        ['stock' => $detail->quantity],
-                        ['id' => $detail->product_id]
-                    );
-                }
-
-                if ($this->user_id) {
-                    $pointsEarned = (int) floor($this->final_total / 10000);
-                    if ($pointsEarned > 0) {
-                        $user = User::findOne($this->user_id);
-                        if ($user) {
-                            $user->total_points = max(0, ($user->total_points ?? 0) - $pointsEarned);
-                            $user->updateMembershipLevel();
-                            $user->save(false);
-                        }
-                    }
-                }
-                if ($this->couponUsage) {
-                    $this->couponUsage->delete();
-                }
-
-                $transaction->commit();
-                return true;
-            }
-            $transaction->rollBack();
-            return false;
-        } catch (\Throwable $e) {
-            $transaction->rollBack();
-            throw $e;
-        }
-    }
-
-    /**
-     * Gets query for [[User]].
-     *
-     * @return \yii\db\ActiveQuery
-     */
-    public function getUser()
-    {
-        return $this->hasOne(User::class, ['id' => 'user_id']);
-    }
-
-    /**
-     * Gets query for [[MembershipLevel]].
-     *
-     * @return \yii\db\ActiveQuery
-     */
-    public function getMembershipLevel()
-    {
-        return $this->hasOne(MembershipLevel::class, ['id' => 'membership_level_id']);
-    }
-
-    /**
-     * @return \yii\db\ActiveQuery
-     */
-    public function getOrderDetails()
-    {
-        return $this->hasMany(OrderDetail::class, ['order_id' => 'id']);
-    }
-
-    /**
-     * @return \yii\db\ActiveQuery
-     */
-    public function getCouponUsage()
-    {
-        return $this->hasOne(CouponUsage::class, ['order_id' => 'id']);
+        return new OrderQuery(get_called_class());
     }
 }

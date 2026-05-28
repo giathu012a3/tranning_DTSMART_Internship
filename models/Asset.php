@@ -2,7 +2,7 @@
 
 namespace app\models;
 
-use yii\behaviors\TimestampBehavior;
+use Yii;
 
 /**
  * This is the model class for table "assets".
@@ -33,16 +33,9 @@ class Asset extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['file_id', 'asset_id', 'asset_type', 'collection_name'], 'required'],
+            [['file_id', 'asset_id', 'asset_type', 'collection_name', 'created_at', 'updated_at'], 'required'],
             [['file_id', 'asset_id', 'created_at', 'updated_at'], 'integer'],
             [['asset_type', 'collection_name'], 'string', 'max' => 255],
-        ];
-    }
-
-    public function behaviors()
-    {
-        return [
-            TimestampBehavior::class
         ];
     }
 
@@ -62,11 +55,4 @@ class Asset extends \yii\db\ActiveRecord
         ];
     }
 
-    /**
-     * @return \yii\db\ActiveQuery
-     */
-    public function getFile()
-    {
-        return $this->hasOne(File::class, ['id' => 'file_id']);
-    }
 }

@@ -13,18 +13,10 @@ use Yii;
  * @property int $quantity
  * @property int $created_at
  * @property int $updated_at
- *
- * @property Cart $cart
  */
 class CartDetail extends \yii\db\ActiveRecord
 {
 
-    public function behaviors()
-    {
-        return [
-            \yii\behaviors\TimestampBehavior::class,
-        ];
-    }
 
     /**
      * {@inheritdoc}
@@ -40,6 +32,7 @@ class CartDetail extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
+            [['updated_at'], 'default', 'value' => 1779417142],
             [['cart_id', 'product_id', 'quantity'], 'required'],
             [['cart_id', 'product_id', 'quantity', 'created_at', 'updated_at'], 'integer'],
         ];
@@ -60,28 +53,4 @@ class CartDetail extends \yii\db\ActiveRecord
         ];
     }
 
-    /**
-     * @return \yii\db\ActiveQuery
-     */
-    public function getCart()
-    {
-        return $this->hasOne(Cart::class, ['id' => 'cart_id']);
-    }
-
-    /**
-     * @return \yii\db\ActiveQuery
-     */
-    public function getProduct()
-    {
-        return $this->hasOne(Product::class, ['id' => 'product_id']);
-    }
-
-    /**
-     * {@inheritdoc}
-     * @return CartDetailsQuery the active query used by this AR class.
-     */
-    public static function find()
-    {
-        return new CartDetailsQuery(get_called_class());
-    }
 }

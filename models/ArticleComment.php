@@ -15,11 +15,6 @@ use Yii;
  * @property int $status
  * @property int $created_at
  * @property int $updated_at
- *
- * @property Article $article
- * @property User $user
- * @property ArticleComment $parent
- * @property ArticleComment[] $children
  */
 class ArticleComment extends \yii\db\ActiveRecord
 {
@@ -44,13 +39,7 @@ class ArticleComment extends \yii\db\ActiveRecord
             [['article_id', 'user_id', 'content', 'created_at', 'updated_at'], 'required'],
             [['article_id', 'user_id', 'parent_id', 'status', 'created_at', 'updated_at'], 'integer'],
             [['content'], 'string'],
-            [
-                ['article_id'],
-                'exist',
-                'skipOnError' => true,
-                'targetClass' => Article::class,
-                'targetAttribute' => ['article_id' => 'id']
-            ],
+            [['article_id'], 'exist', 'skipOnError' => true, 'targetClass' => Articles::class, 'targetAttribute' => ['article_id' => 'id']],
         ];
     }
 
@@ -71,35 +60,4 @@ class ArticleComment extends \yii\db\ActiveRecord
         ];
     }
 
-    /**
-     * @return \yii\db\ActiveQuery
-     */
-    public function getArticle()
-    {
-        return $this->hasOne(Article::class, ['id' => 'article_id']);
-    }
-
-    /**
-     * @return \yii\db\ActiveQuery
-     */
-    public function getUser()
-    {
-        return $this->hasOne(User::class, ['id' => 'user_id']);
-    }
-
-    /**
-     * @return \yii\db\ActiveQuery
-     */
-    public function getParent()
-    {
-        return $this->hasOne(ArticleComment::class, ['id' => 'parent_id']);
-    }
-
-    /**
-     * @return \yii\db\ActiveQuery
-     */
-    public function getChildren()
-    {
-        return $this->hasMany(ArticleComment::class, ['parent_id' => 'id']);
-    }
 }

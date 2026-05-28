@@ -14,9 +14,6 @@ use Yii;
  * @property int $status
  * @property int $created_at
  * @property int $updated_at
- *
- * @property RolePermission[] $rolePermissions
- * @property Role[] $roles
  */
 class Permission extends \yii\db\ActiveRecord
 {
@@ -61,19 +58,4 @@ class Permission extends \yii\db\ActiveRecord
         ];
     }
 
-    /**
-     * @return \yii\db\ActiveQuery
-     */
-    public function getRolePermissions()
-    {
-        return $this->hasMany(RolePermission::class, ['permission_id' => 'id']);
-    }
-
-    /**
-     * @return \yii\db\ActiveQuery
-     */
-    public function getRoles()
-    {
-        return $this->hasMany(Role::class, ['id' => 'role_id'])->via('rolePermissions');
-    }
 }

@@ -29,10 +29,7 @@ class ProductController extends \yii\web\Controller
                     'now' => date('d/m/Y'),
                 ],
                 'pagination' => [
-                    'total_count' => (int) $dataProvider->getTotalCount(),
-                    'page_count' => (int) $dataProvider->getPagination()->getPageCount(),
-                    'current_page' => (int) $dataProvider->getPagination()->getPage() + 1,
-                    'per_page' => (int) $dataProvider->getPagination()->pageSize,
+                    'total_count' => $dataProvider
                 ],
                 'message' => 'Product retrieved successfully',
             ];

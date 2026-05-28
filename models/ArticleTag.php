@@ -12,9 +12,6 @@ use Yii;
  * @property int $tag_id
  * @property int $created_at
  * @property int $updated_at
- *
- * @property Article $article
- * @property Tag $tag
  */
 class ArticleTag extends \yii\db\ActiveRecord
 {
@@ -26,13 +23,6 @@ class ArticleTag extends \yii\db\ActiveRecord
     public static function tableName()
     {
         return 'article_tags';
-    }
-
-    public function behaviors()
-    {
-        return [
-            \yii\behaviors\TimestampBehavior::class,
-        ];
     }
 
     /**
@@ -60,21 +50,4 @@ class ArticleTag extends \yii\db\ActiveRecord
         ];
     }
 
-    /**
-     * @return \yii\db\ActiveQuery
-     */
-    public function getArticle()
-    {
-        return $this->hasOne(Article::class, ['id' => 'article_id']);
-    }
-
-    /**
-     * @return \yii\db\ActiveQuery
-     */
-    public function getTag()
-    {
-        return $this->hasOne(Tag::class, ['id' => 'tag_id']);
-    }
-
-    
 }

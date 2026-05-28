@@ -12,8 +12,6 @@ use Yii;
  * @property int $article_id
  * @property int $created_at
  * @property int $updated_at
- *
- * @property Article $article
  */
 class ProductArticle extends \yii\db\ActiveRecord
 {
@@ -25,13 +23,6 @@ class ProductArticle extends \yii\db\ActiveRecord
     public static function tableName()
     {
         return 'product_articles';
-    }
-
-    public function behaviors()
-    {
-        return [
-            \yii\behaviors\TimestampBehavior::class,
-        ];
     }
 
     /**
@@ -58,21 +49,5 @@ class ProductArticle extends \yii\db\ActiveRecord
             'updated_at' => 'Updated At',
         ];
     }
-
-    /**
-     * @return \yii\db\ActiveQuery
-     */
-    public function getArticle()
-    {
-        return $this->hasOne(Article::class, ['id' => 'article_id']);
-    }
-    /**
-     * @return \yii\db\ActiveQuery
-     */
-    public function getProduct()
-    {
-        return $this->hasOne(Product::class, ['id' => 'product_id']);
-    }
-
 
 }

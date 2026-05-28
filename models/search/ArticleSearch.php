@@ -72,7 +72,7 @@ class ArticleSearch extends Article
                 'validatePage' => true,
             ],
             'sort' => [
-                'defaultOrder' => ['articles.id' => SORT_DESC],
+                'defaultOrder' => ['id' => SORT_DESC],
             ],
         ]);
 

@@ -19,8 +19,6 @@ use Yii;
  * @property int $expiry_date
  * @property int $created_at
  * @property int $updated_at
- *
- * @property CouponUsage[] $couponUsages
  */
 class Coupon extends \yii\db\ActiveRecord
 {
@@ -43,9 +41,7 @@ class Coupon extends \yii\db\ActiveRecord
             [['max_amount', 'min_purchase', 'usage_limit'], 'default', 'value' => null],
             [['status'], 'default', 'value' => 1],
             [['code', 'type', 'value', 'start_date', 'expiry_date', 'created_at', 'updated_at'], 'required'],
-            [['max_amount', 'min_purchase'], 'number', 'min' => 0],
-            [['value'], 'number'],
-            [['value'], 'compare', 'compareValue' => 0, 'operator' => '>', 'type' => 'number', 'message' => 'Coupon value must be greater than 0.'],
+            [['value', 'max_amount', 'min_purchase'], 'number'],
             [['usage_limit', 'status', 'start_date', 'expiry_date', 'created_at', 'updated_at'], 'integer'],
             [['code', 'type'], 'string', 'max' => 255],
             [['code'], 'unique'],
@@ -73,11 +69,4 @@ class Coupon extends \yii\db\ActiveRecord
         ];
     }
 
-    /**
-     * @return \yii\db\ActiveQuery
-     */
-    public function getCouponUsages()
-    {
-        return $this->hasMany(CouponUsage::class, ['coupon_id' => 'id']);
-    }
 }

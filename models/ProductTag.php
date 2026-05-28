@@ -3,7 +3,6 @@
 namespace app\models;
 
 use Yii;
-use yii\behaviors\TimestampBehavior;
 
 /**
  * This is the model class for table "product_tags".
@@ -26,20 +25,13 @@ class ProductTag extends \yii\db\ActiveRecord
         return 'product_tags';
     }
 
-    public function behaviors()
-    {
-        return [
-            TimestampBehavior::class,
-        ];
-    }
-
     /**
      * {@inheritdoc}
      */
     public function rules()
     {
         return [
-            [['product_id', 'tag_id'], 'required'],
+            [['product_id', 'tag_id', 'created_at', 'updated_at'], 'required'],
             [['product_id', 'tag_id', 'created_at', 'updated_at'], 'integer'],
         ];
     }
@@ -58,28 +50,4 @@ class ProductTag extends \yii\db\ActiveRecord
         ];
     }
 
-    /**
-     * {@inheritdoc}
-     * @return ProductTagsQuery the active query used by this AR class.
-     */
-    public static function find()
-    {
-        return new ProductTagsQuery(get_called_class());
-    }
-
-    /**
-     * @return \yii\db\ActiveQuery
-     */
-    public function getProduct()
-    {
-        return $this->hasOne(Product::class, ['id' => 'product_id']);
-    }
-
-    /**
-     * @return \yii\db\ActiveQuery
-     */
-    public function getTag()
-    {
-        return $this->hasOne(Tag::class, ['id' => 'tag_id']);
-    }
 }

@@ -3,7 +3,6 @@
 namespace app\models;
 
 use Yii;
-use yii\behaviors\TimestampBehavior;
 
 /**
  * This is the model class for table "categories".
@@ -33,16 +32,11 @@ class Category extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
+            [['deleted_at'], 'default', 'value' => null],
             [['status'], 'default', 'value' => 1],
-            [['name'], 'required'],
+            [['name', 'created_at', 'updated_at'], 'required'],
             [['status', 'created_at', 'updated_at', 'deleted_at'], 'integer'],
             [['name'], 'string', 'max' => 255],
-            [
-                ['name'],
-                'unique',
-                'filter' => ['deleted_at' => null],
-                'message' => 'This category name already exists.'
-            ],
         ];
     }
 
@@ -52,39 +46,21 @@ class Category extends \yii\db\ActiveRecord
     public function attributeLabels()
     {
         return [
-            'id' => Yii::t('app', 'ID'),
-            'name' => Yii::t('app', 'Name'),
-
+            'id' => 'ID',
+            'name' => 'Name',
+            'status' => 'Status',
+            'created_at' => 'Created At',
+            'updated_at' => 'Updated At',
+            'deleted_at' => 'Deleted At',
         ];
-    }
-    public function behaviors()
-    {
-        return [
-            TimestampBehavior::class,
-        ];
-    }
-
-    public static function find()
-    {
-        return new CategoriesQuery(get_called_class());
     }
 
     /**
-     * @return \yii\db\ActiveQuery
+     * {@inheritdoc}
+     * @return CategoriesQuery the active query used by this AR class.
      */
-    public function getProducts()
+    public static function find()
     {
-        return $this->hasMany(Product::class, ['category_id' => 'id'])->notDeleted();
-    }
-
-    public function getActiveProducts()
-    {
-        return $this->getProducts()->active();
-    }
-
-    public function softDelete()
-    {
-        $this->deleted_at = time();
-        return $this->save(false);
+        return new CategoriesQuery(get_called_class());
     }
 }

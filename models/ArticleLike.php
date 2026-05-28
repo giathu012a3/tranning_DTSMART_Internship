@@ -12,9 +12,6 @@ use Yii;
  * @property int $user_id
  * @property int $created_at
  * @property int $updated_at
- *
- * @property Article $article
- * @property User $user
  */
 class ArticleLike extends \yii\db\ActiveRecord
 {
@@ -53,19 +50,4 @@ class ArticleLike extends \yii\db\ActiveRecord
         ];
     }
 
-    /**
-     * @return \yii\db\ActiveQuery
-     */
-    public function getArticle()
-    {
-        return $this->hasOne(Article::class, ['id' => 'article_id']);
-    }
-
-    /**
-     * @return \yii\db\ActiveQuery
-     */
-    public function getUser()
-    {
-        return $this->hasOne(User::class, ['id' => 'user_id']);
-    }
 }

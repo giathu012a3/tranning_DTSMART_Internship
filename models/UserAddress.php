@@ -16,8 +16,6 @@ use Yii;
  * @property int $status
  * @property int $created_at
  * @property int $updated_at
- *
- * @property User $user
  */
 class UserAddress extends \yii\db\ActiveRecord
 {
@@ -62,14 +60,6 @@ class UserAddress extends \yii\db\ActiveRecord
             'created_at' => 'Created At',
             'updated_at' => 'Updated At',
         ];
-    }
-
-    /**
-     * @return \yii\db\ActiveQuery
-     */
-    public function getUser()
-    {
-        return $this->hasOne(User::class, ['id' => 'user_id']);
     }
 
 }

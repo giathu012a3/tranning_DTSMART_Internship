@@ -14,9 +14,6 @@ use Yii;
  * @property int $status
  * @property int $created_at
  * @property int $updated_at
- *
- * @property User[] $users
- * @property Order[] $orders
  */
 class MembershipLevel extends \yii\db\ActiveRecord
 {
@@ -62,28 +59,4 @@ class MembershipLevel extends \yii\db\ActiveRecord
         ];
     }
 
-    /**
-     * @return \yii\db\ActiveQuery
-     */
-    public function getUsers()
-    {
-        return $this->hasMany(User::class, ['member_ship_id' => 'id']);
-    }
-
-    /**
-     * @return \yii\db\ActiveQuery
-     */
-    public function getOrders()
-    {
-        return $this->hasMany(Order::class, ['membership_level_id' => 'id']);
-    }
-
-    /**
-     * {@inheritdoc}
-     * @return MembershipLevelsQuery the active query used by this AR class.
-     */
-    public static function find()
-    {
-        return new MembershipLevelsQuery(get_called_class());
-    }
 }

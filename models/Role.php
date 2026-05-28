@@ -13,9 +13,6 @@ use Yii;
  * @property int $status
  * @property int $created_at
  * @property int $updated_at
- *
- * @property RolePermission[] $rolePermissions
- * @property Permission[] $permissions
  */
 class Role extends \yii\db\ActiveRecord
 {
@@ -60,34 +57,4 @@ class Role extends \yii\db\ActiveRecord
         ];
     }
 
-    /**
-     * @return \yii\db\ActiveQuery
-     */
-    public function getRolePermissions()
-    {
-        return $this->hasMany(RolePermission::class, ['role_id' => 'id']);
-    }
-
-    /**
-     * @return \yii\db\ActiveQuery
-     */
-    public function getPermissions()
-    {
-        return $this->hasMany(Permission::class, ['id' => 'permission_id'])->via('rolePermissions');
-    }
-
-    /**
-     * @return \yii\db\ActiveQuery
-     */
-    public function getUserRoles()
-    {
-        return $this->hasMany(UserRole::class, ['role_id' => 'id']);
-    }
-
-    /**
-     * @return \yii\db\ActiveQuery
-     */
-    public function getUsers(){
-        return $this->hasMany(User::class, ['id' => 'user_id'])->via('userRoles');
-    }
 }
