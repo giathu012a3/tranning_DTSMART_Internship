@@ -10,13 +10,6 @@ use app\models\search\OrderSearch;
 
 class OrderController extends BaseApiController
 {
-    public function behaviors()
-    {
-        $behaviors = parent::behaviors();
-        $behaviors['authenticator']['except'] = ['delete'];
-        return $behaviors;
-    }
-
     public function actionCreate()
     {
         try {
