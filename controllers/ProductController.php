@@ -11,9 +11,6 @@ use app\models\search\ProductSearch;
 
 class ProductController extends \yii\web\Controller
 {
-    public $enableCsrfValidation = false;
-
-
     public function actionIndex()
     {
         try {

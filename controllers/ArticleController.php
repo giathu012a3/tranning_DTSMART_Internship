@@ -15,8 +15,6 @@ use yii\web\NotFoundHttpException;
  */
 class ArticleController extends Controller
 {
-    public $enableCsrfValidation = false;
-
 
     /**
      * Lists all Article models.
@@ -112,24 +110,12 @@ class ArticleController extends Controller
         try {
             if ($form->load(Yii::$app->request->post(), '')) {
                 if ($form->save()) {
-                    $article = $form->getArticle();
-
-                    $updatedArticle = Article::find()
-                        ->withAsset()
-                        ->withTags()
-                        ->withProducts()
-                        ->withAuthor()
-                        ->byId($article->id)
-                        ->notDeleted()
-                        ->one();
-                    $responseData = ArticleResponse::fromModel($updatedArticle);
-
                     return [
                         'status' => true,
                         'data' => [
-                            'article' => $responseData,
+                            'article' => $this->getArticleResponse($form->getArticle()),
                             'now' => date('d/m/Y'),
-                        ],
+                        ],  
                         'message' => 'Article created successfully'
                     ];
                 }
@@ -167,20 +153,10 @@ class ArticleController extends Controller
             if (Yii::$app->request->isPost) {
                 $form->load(Yii::$app->request->post(), '');
                 if ($form->save()) {
-                    $updatedArticle = Article::find()
-                        ->withAsset()
-                        ->withTags()
-                        ->withProducts()
-                        ->withAuthor()
-                        ->byId($id)
-                        ->notDeleted()
-                        ->one();
-                    $responseData = ArticleResponse::fromModel($updatedArticle);
-
                     return [
                         'status' => true,
                         'data' => [
-                            'article' => $responseData,
+                            'article' => $this->getArticleResponse($form->getArticle()),
                             'now' => date('d/m/Y'),
                         ],
                         'message' => 'Article updated successfully',
@@ -244,4 +220,23 @@ class ArticleController extends Controller
         }
     }
 
+    /**
+     * Helper to get a fully eager-loaded ArticleResponse object.
+     *
+     * @param Article $article
+     * @return ArticleResponse
+     */
+    private function getArticleResponse(Article $article): ArticleResponse
+    {
+        $updatedArticle = Article::find()
+            ->withAsset()
+            ->withTags()
+            ->withProducts()
+            ->withAuthor()
+            ->byId($article->id)
+            ->notDeleted()
+            ->one();
+
+        return ArticleResponse::fromModel($updatedArticle);
+    }
 }

@@ -17,8 +17,6 @@ use yii\web\NotFoundHttpException;
  */
 class CategoryController extends Controller
 {
-    public $enableCsrfValidation = false;
-
     /**
      * Lists all Category models.
      *

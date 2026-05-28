@@ -7,8 +7,6 @@ use yii\filters\auth\HttpBearerAuth;
 
 class BaseApiController extends Controller
 {
-    public $enableCsrfValidation = false;
-
     public function behaviors()
     {
         $behaviors = parent::behaviors();

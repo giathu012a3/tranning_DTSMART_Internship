@@ -118,7 +118,6 @@ class Order extends \yii\db\ActiveRecord
         try {
             $this->deleted_at = time();
             if ($this->save(false)) {
-                // 1. Restore product stock
                 foreach ($this->orderDetails as $detail) {
                     Product::updateAllCounters(
                         ['stock' => $detail->quantity],
@@ -126,28 +125,17 @@ class Order extends \yii\db\ActiveRecord
                     );
                 }
 
-                // 2. Deduct earned points and recalculate membership level
                 if ($this->user_id) {
                     $pointsEarned = (int) floor($this->final_total / 10000);
                     if ($pointsEarned > 0) {
                         $user = User::findOne($this->user_id);
                         if ($user) {
                             $user->total_points = max(0, ($user->total_points ?? 0) - $pointsEarned);
-
-                            // Find the appropriate membership level based on new points
-                            $newLevel = MembershipLevel::find()
-                                ->where(['status' => 1])
-                                ->andWhere(['<=', 'points_required', $user->total_points])
-                                ->orderBy(['points_required' => SORT_DESC])
-                                ->one();
-
-                            $user->member_ship_id = $newLevel ? $newLevel->id : null;
+                            $user->updateMembershipLevel();
                             $user->save(false);
                         }
                     }
                 }
-
-                // 3. Remove coupon usage to restore coupon availability
                 if ($this->couponUsage) {
                     $this->couponUsage->delete();
                 }

@@ -25,7 +25,7 @@ $config = [
         'request' => [
             // !!! insert a secret key in the following (if it is empty) - this is required by cookie validation
             'cookieValidationKey' => '23456789',
-
+            'enableCsrfValidation' => false,
             'parsers' => [
                 'application/json' => 'yii\web\JsonParser',
             ],
@@ -63,15 +63,6 @@ $config = [
             'enablePrettyUrl' => true,
             'showScriptName' => false,
             'rules' => [
-                // 'GET api/orders' => 'order/index',
-                // 'GET api/products/<id:\d+>' => 'product/view',
-                // 'POST api/orders'              => 'order/create',
-                // 'GET api/orders/<id:\d+>'      => 'order/view',
-                // 'DELETE api/orders/<id:\d+>'   => 'order/delete',
-                // 'GET api/orders'               => 'order/index',
-                // 'GET api/products/featured' => 'product/featured',
-                // 'PUT api/categories/<id:\d+>'=>'category/update',
-                // 'GET api/articles/<slug:>' => 'article/view',
                 [
                     'class' => 'yii\rest\UrlRule',
                     'controller' => 'category',

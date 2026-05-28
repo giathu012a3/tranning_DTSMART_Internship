@@ -198,8 +198,10 @@ class User extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
             ->byPoints($this->total_points)
             ->one();
 
-        if ($newLevel && $newLevel->id !== $this->member_ship_id) {
-            $this->member_ship_id = $newLevel->id;
+        $newLevelId = $newLevel ? $newLevel->id : null;
+
+        if ($newLevelId !== $this->member_ship_id) {
+            $this->member_ship_id = $newLevelId;
         }
     }
 }
