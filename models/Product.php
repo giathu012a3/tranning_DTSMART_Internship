@@ -2,6 +2,7 @@
 
 namespace app\models;
 
+use app\models\query\ProductsQuery;
 use Yii;
 
 /**
@@ -38,7 +39,7 @@ class Product extends \yii\db\ActiveRecord
         return [
             [['description', 'deleted_at'], 'default', 'value' => null],
             [['status'], 'default', 'value' => 1],
-            [['name', 'price', 'stock', 'category_id', 'created_at', 'updated_at'], 'required'],
+            [['name', 'price', 'stock', 'category_id'], 'required'],
             [['price', 'stock'], 'number'],
             [['status', 'category_id', 'created_at', 'updated_at', 'deleted_at'], 'integer'],
             [['description'], 'string'],

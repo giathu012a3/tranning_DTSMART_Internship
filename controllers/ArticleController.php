@@ -7,7 +7,7 @@ use app\models\forms\ArticleForm;
 use app\models\response\ArticleResponse;
 use app\models\search\ArticleSearch;
 use Yii;
-use yii\web\Controller;
+use yii\rest\Controller;
 use yii\web\NotFoundHttpException;
 
 /**

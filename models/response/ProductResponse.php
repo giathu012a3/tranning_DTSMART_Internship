@@ -2,11 +2,10 @@
 
 namespace app\models\response;
 
-use app\models\Product;
+use app\models\ProductModel;
 
-class ProductResponse extends Product
+class ProductResponse extends ProductModel
 {
-    public $articles_count;
 
     public function fields()
     {
@@ -41,8 +40,8 @@ class ProductResponse extends Product
                     $filesCount = (int) $model->getAssets()->count();
                 }
 
-                $articlesCount = $model->articles_count !== null 
-                    ? (int) $model->articles_count 
+                $articlesCount = $model->articles_count !== null
+                    ? (int) $model->articles_count
                     : ($model->isRelationPopulated('articles') ? count($model->articles) : (int) $model->getArticles()->count());
 
                 return [
@@ -80,7 +79,7 @@ class ProductResponse extends Product
                                 'file_path' => $asset->file->file_path,
                                 'file_size' => $asset->file->file_size,
                                 'collection_name' => $asset->collection_name,
-                                'file_type'  => $asset->file->file_type
+                                'file_type' => $asset->file->file_type
                             ];
                         }
                     }
@@ -112,7 +111,7 @@ class ProductResponse extends Product
      * @param Product $product
      * @return self
      */
-    public static function fromModel(Product $product)
+    public static function fromModel(ProductModel $product)
     {
         $response = new self();
         self::populateRecord($response, $product->attributes);

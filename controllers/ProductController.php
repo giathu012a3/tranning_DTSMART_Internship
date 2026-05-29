@@ -3,203 +3,136 @@
 namespace app\controllers;
 
 use app\models\forms\ProductForm;
+use app\models\forms\TagForm;
 use app\models\response\ProductResponse;
 use Yii;
-use app\models\Product;
+use app\models\ProductModel;
+use app\models\TagModel;
 use app\models\search\ProductSearch;
 
-
-class ProductController extends \yii\web\Controller
+class ProductController extends BaseApiController
 {
     public function actionIndex()
     {
-        try {
-            $searchModel = new ProductSearch();
-            $dataProvider = $searchModel->search(Yii::$app->request->queryParams, '');
+        $searchModel  = new ProductSearch();
+        $dataProvider = $searchModel->search(Yii::$app->request->queryParams, '');
+        $serialized   = $this->serializeData($dataProvider);
+        $items        = array_map(fn($model) => ProductResponse::fromModel($model), $dataProvider->getModels());
 
-            $models = $dataProvider->getModels();
-            $responseData = array_map(function ($item) {
-                return ProductResponse::fromModel($item);
-            }, $models);
-
-            return [
-                'status' => true,
-                'data' => [
-                    'items' => $responseData,
-                    'now' => date('d/m/Y'),
-                ],
-                'pagination' => [
-                    'total_count' => $dataProvider
-                ],
-                'message' => 'Product retrieved successfully',
-            ];
-        } catch (\Throwable $e) {
-            return [
-                'status' => false,
-                'data' => null,
-                'message' => 'Error retrieving product: ' . $e->getMessage(),
-            ];
-        }
+        return [
+            'status'     => true,
+            'data'       => $items,
+            'pagination' => $serialized['pagination'],
+            'message'    => 'Products retrieved successfully',
+        ];
     }
 
     public function actionView($id)
     {
-        try {
-            $product = Product::find()
-                ->notDeleted()
-                ->byId($id)
-                ->one();
+        $product = ProductModel::find()->notDeleted()->byId($id)->one();
 
-            if (!$product) {
-                return [
-                    'status' => false,
-                    'data' => null,
-                    'message' => 'Product not found',
-                ];
-            }
-
+        if (!$product) {
             return [
-                'status' => true,
-                'data' => [
-                    'product' => $this->getProductResponse($product),
-                    'now' => date('d/m/Y'),
-                ],
-                'message' => 'Product retrieved successfully',
-            ];
-        } catch (\Throwable $e) {
-            return [
-                'status' => false,
-                'data' => null,
-                'message' => 'Error retrieving product: ' . $e->getMessage(),
+                'status'  => false,
+                'data'    => null,
+                'message' => 'Product not found',
             ];
         }
+
+        return [
+            'status'  => true,
+            'data'    => $this->serializeData($this->loadProductResponse($product->id)),
+            'message' => 'Product retrieved successfully',
+        ];
     }
 
     public function actionCreate()
     {
         $form = new ProductForm();
 
-        try {
-            if ($form->load(Yii::$app->request->post(), '')) {
-                if ($form->save()) {
-                    return [
-                        'status' => true,
-                        'data' => [
-                            'product' => $this->getProductResponse($form->getProduct()),
-                            'now' => date('d/m/Y'),
-                        ],
-                        'message' => 'Product created successfully',
-                    ];
-                }
-            }
+        if ($form->load(Yii::$app->request->post(), '') && $form->save()) {
+            TagModel::syncForProduct($form->id, TagForm::resolveIds($form->tags ?? []));
 
             return [
-                'status' => false,
-                'data' => $form->getErrors(),
-                'message' => 'Validation failed: ' . json_encode($form->errors),
-            ];
-        } catch (\Throwable $e) {
-            return [
-                'status' => false,
-                'data' => null,
-                'message' => 'Error creating product: ' . $e->getMessage(),
+                'status'  => true,
+                'data'    => $this->serializeData($this->loadProductResponse($form->id)),
+                'message' => 'Product created successfully',
             ];
         }
+
+        return [
+            'status'  => false,
+            'data'    => $form->getErrors(),
+            'message' => 'Validation failed: ' . json_encode($form->errors),
+        ];
     }
 
     public function actionUpdate($id)
     {
-        $product = Product::find()->byId($id)->notDeleted()->one();
+        $form = ProductForm::find()->byId($id)->notDeleted()->one();
 
-        if (!$product) {
+        if (!$form) {
             return [
-                'status' => false,
-                'data' => null,
+                'status'  => false,
+                'data'    => null,
                 'message' => 'Product not found',
             ];
         }
 
-        $form = new ProductForm($product);
-
-        try {
-            if (Yii::$app->request->isPost) {
-                $form->load(Yii::$app->request->post(), '');
-                if ($form->save()) {
-                    return [
-                        'status' => true,
-                        'data' => [
-                            'product' => $this->getProductResponse($product),
-                            'now' => date('d/m/Y'),
-                        ],
-                        'message' => 'Product updated successfully',
-                    ];
-                }
-            }
+        if ($form->load(Yii::$app->request->post(), '') && $form->save()) {
+            TagModel::syncForProduct($form->id, TagForm::resolveIds($form->tags ?? []));
 
             return [
-                'status' => false,
-                'data' => null,
-                'message' => 'Validation failed: ' . json_encode($form->errors),
-            ];
-        } catch (\Throwable $e) {
-            return [
-                'status' => false,
-                'data' => null,
-                'message' => 'Error updating product: ' . $e->getMessage(),
+                'status'  => true,
+                'data'    => $this->serializeData($this->loadProductResponse($form->id)),
+                'message' => 'Product updated successfully',
             ];
         }
+
+        return [
+            'status'  => false,
+            'data'    => $form->getErrors(),
+            'message' => 'Validation failed: ' . json_encode($form->errors),
+        ];
     }
 
     public function actionDelete($id)
     {
-        $product = Product::find()->byId($id)->notDeleted()->one();
+        $product = ProductModel::find()->byId($id)->notDeleted()->one();
 
         if (!$product) {
             return [
-                'status' => false,
-                'data' => null,
+                'status'  => false,
+                'data'    => null,
                 'message' => 'Product not found',
             ];
         }
 
-        try {
-            if ($product->softDelete()) {
-                return [
-                    'status' => true,
-                    'data' => null,
-                    'message' => 'Product moved to trash successfully',
-                ];
-            }
+        if ($product->softDelete()) {
             return [
-                'status' => false,
-                'data' => null,
-                'message' => 'Failed to delete product',
-            ];
-        } catch (\Throwable $e) {
-            return [
-                'status' => false,
-                'data' => null,
-                'message' => 'Error delete product: ' . $e->getMessage(),
+                'status'  => true,
+                'data'    => null,
+                'message' => 'Product moved to trash successfully',
             ];
         }
+
+        return [
+            'status'  => false,
+            'data'    => null,
+            'message' => 'Failed to delete product',
+        ];
     }
 
-    /**
-     * Helper to get a fully eager-loaded ProductResponse object.
-     *
-     * @param Product $product
-     * @return ProductResponse
-     */
-    private function getProductResponse(Product $product)
+    private function loadProductResponse(int $id): ?ProductResponse
     {
-        $updatedProduct = Product::find()
+        $product = ProductModel::find()
             ->withAsset()
             ->withCategory()
             ->withTags()
             ->withArticles()
-            ->byId($product->id)
+            ->byId($id)
             ->one();
 
-        return ProductResponse::fromModel($updatedProduct);
+        return $product ? ProductResponse::fromModel($product) : null;
     }
 }

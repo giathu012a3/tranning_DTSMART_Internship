@@ -2,51 +2,22 @@
 
 namespace app\models\forms;
 
-use Yii;
-use yii\base\Model;
-use app\models\Product;
-use app\models\Tag;
+use app\models\ProductModel;
 use app\models\ProductTag;
 use yii\web\UploadedFile;
 
-class ProductForm extends Model
+class ProductForm extends ProductModel
 {
-    private $_product;
-
-    public $name;
-    public $price;
-    public $category_id;
-    public $status;
-    public $stock;
-    public $description;
 
     public $tags;
 
-    public $deleted_image_ids;
-
-    public function __construct(?Product $product = null, $config = [])
-    {
-        if ($product === null) {
-            $product = new Product();
-        }
-        $this->_product = $product;
-
-        $this->name = $product->name;
-        $this->price = $product->price;
-        $this->category_id = $product->category_id;
-        $this->status = $product->status;
-        $this->stock = $product->stock;
-        $this->description = $product->description;
-
-        parent::__construct($config);
-    }
+    private $_currentTags = null;
 
     public function rules()
     {
-        return [
-            [['name', 'price', 'category_id', 'stock'], 'required'],
+        $rules = parent::rules();
+        return array_merge($rules, [
             [['stock'], 'number', 'min' => 0],
-            [['price'], 'number'],
             [
                 ['price'],
                 'compare',
@@ -55,189 +26,65 @@ class ProductForm extends Model
                 'type' => 'number',
                 'message' => 'Price must be greater than 0.'
             ],
-            [['category_id', 'status'], 'integer'],
-            [['description'], 'string'],
-            [['name'], 'string', 'max' => 255],
             [
                 ['name'],
                 'unique',
-                'targetClass' => Product::class,
-                'filter' => function ($query) {
-                    if (!$this->_product->isNewRecord) {
-                        $query->andWhere(['not', ['id' => $this->_product->id]]);
-                    }
-                    $query->andWhere(['deleted_at' => null]);
-                },
+                'filter' => ['deleted_at' => null],
                 'message' => 'This product name already exists.'
             ],
-            [['tags', 'deleted_image_ids'], 'safe'],
-            [['name'], 'validateAnyChange', 'skipOnEmpty' => false],
-        ];
+            [['tags'], 'filter', 'filter' => function ($tags) {
+                if (!is_array($tags)) return [];
+                return array_unique(array_filter(array_map('trim', $tags), function ($v) {
+                    return $v !== '' && strlen($v) <= 255;
+                }));
+            }],
+            [['deleted_image_ids'], 'safe'],
+            [['name'], 'validateHasChanges', 'skipOnEmpty' => false],
+        ]);
     }
 
-    public function validateAnyChange($attribute, $params)
+    public function afterFind()
     {
-        if (!$this->_product->isNewRecord) {
-            $nameUnchanged = ($this->name === $this->_product->name);
-            $priceUnchanged = ((float)$this->price === (float)$this->_product->price);
-            $categoryUnchanged = ((int)$this->category_id === (int)$this->_product->category_id);
-            $statusUnchanged = ((int)$this->status === (int)$this->_product->status);
-            $stockUnchanged = ((float)$this->stock === (float)$this->_product->stock);
-            $descriptionUnchanged = ($this->description === $this->_product->description);
+        parent::afterFind();
+        $this->tags = $this->getCurrentTags();
+    }
 
-            if ($this->tags === null) {
-                $tagsUnchanged = true;
-            } else {
-                $targetTags = [];
-                if (is_array($this->tags)) {
-                    foreach ($this->tags as $name) {
-                        if (is_string($name)) {
-                            $name = trim($name);
-                            if (!empty($name) && strlen($name) <= 255) {
-                                $targetTags[] = $name;
-                            }
-                        }
-                    }
-                }
-                $targetTags = array_unique($targetTags);
-                $currentTags = ProductTag::find()
-                    ->alias('pt')
-                    ->innerJoinWith('tag t')
-                    ->where(['pt.product_id' => $this->_product->id])
-                    ->select('t.name')
-                    ->column();
-                $tagsUnchanged = (count($targetTags) === count($currentTags) &&
-                    !array_diff($targetTags, $currentTags) &&
-                    !array_diff($currentTags, $targetTags));
+    public function validateHasChanges($attribute, $params)
+    {
+        if (!$this->isNewRecord) {
+            $dirty = $this->getDirtyAttributes();
+
+            $tagsUnchanged = true;
+            if ($this->tags !== null) {
+                $currentTags = $this->getCurrentTags();
+                $tagsUnchanged = (count($this->tags) === count($currentTags) &&
+                    !array_diff($this->tags, $currentTags) &&
+                    !array_diff($currentTags, $this->tags));
             }
 
             $noNewThumbnail = empty(UploadedFile::getInstanceByName('thumbnail'));
-            $noNewImages = empty(UploadedFile::getInstancesByName('images')) && empty(UploadedFile::getInstanceByName('images'));
+            $noNewImages = empty(UploadedFile::getInstancesByName('images'));
             $noDeletions = empty($this->deleted_image_ids);
 
-            if (
-                $nameUnchanged && $priceUnchanged &&
-                $categoryUnchanged && $statusUnchanged &&
-                $stockUnchanged && $descriptionUnchanged &&
-                $tagsUnchanged && $noNewThumbnail &&
-                $noNewImages && $noDeletions
-            ) {
+            unset($dirty['updated_at'], $dirty['created_at']);
+
+            if (empty($dirty) && $tagsUnchanged && $noNewThumbnail && $noNewImages && $noDeletions) {
                 $this->addError('name', 'No changes detected. Please modify at least one field to update.');
             }
         }
     }
 
-    /**
-     * @return Product
-     */
-    public function getProduct()
+    public function getCurrentTags()
     {
-        return $this->_product;
+        if ($this->_currentTags === null) {
+            $this->_currentTags = ProductTag::find()
+                ->alias('pt')
+                ->innerJoinWith('tag t')
+                ->where(['pt.product_id' => $this->id])
+                ->select('t.name')
+                ->column();
+        }
+        return $this->_currentTags;
     }
 
-    public function save()
-    {
-        if (!$this->validate()) {
-            return false;
-        }
-
-        $transaction = Yii::$app->db->beginTransaction();
-        try {
-            $this->_product->name        = $this->name;
-            $this->_product->price       = $this->price;
-            $this->_product->category_id = $this->category_id;
-            $this->_product->status      = $this->status;
-            $this->_product->stock       = $this->stock;
-            $this->_product->description = $this->description;
-
-            $isNewRecord = $this->_product->isNewRecord;
-            $this->_product->scenario         = $isNewRecord ? Product::SCENARIO_CREATE : Product::SCENARIO_UPDATE;
-            $this->_product->deleted_image_ids = $this->deleted_image_ids;
-
-            if (!$this->_product->save()) {
-                $this->addErrors($this->_product->getErrors());
-                return false;
-            }
-
-            $this->syncTags($isNewRecord);
-
-            $transaction->commit();
-            return true;
-        } catch (\Throwable $e) {
-            $transaction->rollBack();
-            throw $e;
-        }
-    }
-
-
-    private function syncTags($isNewRecord = false)
-    {
-        if ($this->tags === null) {
-            return;
-        }
-
-        $tagNames = [];
-        if (is_array($this->tags)) {
-            foreach ($this->tags as $name) {
-                if (!is_string($name)) continue;
-                $name = trim($name);
-                if (!empty($name) && strlen($name) <= 255) {
-                    $tagNames[] = $name;
-                }
-            }
-        }
-        $tagNames = array_unique($tagNames);
-        $targetTagIds = [];
-
-        if (!empty($tagNames)) {
-            $existingTags = Tag::find()->where(['in', 'name', $tagNames])->indexBy('name')->all();
-
-            foreach ($tagNames as $name) {
-                if (isset($existingTags[$name])) {
-                    $targetTagIds[] = $existingTags[$name]->id;
-                } else {
-                    $tag = new Tag();
-                    $tag->name = $name;
-                    if ($tag->save()) {
-                        $targetTagIds[] = $tag->id;
-                    }
-                }
-            }
-        }
-
-        $currentTagIds = $isNewRecord ? [] : ProductTag::find()
-            ->where(['product_id' => $this->_product->id])
-            ->select('tag_id')->column();
-
-        $tagsToAdd = array_diff($targetTagIds, $currentTagIds);
-        $tagsToRemove = array_diff($currentTagIds, $targetTagIds);
-
-        if (!empty($tagsToRemove)) {
-            ProductTag::deleteAll([
-                'product_id' => $this->_product->id,
-                'tag_id' => $tagsToRemove
-            ]);
-        }
-
-        if (!empty($tagsToAdd)) {
-            $rows = [];
-            $time = time();
-            foreach ($tagsToAdd as $tagId) {
-                $rows[] = [
-                    $this->_product->id,
-                    $tagId,
-                    $time,
-                    $time
-                ];
-            }
-            Yii::$app->db->createCommand()
-                ->batchInsert(ProductTag::tableName(), [
-                    'product_id',
-                    'tag_id',
-                    'created_at',
-                    'updated_at'
-                ], $rows)
-                ->execute();
-        }
-    }
 }

@@ -6,7 +6,7 @@ use Yii;
 use yii\behaviors\TimestampBehavior;
 use app\behaviors\UploadAssetBehavior;
 
-class ProductWithRelations extends Product
+class ProductModel extends Product
 {
     public $deleted_image_ids;
     public $thumbnail;
@@ -55,8 +55,9 @@ class ProductWithRelations extends Product
      */
     public function getArticles()
     {
-        return $this->hasMany(Article::class, ['id' => 'article_id'])->via('productArticles')->notDeleted();
+        return $this->hasMany(ArticleModel::class, ['id' => 'article_id'])->via('productArticles')->notDeleted();
     }
+
 
     public function getActiveArticles()
     {
@@ -84,13 +85,13 @@ class ProductWithRelations extends Product
      */
     public function getAssets()
     {
-        return $this->hasMany(Asset::class, ['asset_id' => 'id'])
+        return $this->hasMany(AssetModel::class, ['asset_id' => 'id'])
             ->onCondition(['asset_type' => 'product']);
     }
 
     public function getThumbnail()
     {
-        return $this->hasOne(Asset::class, ['asset_id' => 'id'])
+        return $this->hasOne(AssetModel::class, ['asset_id' => 'id'])
             ->onCondition(['asset_type' => 'product', 'collection_name' => 'thumbnail'])
             ->with('file');
     }

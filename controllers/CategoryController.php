@@ -7,7 +7,7 @@ use app\models\forms\CategoryForm;
 use app\models\response\CategoryResponse;
 use app\models\search\CategorySearch;
 use Yii;
-use yii\web\Controller;
+use yii\rest\Controller;
 use yii\web\NotFoundHttpException;
 
 
@@ -25,26 +25,15 @@ class CategoryController extends Controller
     public function actionIndex()
     {
         try {
-            $searchModel = new CategorySearch();
+            $searchModel  = new CategorySearch();
             $dataProvider = $searchModel->search($this->request->queryParams, '');
+            $serialized   = $this->serializeData($dataProvider);
 
-            $models = $dataProvider->getModels();
-            $data = array_map(function ($item) {
-                return CategoryResponse::fromModel($item);
-            }, $models);
             return [
-                'status' => true,
-                'data' => [
-                    'items' => $data,
-                    'now' => date('d/m/Y'),
-                ],
-                'pagination' => [
-                    'total_count' => (int) $dataProvider->getTotalCount(),
-                    'page_count' => (int) $dataProvider->getPagination()->getPageCount(),
-                    'current_page' => (int) $dataProvider->getPagination()->getPage() + 1,
-                    'per_page' => (int) $dataProvider->getPagination()->pageSize,
-                ],
-                'message' => 'Categories retrieved successfully',
+                'status'     => true,
+                'data'       => $serialized['items'],
+                'pagination' => $serialized['pagination'],
+                'message'    => 'Categories retrieved successfully',
             ];
         } catch (\Throwable $e) {
             return [
@@ -52,7 +41,8 @@ class CategoryController extends Controller
                 'data' => null,
                 'message' => 'Error retrieving categories: ' . $e->getMessage(),
             ];
-        };
+        }
+        ;
     }
 
     /**

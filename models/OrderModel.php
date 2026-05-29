@@ -5,7 +5,7 @@ namespace app\models;
 use Yii;
 use yii\behaviors\TimestampBehavior;
 
-class OrderWithRelations extends Order
+class OrderModel extends Order
 {
     public $items_count;
 

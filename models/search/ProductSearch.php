@@ -4,13 +4,10 @@ namespace app\models\search;
 
 use yii\base\Model;
 use yii\data\ActiveDataProvider;
-use app\models\Product;
+use app\models\ProductModel;
 use app\models\ProductArticle;
 
-/**
- * ProductSearch represents the model behind the search form of `app\models\Product`.
- */
-class ProductSearch extends Product
+class ProductSearch extends ProductModel
 {
     public $category;
     /**
@@ -44,7 +41,7 @@ class ProductSearch extends Product
      */
     public function search($params, $formName = null)
     {
-        $query = Product::find()
+        $query = ProductModel::find()
             ->select([
                 'products.id',
                 'products.name',
@@ -59,7 +56,7 @@ class ProductSearch extends Product
                     ->where('product_id = products.id')
             ])
             ->notDeleted()
-            ->joinWith(['category'])
+            ->leftJoin('categories', 'categories.id = products.category_id AND categories.deleted_at IS NULL')
             ->withAsset()
             ->withTags();
 

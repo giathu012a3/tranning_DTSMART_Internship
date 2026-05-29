@@ -7,8 +7,15 @@ use yii\behaviors\SluggableBehavior;
 use yii\behaviors\TimestampBehavior;
 use app\behaviors\UploadAssetBehavior;
 
-class ArticleWithRelations extends Article
+use app\models\query\ArticlesQuery;
+
+class ArticleModel extends Article
 {
+    public static function find()
+    {
+        return new ArticlesQuery(get_called_class());
+    }
+
     public $deleted_image_ids;
     public $thumbnail;
     public $images;

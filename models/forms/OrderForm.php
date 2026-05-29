@@ -14,16 +14,13 @@ use app\models\User;
 use app\models\UserAddress;
 use app\models\Cart;
 use app\models\CartDetail;
+use app\models\OrderModel;
 
-class OrderForm extends Model
+class OrderForm extends OrderModel
 {
     const SCENARIO_CHECKOUT = 'checkout';
 
-    public $payment_method;
-    public $coupon_code;
-    public $address_id;
-    public $items;
-    public $user_id;
+
     private $_coupon = null;
     private $_total = 0;
     private $_final_total = 0;
