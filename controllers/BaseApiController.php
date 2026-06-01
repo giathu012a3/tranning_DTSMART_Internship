@@ -8,7 +8,7 @@ use yii\filters\auth\HttpBearerAuth;
 class BaseApiController extends Controller
 {
     public $serializer = [
-        'class' => 'yii\rest\Serializer',
+        'class' => 'app\components\AppSerializer',
         'collectionEnvelope' => 'items',
         'metaEnvelope' => 'pagination',
     ];
@@ -21,4 +21,41 @@ class BaseApiController extends Controller
     //     ];
     //     return $behaviors;
     // }
+
+    /**
+     * Helper to return standard success response.
+     *
+     * @param mixed $data
+     * @param string $message
+     * @param mixed|null $pagination
+     * @return array
+     */
+    public function responseSuccess($data, string $message = 'Success', $pagination = null): array
+    {
+        $response = [
+            'status'  => true,
+            'data'    => $data,
+            'message' => $message,
+        ];
+        if ($pagination !== null) {
+            $response['pagination'] = $pagination;
+        }
+        return $response;
+    }
+
+    /**
+     * Helper to return standard error response.
+     *
+     * @param string $message
+     * @param mixed|null $data
+     * @return array
+     */
+    public function responseError(string $message = 'Error', $data = null): array
+    {
+        return [
+            'status'  => false,
+            'data'    => $data,
+            'message' => $message,
+        ];
+    }
 }

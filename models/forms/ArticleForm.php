@@ -13,7 +13,7 @@ use app\models\ProductArticle;
 use yii\web\UploadedFile;
 
 /**
- * ArticleForm gánh vác việc xác thực dữ liệu và logic nghiệp vụ cho Bài viết
+ * ArticleForm handles validation and business logic for Article model.
  */
 class ArticleForm extends Model
 {

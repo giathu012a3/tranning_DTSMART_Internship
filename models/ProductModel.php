@@ -6,6 +6,13 @@ use Yii;
 use yii\behaviors\TimestampBehavior;
 use app\behaviors\UploadAssetBehavior;
 
+/**
+ * @property Category|null $category
+ * @property TagModel[] $tags
+ * @property AssetModel[] $assets
+ * @property ArticleModel[] $articles
+ * @property AssetModel|null $thumbnail
+ */
 class ProductModel extends Product
 {
     public $deleted_image_ids;
@@ -58,7 +65,6 @@ class ProductModel extends Product
         return $this->hasMany(ArticleModel::class, ['id' => 'article_id'])->via('productArticles')->notDeleted();
     }
 
-
     public function getActiveArticles()
     {
         return $this->getArticles()->active();
@@ -92,8 +98,7 @@ class ProductModel extends Product
     public function getThumbnail()
     {
         return $this->hasOne(AssetModel::class, ['asset_id' => 'id'])
-            ->onCondition(['asset_type' => 'product', 'collection_name' => 'thumbnail'])
-            ->with('file');
+            ->onCondition(['asset_type' => 'product', 'collection_name' => 'thumbnail']);
     }
 
     /**
@@ -109,7 +114,7 @@ class ProductModel extends Product
      */
     public function getProductTags()
     {
-        return $this->hasMany(ProductTag::class, ['product_id' => 'id']);
+        return $this->hasMany(ProductTagModel::class, ['product_id' => 'id']);
     }
 
     /**
@@ -117,7 +122,7 @@ class ProductModel extends Product
      */
     public function getTags()
     {
-        return $this->hasMany(Tag::class, ['id' => 'tag_id'])->via('productTags');
+        return $this->hasMany(TagModel::class, ['id' => 'tag_id'])->via('productTags');
     }
 
     public function softDelete(): bool

@@ -57,5 +57,4 @@ class File extends \yii\db\ActiveRecord
             'updated_at' => 'Updated At',
         ];
     }
-
 }

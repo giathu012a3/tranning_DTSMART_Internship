@@ -6,6 +6,7 @@ use yii\base\Model;
 use yii\data\ActiveDataProvider;
 use app\models\ProductModel;
 use app\models\ProductArticle;
+use app\models\response\ProductResponse;
 
 class ProductSearch extends ProductModel
 {
@@ -41,7 +42,7 @@ class ProductSearch extends ProductModel
      */
     public function search($params, $formName = null)
     {
-        $query = ProductModel::find()
+        $query = ProductResponse::find()
             ->select([
                 'products.id',
                 'products.name',
@@ -58,7 +59,8 @@ class ProductSearch extends ProductModel
             ->notDeleted()
             ->leftJoin('categories', 'categories.id = products.category_id AND categories.deleted_at IS NULL')
             ->withAsset()
-            ->withTags();
+            ->withTags()
+            ->withCategory();
 
 
         $dataProvider = new ActiveDataProvider([

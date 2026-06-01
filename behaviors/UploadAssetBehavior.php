@@ -36,12 +36,11 @@ class UploadAssetBehavior extends Behavior
             }
         }
     }
-
     public function afterSave($event)
     {
         /** @var ActiveRecord $model */
         $model = $this->owner;
-        $assetType = strtolower((new \ReflectionClass($model))->getShortName());
+        $assetType = rtrim($model->tableName(), 's');
 
         $isInsert = $event->name === ActiveRecord::EVENT_AFTER_INSERT;
 
