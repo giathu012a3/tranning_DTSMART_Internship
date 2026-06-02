@@ -34,3 +34,6 @@ tests/_support/_generated
 
 #vagrant folder
 /.vagrant
+
+# yii2 uploads directory
+/web/uploads/*

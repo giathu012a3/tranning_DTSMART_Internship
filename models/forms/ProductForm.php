@@ -19,7 +19,9 @@ class ProductForm extends ProductModel
                 $arr = is_string($tags) ? explode(',', $tags) : (array)$tags;
                 return array_values(array_unique(array_filter(array_map('trim', $arr))));
             }],
-            [['deleted_image_ids', 'thumbnail', 'images'], 'safe'],
+            [['deleted_image_ids'], 'safe'],
+            [['thumbnail'], 'image', 'extensions' => 'png, jpg, jpeg, gif, webp', 'maxSize' => 10 * 1024 * 1024, 'skipOnEmpty' => true],
+            [['images'], 'image', 'extensions' => 'png, jpg, jpeg, gif, webp', 'maxSize' => 10 * 1024 * 1024, 'maxFiles' => 20, 'skipOnEmpty' => true],
             [['name'], 'validateHasChanges', 'skipOnEmpty' => false],
         ]);
     }
