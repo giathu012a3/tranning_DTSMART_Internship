@@ -3,12 +3,10 @@
 namespace app\controllers;
 
 use app\models\forms\ProductForm;
-use app\models\forms\TagForm;
 use Yii;
 use app\models\ProductModel;
 use app\models\TagModel;
 use app\models\search\ProductSearch;
-use app\models\response\ProductResponse;
 
 class ProductController extends BaseApiController
 {
@@ -39,64 +37,50 @@ class ProductController extends BaseApiController
 
     public function actionCreate()
     {
-        try {
-            $form = new ProductForm();
+        $form = new ProductForm();
 
-            if ($form->load(Yii::$app->request->post(), '') && $form->save()) {
-                $tagErrors = [];
-                TagModel::syncForProduct($form->id, TagForm::resolveIds($form->tags ?? [], $tagErrors));
-
-                $product = $this->loadProduct($form->id);
-                if (!empty($tagErrors)) {
-                    return $this->responseSuccess(
-                        $product,
-                        'Product created successfully, but some tags failed to create: ' . implode('; ', $tagErrors)
-                    );
-                }
-
-                return $product;
+        if ($form->load(Yii::$app->request->post(), '') && $form->save()) {
+            $product = $this->loadProduct($form->id);
+            if (!empty($form->tagErrors)) {
+                return $this->responseSuccess(
+                    $product,
+                    'Product created successfully, but some tags failed to create: ' . implode('; ', $form->tagErrors)
+                );
             }
 
-            return $this->responseError(
-                'Validation failed: ' . json_encode($form->errors),
-                $form->getErrors()
-            );
-        } catch (\Throwable $e) {
-            return $this->responseError('Error creating product: ' . $e->getMessage());
+            return $product;
         }
+
+        return $this->responseError(
+            'Validation failed: ' . json_encode($form->errors),
+            $form->getErrors()
+        );
     }
 
     public function actionUpdate($id)
     {
-        try {
-            $form = ProductForm::find()->byId($id)->notDeleted()->one();
+        $form = ProductForm::find()->byId($id)->notDeleted()->one();
 
-            if (!$form) {
-                return $this->responseError('Product not found', null);
-            }
-
-            if ($form->load(Yii::$app->request->post(), '') && $form->save()) {
-                $tagErrors = [];
-                TagModel::syncForProduct($form->id, TagForm::resolveIds($form->tags ?? [], $tagErrors));
-
-                $product = $this->loadProduct($form->id);
-                if (!empty($tagErrors)) {
-                    return $this->responseSuccess(
-                        $product,
-                        'Product updated successfully, but some tags failed to create: ' . implode('; ', $tagErrors)
-                    );
-                }
-
-                return $product;
-            }
-
-            return $this->responseError(
-                'Validation failed: ' . json_encode($form->errors),
-                $form->getErrors()
-            );
-        } catch (\Throwable $e) {
-            return $this->responseError('Error updating product: ' . $e->getMessage());
+        if (!$form) {
+            return $this->responseError('Product not found', null);
         }
+
+        if ($form->load(Yii::$app->request->post(), '') && $form->save()) {
+            $product = $this->loadProduct($form->id);
+            if (!empty($form->tagErrors)) {
+                return $this->responseSuccess(
+                    $product,
+                    'Product updated successfully, but some tags failed to create: ' . implode('; ', $form->tagErrors)
+                );
+            }
+
+            return $product;
+        }
+
+        return $this->responseError(
+            'Validation failed: ' . json_encode($form->errors),
+            $form->getErrors()
+        );
     }
 
     public function actionDelete($id)
@@ -118,20 +102,14 @@ class ProductController extends BaseApiController
         }
     }
 
-    private function loadProduct(int $id): ?ProductResponse
+    private function loadProduct(int $id): ?ProductModel
     {
-        $product = ProductResponse::find()
+        return ProductModel::find()
             ->withAsset()
             ->withCategory()
             ->withTags()
             ->withArticles()
             ->byId($id)
             ->one();
-
-        if ($product !== null) {
-            $product->detailMode = true;
-        }
-
-        return $product;
     }
 }

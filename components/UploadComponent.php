@@ -11,9 +11,13 @@ use app\models\Asset;
 class UploadComponent extends Component
 {
 
-    public function processUploads($model, $attributes = [])
+    public function processUploads($model, $attributes = [], $assetType = null)
     {
-        $assetType = strtolower((new \ReflectionClass($model))->getShortName());
+        if ($assetType === null) {
+            $assetType = method_exists($model, 'tableName')
+                ? rtrim($model->tableName(), 's')
+                : strtolower((new \ReflectionClass($model))->getShortName());
+        }
         $time = time();
 
         $allFilesData = [];
