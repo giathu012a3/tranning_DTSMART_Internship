@@ -22,6 +22,7 @@ class ProductModel extends Product
     public $articles_count;
     public $tags;
     public array $tagErrors = [];
+    public bool $detailMode = false;
     private $_currentTags = null;
 
     public function behaviors()
@@ -123,32 +124,16 @@ class ProductModel extends Product
         return $this->hasMany(TagModel::class, ['id' => 'tag_id'])->via('productTags');
     }
 
-    public function afterFind()
-    {
-        parent::afterFind();
-        $this->tags = $this->getCurrentTags();
-    }
-
-    public function getCurrentTags()
-    {
-        if ($this->_currentTags === null) {
-            if ($this->isNewRecord) {
-                $this->_currentTags = [];
-            } else {
-                $this->_currentTags = $this->getTags()->select('name')->column();
-            }
-        }
-        return $this->_currentTags;
-    }
-
     public function afterSave($insert, $changedAttributes)
     {
         parent::afterSave($insert, $changedAttributes);
-        try {
-            $tagIds = TagModel::resolveIds($this->tags ?? [], $this->tagErrors);
-            TagModel::syncForProduct($this->id, $tagIds);
-        } catch (\Throwable $e) {
-            $this->tagErrors[] = 'Lỗi hệ thống khi đồng bộ tag: ' . $e->getMessage();
+        if ($this->tags !== null) {
+            try {
+                $tagIds = TagModel::resolveIds($this->tags, $this->tagErrors);
+                TagModel::syncForProduct($this->id, $tagIds);
+            } catch (\Throwable $e) {
+                $this->tagErrors[] = 'Lỗi hệ thống khi đồng bộ tag: ' . $e->getMessage();
+            }
         }
     }
 
@@ -163,7 +148,7 @@ class ProductModel extends Product
      */
     public function fields()
     {
-        return [
+        $fields = [
             'id',
             'name',
             'price',
@@ -174,11 +159,12 @@ class ProductModel extends Product
                 return $this->category->name ?? 'N/A';
             },
             'tags' => function () {
+                $tagModels = $this->isRelationPopulated('tags') ? $this->relatedRecords['tags'] : $this->getTags()->all();
                 return array_map(fn($tag) => [
                     'id'   => $tag->id,
                     'name' => $tag->name,
                     'slug' => $tag->slug,
-                ], $this->tags);
+                ], $tagModels);
             },
             'created_at' => function () {
                 return $this->created_at ? date('Y-m-d H:i:s', $this->created_at) : null;
@@ -192,15 +178,22 @@ class ProductModel extends Product
                     'articles_count' => $this->articles_count ?? count($this->articles),
                 ];
             },
-            'thumbnail_url' => function () {
+        ];
+
+        if ($this->detailMode) {
+            $fields = array_merge($fields, $this->extraFields());
+        } else {
+            $fields['thumbnail_url'] = function () {
                 foreach ($this->assets as $asset) {
                     if ($asset->collection_name === 'thumbnail' && $asset->file) {
                         return FileModel::buildUrl($asset->file->file_path);
                     }
                 }
                 return null;
-            },
-        ];
+            };
+        }
+
+        return $fields;
     }
 
     /**

@@ -24,6 +24,26 @@ class ProductForm extends ProductModel
         ]);
     }
 
+    private $_currentTags = null;
+
+    public function afterFind()
+    {
+        parent::afterFind();
+        $this->tags = $this->getCurrentTags();
+    }
+
+    public function getCurrentTags()
+    {
+        if ($this->_currentTags === null) {
+            if ($this->isNewRecord) {
+                $this->_currentTags = [];
+            } else {
+                $this->_currentTags = $this->getTags()->select('name')->column();
+            }
+        }
+        return $this->_currentTags;
+    }
+
     public function validateHasChanges($attribute, $params)
     {
         if ($this->isNewRecord) {

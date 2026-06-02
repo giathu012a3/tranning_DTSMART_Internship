@@ -6,7 +6,6 @@ use yii\base\Model;
 use yii\data\ActiveDataProvider;
 use app\models\ProductModel;
 use app\models\ProductArticle;
-use app\models\response\ProductResponse;
 
 class ProductSearch extends ProductModel
 {
@@ -42,7 +41,7 @@ class ProductSearch extends ProductModel
      */
     public function search($params, $formName = null)
     {
-        $query = ProductResponse::find()
+        $query = ProductModel::find()
             ->select([
                 'products.id',
                 'products.name',

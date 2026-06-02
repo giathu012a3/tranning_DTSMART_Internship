@@ -104,12 +104,18 @@ class ProductController extends BaseApiController
 
     private function loadProduct(int $id): ?ProductModel
     {
-        return ProductModel::find()
+        $product = ProductModel::find()
             ->withAsset()
             ->withCategory()
             ->withTags()
             ->withArticles()
             ->byId($id)
             ->one();
+
+        if ($product !== null) {
+            $product->detailMode = true;
+        }
+
+        return $product;
     }
 }
