@@ -31,9 +31,11 @@ class TagModel extends Tag
         ];
     }
 
-    public static function syncForProduct(int $productId, array $tagIds): void
+    public static function syncForProduct(int $productId, array $tagIds, bool $isInsert = false): void
     {
-        ProductTagModel::deleteAll(['product_id' => $productId]);
+        if (!$isInsert) {
+            ProductTagModel::deleteAll(['product_id' => $productId]);
+        }
 
         if (empty($tagIds)) {
             return;

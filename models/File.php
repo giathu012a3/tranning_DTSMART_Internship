@@ -35,7 +35,7 @@ class File extends \yii\db\ActiveRecord
     {
         return [
             [['status'], 'default', 'value' => 1],
-            [['file_path', 'file_name', 'file_type', 'file_size', 'created_at', 'updated_at'], 'required'],
+            [['file_path', 'file_name', 'file_type', 'file_size'], 'required'],
             [['file_size', 'status', 'created_at', 'updated_at'], 'integer'],
             [['file_path', 'file_name', 'file_type'], 'string', 'max' => 255],
         ];

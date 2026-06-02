@@ -41,10 +41,12 @@ class ProductController extends BaseApiController
 
         if ($form->load(Yii::$app->request->post(), '') && $form->save()) {
             $product = $this->loadProduct($form->id);
-            if (!empty($form->tagErrors)) {
-                return $this->responseSuccess(
+            if (!empty($form->tagErrors) || $form->hasErrors()) {
+                $warnings = $this->extractWarnings($form, ['tags' => $form->tagErrors]);
+                return $this->responseWithWarnings(
                     $product,
-                    'Product created successfully, but some tags failed to create: ' . implode('; ', $form->tagErrors)
+                    'Product created successfully, but some parts had warnings.',
+                    $warnings
                 );
             }
 
@@ -67,10 +69,12 @@ class ProductController extends BaseApiController
 
         if ($form->load(Yii::$app->request->post(), '') && $form->save()) {
             $product = $this->loadProduct($form->id);
-            if (!empty($form->tagErrors)) {
-                return $this->responseSuccess(
+            if (!empty($form->tagErrors) || $form->hasErrors()) {
+                $warnings = $this->extractWarnings($form, ['tags' => $form->tagErrors]);
+                return $this->responseWithWarnings(
                     $product,
-                    'Product updated successfully, but some tags failed to create: ' . implode('; ', $form->tagErrors)
+                    'Product updated successfully, but some parts had warnings.',
+                    $warnings
                 );
             }
 

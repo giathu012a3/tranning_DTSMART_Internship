@@ -5,8 +5,8 @@ namespace app\components;
 use Yii;
 use yii\base\Component;
 use yii\web\UploadedFile;
-use app\models\File;
-use app\models\Asset;
+use app\models\FileModel;
+use app\models\AssetModel;
 
 class UploadComponent extends Component
 {
@@ -18,12 +18,6 @@ class UploadComponent extends Component
                 ? rtrim($model->tableName(), 's')
                 : strtolower((new \ReflectionClass($model))->getShortName());
         }
-        $time = time();
-
-        $allFilesData = [];
-        $allFilePaths = [];
-        $pathAttributeMap = [];
-
         foreach ($attributes as $attribute => $folder) {
             $files = UploadedFile::getInstancesByName($attribute);
             if (empty($files)) {
@@ -34,79 +28,56 @@ class UploadComponent extends Component
             }
 
             if (!empty($files)) {
-                foreach ($files as $file) {
-                    $fileName = time() . '_' . Yii::$app->security->generateRandomString(5) . '.' . $file->extension;
-                    $relativePath = 'uploads/' . $folder . '/' . $fileName;
-                    $absolutePath = Yii::getAlias('@webroot/') . $relativePath;
-
-                    if (!is_dir(dirname($absolutePath))) {
-                        if (!mkdir(dirname($absolutePath), 0777, true)) {
-                            throw new \Exception("Cannot create directory: " . dirname($absolutePath));
-                        }
-                    }
-
-                    if ($file->saveAs($absolutePath)) {
-                        $allFilesData[] = [
-                            $relativePath,
-                            $fileName,
-                            $file->type,
-                            $file->size,
-                            1,
-                            $time,
-                            $time
-                        ];
-                        $allFilePaths[] = $relativePath;
-                        $pathAttributeMap[$relativePath] = $attribute;
-                    } else {
-                        throw new \Exception("Cannot save as physical file. error (code): " . $file->error);
+                $targetDir = Yii::getAlias('@webroot/uploads/' . $folder);
+                if (!is_dir($targetDir)) {
+                    if (!mkdir($targetDir, 0777, true)) {
+                        Yii::error("Cannot create directory: " . $targetDir, __METHOD__);
+                        continue;
                     }
                 }
-            }
-        }
 
-        if (!empty($allFilesData)) {
-            Yii::$app->db->createCommand()->batchInsert(
-                File::tableName(),
-                [
-                    'file_path',
-                    'file_name',
-                    'file_type',
-                    'file_size',
-                    'status',
-                    'created_at',
-                    'updated_at'
-                ],
-                $allFilesData
-            )->execute();
+                foreach ($files as $file) {
+                    try {
+                        $fileName = time() . '_' . Yii::$app->security->generateRandomString(5) . '.' . $file->extension;
+                        $relativePath = 'uploads/' . $folder . '/' . $fileName;
+                        $absolutePath = Yii::getAlias('@webroot/') . $relativePath;
 
-            $insertedFiles = File::find()->where(['in', 'file_path', $allFilePaths])->all();
+                        if (!$file->saveAs($absolutePath)) {
+                            throw new \Exception("Cannot save physical file '{$fileName}' (Error code: {$file->error}).");
+                        }
 
-            $assetsData = [];
-            foreach ($insertedFiles as $insertedFile) {
-                $attribute = $pathAttributeMap[$insertedFile->file_path] ?? 'default';
-                $assetsData[] = [
-                    $model->id,
-                    $assetType,
-                    $insertedFile->id,
-                    $attribute,
-                    $time,
-                    $time
-                ];
-            }
+                        $fileModel = new FileModel();
+                        $fileModel->file_path = $relativePath;
+                        $fileModel->file_name = $fileName;
+                        $fileModel->file_type = $file->type;
+                        $fileModel->file_size = $file->size;
+                        $fileModel->status = 1;
 
-            if (!empty($assetsData)) {
-                Yii::$app->db->createCommand()->batchInsert(
-                    Asset::tableName(),
-                    [
-                        'asset_id',
-                        'asset_type',
-                        'file_id',
-                        'collection_name',
-                        'created_at',
-                        'updated_at'
-                    ],
-                    $assetsData
-                )->execute();
+                        if (!$fileModel->save()) {
+                            if (file_exists($absolutePath)) {
+                                @unlink($absolutePath);
+                            }
+                            throw new \Exception("DB Error saving File record: " . implode(', ', $fileModel->getFirstErrors()));
+                        }
+
+                        $asset = new AssetModel();
+                        $asset->asset_id = $model->id;
+                        $asset->asset_type = $assetType;
+                        $asset->file_id = $fileModel->id;
+                        $asset->collection_name = $attribute;
+
+                        if (!$asset->save()) {
+                            $fileModel->delete();
+                            if (file_exists($absolutePath)) {
+                                @unlink($absolutePath);
+                            }
+                            throw new \Exception("DB Error saving Asset record: " . implode(', ', $asset->getFirstErrors()));
+                        }
+                    } catch (\Throwable $e) {
+                        Yii::error("Error processing upload for file: " . $file->name . ". Error: " . $e->getMessage(), __METHOD__);
+                        $model->addError($attribute, "Ảnh '{$file->name}' tải lên thất bại: " . $e->getMessage());
+                    }
+                }
             }
         }
     }

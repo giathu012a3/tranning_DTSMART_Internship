@@ -58,4 +58,50 @@ class BaseApiController extends Controller
             'message' => $message,
         ];
     }
+
+    /**
+     * Helper to return success response with structured warnings for REST API (e.g. Vue).
+     *
+     * @param mixed $data
+     * @param string $message
+     * @param array $warnings
+     * @return array
+     */
+    public function responseWithWarnings($data, string $message, array $warnings = []): array
+    {
+        return [
+            'status'   => true,
+            'message'  => $message,
+            'data'     => $data,
+            'warnings' => $warnings,
+        ];
+    }
+
+    /**
+     * Automatically extracts all validation/upload errors and custom errors (like tags) from a model
+     * to structure them cleanly for REST API consumers.
+     *
+     * @param \yii\base\Model $model
+     * @param array $customWarnings
+     * @return array
+     */
+    public function extractWarnings($model, array $customWarnings = []): array
+    {
+        $warnings = [];
+
+        foreach ($customWarnings as $key => $values) {
+            if (!empty($values)) {
+                $warnings[$key] = $values;
+            }
+        }
+
+        if ($model->hasErrors()) {
+            foreach ($model->getErrors() as $attribute => $errors) {
+                if (!empty($errors)) {
+                    $warnings[$attribute] = $errors;
+                }
+            }
+        }
+        return $warnings;
+    }
 }

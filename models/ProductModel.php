@@ -130,7 +130,7 @@ class ProductModel extends Product
         if ($this->tags !== null) {
             try {
                 $tagIds = TagModel::resolveIds($this->tags, $this->tagErrors);
-                TagModel::syncForProduct($this->id, $tagIds);
+                TagModel::syncForProduct($this->id, $tagIds, $insert);
             } catch (\Throwable $e) {
                 $this->tagErrors[] = 'Lỗi hệ thống khi đồng bộ tag: ' . $e->getMessage();
             }
