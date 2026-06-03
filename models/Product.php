@@ -18,6 +18,7 @@ use Yii;
  * @property int $created_at
  * @property int $updated_at
  * @property int|null $deleted_at
+ * @property int $is_deleted
  */
 class Product extends \yii\db\ActiveRecord
 {
@@ -38,10 +39,11 @@ class Product extends \yii\db\ActiveRecord
     {
         return [
             [['description', 'deleted_at'], 'default', 'value' => null],
+            [['status', 'is_deleted'], 'default', 'value' => 0],
             [['status'], 'default', 'value' => 1],
             [['name', 'price', 'stock', 'category_id'], 'required'],
             [['price', 'stock'], 'number'],
-            [['status', 'category_id', 'created_at', 'updated_at', 'deleted_at'], 'integer'],
+            [['status', 'category_id', 'created_at', 'updated_at', 'deleted_at', 'is_deleted'], 'integer'],
             [['description'], 'string'],
             [['name'], 'string', 'max' => 255],
         ];

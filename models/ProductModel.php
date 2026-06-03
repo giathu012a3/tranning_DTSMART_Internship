@@ -140,6 +140,7 @@ class ProductModel extends Product
     public function softDelete(): bool
     {
         $this->deleted_at = time();
+        $this->is_deleted = 1;
         return $this->save(false);
     }
 

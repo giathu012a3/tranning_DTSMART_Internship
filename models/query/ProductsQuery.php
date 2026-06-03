@@ -11,12 +11,12 @@ class ProductsQuery extends \yii\db\ActiveQuery
 {
     public function active()
     {
-        return $this->andWhere('products.status=1');
+        return $this->andWhere(['products.status' => 1]);
     }
 
     public function notDeleted()
     {
-        return $this->andWhere(['products.deleted_at' => null]);
+        return $this->andWhere(['products.is_deleted' => 0]);
     }
 
     /**
@@ -59,7 +59,7 @@ class ProductsQuery extends \yii\db\ActiveQuery
     {
         return $this->with([
             'category' => function ($q) {
-                $q->select(['id', 'name'])->andOnCondition(['categories.deleted_at' => null]);
+                $q->select(['id', 'name'])->andOnCondition(['categories.is_deleted' => 0]);
             }
         ]);
     }

@@ -25,7 +25,7 @@ class ProductController extends BaseApiController
         try {
             $product = $this->loadProduct($id);
 
-            if (!$product || $product->deleted_at !== null) {
+            if (!$product || $product->is_deleted) {
                 return $this->responseError('Product not found', null);
             }
 

@@ -88,7 +88,7 @@ class CartForm extends Model
         }
 
         $product = $this->_cartDetail->product;
-        if (!$product || $product->status != 1 || $product->deleted_at !== null) {
+        if (!$product || $product->status != 1 || $product->is_deleted) {
             $this->addError($attribute, 'Product is no longer available.');
             return;
         }

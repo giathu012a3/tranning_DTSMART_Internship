@@ -16,7 +16,7 @@ class ProductSearch extends ProductModel
     public function rules()
     {
         return [
-            [['id', 'status', 'category_id', 'created_at', 'updated_at', 'deleted_at'], 'integer'],
+            [['id', 'status', 'category_id', 'created_at', 'updated_at', 'deleted_at', 'is_deleted'], 'integer'],
             [['name', 'description', 'category'], 'safe'],
             [['price', 'stock'], 'number'],
         ];
@@ -56,7 +56,7 @@ class ProductSearch extends ProductModel
                     ->where('product_id = products.id')
             ])
             ->notDeleted()
-            ->leftJoin('categories', 'categories.id = products.category_id AND categories.deleted_at IS NULL')
+            ->leftJoin('categories', 'categories.id = products.category_id AND categories.is_deleted = 0')
             ->withAsset()
             ->withTags()
             ->withCategory();
@@ -90,7 +90,7 @@ class ProductSearch extends ProductModel
             'products.category_id' => $this->category_id,
             'products.created_at' => $this->created_at,
             'products.updated_at' => $this->updated_at,
-            'products.deleted_at' => $this->deleted_at,
+            'products.is_deleted' => $this->is_deleted,
         ]);
 
         $query->andFilterWhere(['like', 'products.name', $this->name]);

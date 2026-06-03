@@ -14,7 +14,7 @@ class ProductForm extends ProductModel
         return array_merge($rules, [
             [['stock'], 'number', 'min' => 0],
             [['price'], 'compare', 'compareValue' => 0, 'operator' => '>', 'type' => 'number', 'message' => 'Price must be greater than 0.'],
-            [['name'], 'unique', 'filter' => ['deleted_at' => null], 'message' => 'This product name already exists.'],
+            [['name'], 'unique', 'filter' => ['is_deleted' => 0], 'message' => 'This product name already exists.'],
             [['tags'], 'filter', 'filter' => function ($tags) {
                 $arr = is_string($tags) ? explode(',', $tags) : (array)$tags;
                 return array_values(array_unique(array_filter(array_map('trim', $arr))));
@@ -52,15 +52,18 @@ class ProductForm extends ProductModel
             return;
         }
 
-        $dirty = $this->getDirtyAttributes();
-        unset($dirty['updated_at'], $dirty['created_at']);
+        $attributes = $this->getAttributes(null, ['updated_at', 'created_at']);
+        $oldAttributes = $this->getOldAttributes();
+        unset($oldAttributes['updated_at'], $oldAttributes['created_at']);
+
+        $dbChanged = ($attributes != $oldAttributes);
 
         $tagsChanged = ($this->tags !== null) && (
             count($this->tags) !== count($this->getCurrentTags()) ||
             array_diff($this->tags, $this->getCurrentTags())
         );
 
-        $hasChanges = !empty($dirty)
+        $hasChanges = $dbChanged
             || $tagsChanged
             || UploadedFile::getInstanceByName('thumbnail')
             || UploadedFile::getInstancesByName('images')
