@@ -2,7 +2,6 @@
 
 namespace app\models\forms;
 
-use Yii;
 use app\models\CategoryModel;
 
 class CategoryForm extends CategoryModel

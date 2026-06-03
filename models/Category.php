@@ -35,7 +35,7 @@ class Category extends \yii\db\ActiveRecord
     {
         return [
             [['deleted_at'], 'default', 'value' => null],
-            [['status', 'is_deleted'], 'default', 'value' => 0],
+            [['is_deleted'], 'default', 'value' => 0],
             [['status'], 'default', 'value' => 1],
             [['name'], 'required'],
             [['status', 'created_at', 'updated_at', 'deleted_at', 'is_deleted'], 'integer'],

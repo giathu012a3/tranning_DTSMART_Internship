@@ -19,6 +19,15 @@ class CategoriesQuery extends \yii\db\ActiveQuery
         return $this->andWhere(['categories.is_deleted' => 0]);
     }
 
+    public function withProducts()
+    {
+        return $this->with([
+            'products' => function ($q) {
+                $q->select(['id', 'name', 'price', 'stock', 'category_id'])->notDeleted();
+            }
+        ]);
+    }
+
     public function byId($id)
     {
         return $this->andWhere(['categories.id' => $id]);

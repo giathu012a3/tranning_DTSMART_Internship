@@ -6,197 +6,149 @@ use app\models\CategoryModel;
 use app\models\forms\CategoryForm;
 use app\models\search\CategorySearch;
 use Yii;
-use yii\rest\Controller;
-use yii\web\NotFoundHttpException;
-
-
 
 /**
  * CategoryController implements the CRUD actions for Category model.
  */
-class CategoryController extends Controller
+class CategoryController extends BaseApiController
 {
     /**
      * Lists all Category models.
      *
-     * @return string
+     * @return mixed
      */
     public function actionIndex()
     {
         try {
             $searchModel  = new CategorySearch();
-            $dataProvider = $searchModel->search($this->request->queryParams, '');
-            $serialized   = $this->serializeData($dataProvider);
-
-            return [
-                'status'     => true,
-                'data'       => $serialized['items'],
-                'pagination' => $serialized['pagination'],
-                'message'    => 'Categories retrieved successfully',
-            ];
+            return $searchModel->search(Yii::$app->request->queryParams, '');
         } catch (\Throwable $e) {
-            return [
-                'status' => false,
-                'data' => null,
-                'message' => 'Error retrieving categories: ' . $e->getMessage(),
-            ];
+            return $this->responseError('Error retrieving categories: ' . $e->getMessage());
         }
-        ;
     }
 
     /**
      * Displays a single Category model.
      * @param int $id ID
-     * @return string
-     * @throws NotFoundHttpException if the model cannot be found
+     * @return mixed
      */
     public function actionView($id)
     {
         try {
-            $category = CategoryModel::find()->byId($id)->notDeleted()->one();
-            if (!$category) {
-                return [
-                    'status' => false,
-                    'data' => null,
-                    'message' => 'Category not found or inactive',
-                ];
+            $category = $this->loadCategory($id);
+
+            if (!$category || $category->is_deleted) {
+                return $this->responseError('Category not found', null);
             }
-            return [
-                'status' => true,
-                'data' => $category,
-                'message' => 'Category retrieved successfully',
-            ];
-        } catch (\Throwable $th) {
-            return [
-                'status' => false,
-                'data' => null,
-                'message' => 'Error retrieving category: ' . $th->getMessage(),
-            ];
+
+            return $category;
+        } catch (\Throwable $e) {
+            return $this->responseError('Error retrieving category: ' . $e->getMessage());
         }
     }
 
     /**
      * Creates a new Category model.
-     * If creation is successful, the browser will be redirected to the 'view' page.
-     * @return string|\yii\web\Response
+     * @return mixed
      */
     public function actionCreate()
     {
-        try {
-            $form = new CategoryForm();
-            $data = Yii::$app->request->post();
+        $form = new CategoryForm();
 
-            if ($form->load($data, '') && $form->save()) {
-                return [
-                    'status' => true,
-                    'data' => $form,
-                    'message' => 'Category created successfully'
-                ];
+        if ($form->load(Yii::$app->request->post(), '') && $form->save()) {
+            $category = $this->loadCategory($form->id);
+            if ($form->hasErrors()) {
+                $warnings = $this->extractWarnings($form);
+                return $this->responseWithWarnings(
+                    $category,
+                    'Category created successfully, but some parts had warnings.',
+                    $warnings
+                );
             }
 
-            return [
-                'status' => false,
-                'data' => $form->getErrors(),
-                'message' => 'Invalid data.',
-            ];
-        } catch (\Throwable $e) {
-            return [
-                'status' => false,
-                'data' => null,
-                'message' => 'Error category: ' . $e->getMessage(),
-            ];
+            return $category;
         }
+
+        return $this->responseError(
+            'Validation failed: ' . json_encode($form->errors),
+            $form->getErrors()
+        );
     }
 
     /**
      * Updates an existing Category model.
-     * If update is successful, the browser will be redirected to the 'view' page.
      * @param int $id ID
-     * @return string|\yii\web\Response
-     * @throws NotFoundHttpException if the model cannot be found
+     * @return mixed
      */
     public function actionUpdate($id)
     {
-        try {
-            $form = CategoryForm::find()
-                ->byId($id)
-                ->notDeleted()
-                ->one();
+        $form = CategoryForm::find()->byId($id)->notDeleted()->one();
 
-            if (!$form) {
-                return [
-                    'status' => false,
-                    'data' => null,
-                    'message' => 'This category is not found',
-                ];
-            }
-
-            $data = Yii::$app->request->post();
-
-            if ($form->load($data, '') && $form->save()) {
-                return [
-                    'status' => true,
-                    'data' => $form,
-                    'message' => 'Category updated successfully',
-                ];
-            }
-            return [
-                'status' => false,
-                'data' => $form->getErrors(),
-                'message' => 'Invalid data.',
-            ];
-        } catch (\Throwable $e) {
-            return [
-                'status' => false,
-                'data' => null,
-                'message' => 'Error category: ' . $e->getMessage(),
-            ];
+        if (!$form) {
+            return $this->responseError('Category not found', null);
         }
+
+        if ($form->load(Yii::$app->request->post(), '') && $form->save()) {
+            $category = $this->loadCategory($form->id);
+            if ($form->hasErrors()) {
+                $warnings = $this->extractWarnings($form);
+                return $this->responseWithWarnings(
+                    $category,
+                    'Category updated successfully, but some parts had warnings.',
+                    $warnings
+                );
+            }
+
+            return $category;
+        }
+
+        return $this->responseError(
+            'Validation failed: ' . json_encode($form->errors),
+            $form->getErrors()
+        );
     }
 
     /**
      * Deletes an existing Category model.
-     * If deletion is successful, the browser will be redirected to the 'index' page.
      * @param int $id ID
-     * @return \yii\web\Response
-     * @throws NotFoundHttpException if the model cannot be found
+     * @return mixed
      */
     public function actionDelete($id)
     {
         try {
-            $category = CategoryModel::find()
-                ->byId($id)
-                ->notDeleted()
-                ->one();
+            $category = CategoryModel::find()->byId($id)->notDeleted()->one();
 
             if (!$category) {
-                return [
-                    'status' => false,
-                    'data' => null,
-                    'message' => "This category is not found"
-                ];
+                return $this->responseError('Category not found', null);
             }
 
             if ($category->softDelete()) {
-                return [
-                    'status' => true,
-                    'data' => null,
-                    'message' => "The category has been successfully moved to the trash!"
-                ];
+                return $this->responseSuccess(null, 'Category moved to trash successfully');
             }
 
-            return [
-                'status' => false,
-                'data' => null,
-                'message' => 'Failed to delete category.'
-            ];
+            return $this->responseError('Failed to delete category');
         } catch (\Throwable $e) {
-            return [
-                'status' => false,
-                'data' => null,
-                'message' => 'Error category: ' . $e->getMessage(),
-            ];
+            return $this->responseError('Error deleting category: ' . $e->getMessage());
         }
     }
 
+    /**
+     * Helper to load a fully structured CategoryModel object.
+     *
+     * @param int $id
+     * @return CategoryModel|null
+     */
+    private function loadCategory(int $id): ?CategoryModel
+    {
+        $category = CategoryModel::find()
+            ->withProducts()
+            ->byId($id)
+            ->one();
+
+        if ($category !== null) {
+            $category->detailMode = true;
+        }
+
+        return $category;
+    }
 }

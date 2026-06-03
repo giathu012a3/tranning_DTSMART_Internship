@@ -5,6 +5,7 @@ namespace app\models\search;
 use yii\base\Model;
 use yii\data\ActiveDataProvider;
 use app\models\CategoryModel;
+use app\models\ProductModel;
 
 /**
  * CategorySearch represents the model behind the search form of `app\models\Category`.
@@ -43,7 +44,17 @@ class CategorySearch extends CategoryModel
     public function search($params, $formName = null)
     {
         $query = CategoryModel::find()
-            ->select(['id', 'name', 'status', 'created_at'])
+            ->select([
+                'categories.id',
+                'categories.name',
+                'categories.status',
+                'categories.created_at',
+                'categories.updated_at',
+                'products_count' => ProductModel::find()
+                    ->select('COUNT(*)')
+                    ->where('category_id = categories.id')
+                    ->andWhere(['is_deleted' => 0])
+            ])
             ->notDeleted();
 
         // add conditions that should always apply here
