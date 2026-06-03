@@ -14,6 +14,7 @@ use Yii;
  * @property int $created_at
  * @property int $updated_at
  * @property int|null $deleted_at
+ * @property int $is_deleted
  */
 class Category extends \yii\db\ActiveRecord
 {
@@ -34,9 +35,10 @@ class Category extends \yii\db\ActiveRecord
     {
         return [
             [['deleted_at'], 'default', 'value' => null],
+            [['status', 'is_deleted'], 'default', 'value' => 0],
             [['status'], 'default', 'value' => 1],
-            [['name', 'created_at', 'updated_at'], 'required'],
-            [['status', 'created_at', 'updated_at', 'deleted_at'], 'integer'],
+            [['name'], 'required'],
+            [['status', 'created_at', 'updated_at', 'deleted_at', 'is_deleted'], 'integer'],
             [['name'], 'string', 'max' => 255],
         ];
     }
@@ -53,6 +55,7 @@ class Category extends \yii\db\ActiveRecord
             'created_at' => 'Created At',
             'updated_at' => 'Updated At',
             'deleted_at' => 'Deleted At',
+            'is_deleted' => 'Is Deleted',
         ];
     }
 

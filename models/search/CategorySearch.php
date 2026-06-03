@@ -4,12 +4,12 @@ namespace app\models\search;
 
 use yii\base\Model;
 use yii\data\ActiveDataProvider;
-use app\models\Category;
+use app\models\CategoryModel;
 
 /**
  * CategorySearch represents the model behind the search form of `app\models\Category`.
  */
-class CategorySearch extends Category
+class CategorySearch extends CategoryModel
 {
     public $keyword;
     /**
@@ -18,7 +18,7 @@ class CategorySearch extends Category
     public function rules()
     {
         return [
-            [['id', 'status', 'created_at', 'updated_at', 'deleted_at'], 'integer'],
+            [['id', 'status', 'created_at', 'updated_at', 'deleted_at', 'is_deleted'], 'integer'],
             [['name', 'keyword'], 'safe'],
         ];
     }
@@ -42,7 +42,7 @@ class CategorySearch extends Category
      */
     public function search($params, $formName = null)
     {
-        $query = Category::find()
+        $query = CategoryModel::find()
             ->select(['id', 'name', 'status', 'created_at'])
             ->notDeleted();
 
@@ -73,7 +73,7 @@ class CategorySearch extends Category
             'status' => $this->status,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
-            'deleted_at' => $this->deleted_at,
+            'is_deleted' => $this->is_deleted,
         ]);
 
         $query->andFilterWhere(['like', 'name', $this->name])

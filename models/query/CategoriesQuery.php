@@ -11,17 +11,17 @@ class CategoriesQuery extends \yii\db\ActiveQuery
 {
     public function active()
     {
-        return $this->andWhere(['status' => 1]);
+        return $this->andWhere(['categories.status' => 1]);
     }
 
     public function notDeleted()
     {
-        return $this->andWhere(['deleted_at' => null]);
+        return $this->andWhere(['categories.is_deleted' => 0]);
     }
 
     public function byId($id)
     {
-        return $this->andWhere(['id' => $id]);
+        return $this->andWhere(['categories.id' => $id]);
     }
 
     /**

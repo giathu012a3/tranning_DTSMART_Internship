@@ -2,9 +2,8 @@
 
 namespace app\controllers;
 
-use app\models\Category;
+use app\models\CategoryModel;
 use app\models\forms\CategoryForm;
-use app\models\response\CategoryResponse;
 use app\models\search\CategorySearch;
 use Yii;
 use yii\rest\Controller;
@@ -54,7 +53,7 @@ class CategoryController extends Controller
     public function actionView($id)
     {
         try {
-            $category = Category::find()->byId($id)->notDeleted()->one();
+            $category = CategoryModel::find()->byId($id)->notDeleted()->one();
             if (!$category) {
                 return [
                     'status' => false,
@@ -62,10 +61,9 @@ class CategoryController extends Controller
                     'message' => 'Category not found or inactive',
                 ];
             }
-            $response = CategoryResponse::fromModel($category);
             return [
                 'status' => true,
-                'data' => $response,
+                'data' => $category,
                 'message' => 'Category retrieved successfully',
             ];
         } catch (\Throwable $th) {
@@ -89,10 +87,9 @@ class CategoryController extends Controller
             $data = Yii::$app->request->post();
 
             if ($form->load($data, '') && $form->save()) {
-                $response = CategoryResponse::fromModel($form->getCategory());
                 return [
                     'status' => true,
-                    'data' => $response,
+                    'data' => $form,
                     'message' => 'Category created successfully'
                 ];
             }
@@ -121,12 +118,12 @@ class CategoryController extends Controller
     public function actionUpdate($id)
     {
         try {
-            $category = Category::find()
+            $form = CategoryForm::find()
                 ->byId($id)
                 ->notDeleted()
                 ->one();
 
-            if (!$category) {
+            if (!$form) {
                 return [
                     'status' => false,
                     'data' => null,
@@ -134,18 +131,14 @@ class CategoryController extends Controller
                 ];
             }
 
-            $form = new CategoryForm($category);
             $data = Yii::$app->request->post();
 
-            if ($form->load($data, '')) {
-                if ($form->save()) {
-                    $response = CategoryResponse::fromModel($form->getCategory());
-                    return [
-                        'status' => true,
-                        'data' => $response,
-                        'message' => 'Category updated successfully',
-                    ];
-                }
+            if ($form->load($data, '') && $form->save()) {
+                return [
+                    'status' => true,
+                    'data' => $form,
+                    'message' => 'Category updated successfully',
+                ];
             }
             return [
                 'status' => false,
@@ -171,7 +164,7 @@ class CategoryController extends Controller
     public function actionDelete($id)
     {
         try {
-            $category = Category::find()
+            $category = CategoryModel::find()
                 ->byId($id)
                 ->notDeleted()
                 ->one();

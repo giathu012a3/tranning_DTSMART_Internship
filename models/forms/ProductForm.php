@@ -3,7 +3,6 @@
 namespace app\models\forms;
 
 use app\models\ProductModel;
-use app\models\TagModel;
 use yii\web\UploadedFile;
 
 class ProductForm extends ProductModel
@@ -52,11 +51,14 @@ class ProductForm extends ProductModel
             return;
         }
 
-        $attributes = $this->getAttributes(null, ['updated_at', 'created_at']);
-        $oldAttributes = $this->getOldAttributes();
-        unset($oldAttributes['updated_at'], $oldAttributes['created_at']);
+        $this->category_id = (int)$this->category_id;
+        $this->price = sprintf('%.2f', $this->price);
+        $this->stock = sprintf('%.2f', $this->stock);
 
-        $dbChanged = ($attributes != $oldAttributes);
+        $dirty = $this->getDirtyAttributes();
+        unset($dirty['updated_at'], $dirty['created_at']);
+
+        $dbChanged = !empty($dirty);
 
         $tagsChanged = ($this->tags !== null) && (
             count($this->tags) !== count($this->getCurrentTags()) ||
