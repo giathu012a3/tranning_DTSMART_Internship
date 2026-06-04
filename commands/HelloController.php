@@ -28,7 +28,7 @@ class HelloController extends Controller
      * @param string $message the message to be echoed.
      * @return int Exit code
      */
-    public function actionIndex(string $message = 'hello world'): int
+    public function actionIndex(string $message = 'hello bro'): int
     {
         echo "{$message}\n";
 
