@@ -31,6 +31,22 @@ class TagModel extends Tag
         ];
     }
 
+    public function fields()
+    {
+        return [
+            'id',
+            'name',
+            'slug',
+            'status',
+            'created_at' => function () {
+                return $this->created_at ? date('Y-m-d H:i:s', $this->created_at) : null;
+            },
+            'updated_at' => function () {
+                return $this->updated_at ? date('Y-m-d H:i:s', $this->updated_at) : null;
+            },
+        ];
+    }
+
     public static function syncForProduct(int $productId, array $tagIds, bool $isInsert = false): void
     {
         if (!$isInsert) {
@@ -42,29 +58,35 @@ class TagModel extends Tag
         }
 
         $rows = [];
-        $time = time();
+        $expression = new \yii\db\Expression('UNIX_TIMESTAMP()');
         foreach ($tagIds as $id) {
-            $model = new ProductTagModel();
-            $model->product_id = $productId;
-            $model->tag_id = $id;
-            $model->created_at = $time;
-            $model->updated_at = $time;
-
-            if ($model->validate() && $model->beforeSave(true)) {
-                $rows[] = [
-                    $model->product_id,
-                    $model->tag_id,
-                    $model->created_at,
-                    $model->updated_at
-                ];
-            }
+            $rows[] = [$productId, $id, $expression, $expression];
         }
 
-        if (!empty($rows)) {
-            Yii::$app->db->createCommand()
-                ->batchInsert(ProductTagModel::tableName(), ['product_id', 'tag_id', 'created_at', 'updated_at'], $rows)
-                ->execute();
+        Yii::$app->db->createCommand()
+            ->batchInsert(ProductTagModel::tableName(), ['product_id', 'tag_id', 'created_at', 'updated_at'], $rows)
+            ->execute();
+    }
+
+    public static function syncForArticle(int $articleId, array $tagIds, bool $isInsert = false): void
+    {
+        if (!$isInsert) {
+            ArticleTagModel::deleteAll(['article_id' => $articleId]);
         }
+
+        if (empty($tagIds)) {
+            return;
+        }
+
+        $rows = [];
+        $expression = new \yii\db\Expression('UNIX_TIMESTAMP()');
+        foreach ($tagIds as $id) {
+            $rows[] = [$articleId, $id, $expression, $expression];
+        }
+
+        Yii::$app->db->createCommand()
+            ->batchInsert(ArticleTagModel::tableName(), ['article_id', 'tag_id', 'created_at', 'updated_at'], $rows)
+            ->execute();
     }
 
     public static function resolveIds(array $names, array &$errors = []): array

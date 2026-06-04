@@ -4,7 +4,7 @@ namespace app\models;
 
 use yii\behaviors\TimestampBehavior;
 
-class ProductTagModel extends ProductTag
+class ProductArticleModel extends ProductArticle
 {
     public function behaviors()
     {
@@ -16,8 +16,8 @@ class ProductTagModel extends ProductTag
     public function rules()
     {
         return [
-            [['product_id', 'tag_id'], 'required'],
-            [['product_id', 'tag_id', 'created_at', 'updated_at'], 'integer'],
+            [['product_id', 'article_id'], 'required'],
+            [['product_id', 'article_id', 'created_at', 'updated_at'], 'integer'],
         ];
     }
 
@@ -32,8 +32,8 @@ class ProductTagModel extends ProductTag
     /**
      * @return \yii\db\ActiveQuery
      */
-    public function getTag()
+    public function getArticle()
     {
-        return $this->hasOne(TagModel::class, ['id' => 'tag_id']);
+        return $this->hasOne(ArticleModel::class, ['id' => 'article_id']);
     }
 }

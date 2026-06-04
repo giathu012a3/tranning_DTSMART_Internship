@@ -88,6 +88,18 @@ $config = [
                 ],
                 [
                     'class' => 'yii\rest\UrlRule',
+                    'controller' => 'product-article',
+                    'prefix' => 'api',
+                    'pluralize' => true,
+                ],
+                [
+                    'class' => 'yii\rest\UrlRule',
+                    'controller' => 'article-tag',
+                    'prefix' => 'api',
+                    'pluralize' => true,
+                ],
+                [
+                    'class' => 'yii\rest\UrlRule',
                     'controller' => 'order',
                     'prefix' => 'api',
                     'pluralize' => true,

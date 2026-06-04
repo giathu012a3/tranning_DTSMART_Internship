@@ -4,9 +4,9 @@ namespace app\models\search;
 
 use yii\base\Model;
 use yii\data\ActiveDataProvider;
-use app\models\Tag;
+use app\models\TagModel;
 
-class TagSearch extends Tag
+class TagSearch extends TagModel
 {
     public function rules()
     {
@@ -23,7 +23,7 @@ class TagSearch extends Tag
 
     public function search($params, $formName = null)
     {
-        $query = Tag::find();
+        $query = TagModel::find();
 
         $dataProvider = new ActiveDataProvider([
             'query'      => $query,

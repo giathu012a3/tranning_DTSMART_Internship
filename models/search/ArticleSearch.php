@@ -4,17 +4,18 @@ namespace app\models\search;
 
 use yii\base\Model;
 use yii\data\ActiveDataProvider;
-use app\models\Article;
+use app\models\ArticleModel;
 use app\models\ArticleComment;
 
 /**
- * ArticleSearch represents the model behind the search form of `app\models\Article`.
+ * ArticleSearch represents the model behind the search form of `app\models\ArticleModel`.
  */
-class ArticleSearch extends Article
+class ArticleSearch extends ArticleModel
 {
     public $keyword;
     public $author_name;
     public $tag_name;
+
     /**
      * {@inheritdoc}
      */
@@ -45,7 +46,7 @@ class ArticleSearch extends Article
      */
     public function search($params, $formName = null)
     {
-        $query = Article::find()
+        $query = ArticleModel::find()
             ->select([
                 'articles.id',
                 'articles.title',
@@ -60,10 +61,11 @@ class ArticleSearch extends Article
                     ->select('COUNT(*)')
                     ->where('article_id = articles.id')
             ])
-            ->joinWith(['author', 'tags'])
             ->notDeleted()
             ->withAsset()
-            ->withProducts();
+            ->withProducts()
+            ->withAuthor()
+            ->withTags();
 
         $dataProvider = new ActiveDataProvider([
             'query' => $query,
@@ -84,7 +86,7 @@ class ArticleSearch extends Article
             return $dataProvider;
         }
 
-        // grid filtering conditions
+        // Apply filters
         $query->andFilterWhere([
             'articles.id' => $this->id,
             'articles.like_count' => $this->like_count,
@@ -98,9 +100,19 @@ class ArticleSearch extends Article
             ->andFilterWhere(['like', 'articles.content', $this->content])
             ->andFilterWhere(['like', 'articles.slug', $this->slug])
             ->andFilterWhere(['like', 'articles.excerpt', $this->excerpt])
-            ->andFilterWhere(['like', 'articles.slug', $this->keyword])
-            ->andFilterWhere(['like', 'users.username', $this->author_name])
-            ->andFilterWhere(['like', 'tags.name', $this->tag_name]);
+            ->andFilterWhere(['like', 'articles.slug', $this->keyword]);
+
+        // Dynamically join only when search filters are active to prevent N+1 issues and pagination duplicates
+        if (!empty($this->author_name)) {
+            $query->joinWith('author');
+            $query->andFilterWhere(['like', 'users.username', $this->author_name]);
+        }
+
+        if (!empty($this->tag_name)) {
+            $query->joinWith('tags');
+            $query->andFilterWhere(['like', 'tags.name', $this->tag_name]);
+            $query->groupBy('articles.id');
+        }
 
         return $dataProvider;
     }

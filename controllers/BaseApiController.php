@@ -13,15 +13,6 @@ class BaseApiController extends Controller
         'metaEnvelope' => 'pagination',
     ];
 
-    // public function behaviors()
-    // {
-    //     $behaviors = parent::behaviors();
-    //     $behaviors['authenticator'] = [
-    //         'class' => HttpBearerAuth::class,
-    //     ];
-    //     return $behaviors;
-    // }
-
     /**
      * Helper to return standard success response.
      *
