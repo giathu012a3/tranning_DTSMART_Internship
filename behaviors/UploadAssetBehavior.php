@@ -18,6 +18,7 @@ class UploadAssetBehavior extends Behavior
             ActiveRecord::EVENT_BEFORE_VALIDATE => 'beforeValidate',
             ActiveRecord::EVENT_AFTER_INSERT => 'afterSave',
             ActiveRecord::EVENT_AFTER_UPDATE => 'afterSave',
+            sos
         ];
     }
 
