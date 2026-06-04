@@ -15,7 +15,7 @@ class ArticleController extends BaseApiController
             $searchModel = new ArticleSearch();
             return $searchModel->search(Yii::$app->request->queryParams, '');
         } catch (\Throwable $e) {
-            return $this->responseError('Error retrieving articles: ' . $e->getMessage());
+            return $this->responseError('Error retrieving articles: ' . $e->getMessage(), null, 500);
         }
     }
 
@@ -25,12 +25,12 @@ class ArticleController extends BaseApiController
             $article = $this->loadArticle($id);
 
             if (!$article) {
-                return $this->responseError('Article not found', null);
+                return $this->responseError('Article not found', null, 404);
             }
 
             return $article;
         } catch (\Throwable $e) {
-            return $this->responseError('Error retrieving article: ' . $e->getMessage());
+            return $this->responseError('Error retrieving article: ' . $e->getMessage(), null, 500);
         }
     }
 
@@ -54,7 +54,8 @@ class ArticleController extends BaseApiController
 
         return $this->responseError(
             'Validation failed: ' . json_encode($form->errors),
-            $form->getErrors()
+            $form->getErrors(),
+            422
         );
     }
 
@@ -63,7 +64,7 @@ class ArticleController extends BaseApiController
         $form = ArticleForm::find()->byId($id)->notDeleted()->one();
 
         if (!$form) {
-            return $this->responseError('Article not found', null);
+            return $this->responseError('Article not found', null, 404);
         }
 
         if ($form->load(Yii::$app->request->post(), '') && $form->save()) {
@@ -82,7 +83,8 @@ class ArticleController extends BaseApiController
 
         return $this->responseError(
             'Validation failed: ' . json_encode($form->errors),
-            $form->getErrors()
+            $form->getErrors(),
+            422
         );
     }
 
@@ -92,16 +94,16 @@ class ArticleController extends BaseApiController
             $article = ArticleModel::find()->byId($id)->notDeleted()->one();
 
             if (!$article) {
-                return $this->responseError('Article not found', null);
+                return $this->responseError('Article not found', null, 404);
             }
 
             if ($article->softDelete()) {
                 return $this->responseSuccess(null, 'Article moved to trash successfully');
             }
 
-            return $this->responseError('Failed to delete article');
+            return $this->responseError('Failed to delete article', null, 400);
         } catch (\Throwable $e) {
-            return $this->responseError('Error deleting article: ' . $e->getMessage());
+            return $this->responseError('Error deleting article: ' . $e->getMessage(), null, 500);
         }
     }
 

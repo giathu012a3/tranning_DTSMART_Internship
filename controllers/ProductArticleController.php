@@ -24,17 +24,17 @@ class ProductArticleController extends BaseApiController
         $model->article_id = $params['article_id'] ?? null;
 
         if (!$model->validate()) {
-            return $this->responseError('Validation failed', $model->getErrors());
+            return $this->responseError('Validation failed', $model->getErrors(), 422);
         }
 
         $productExists = ProductModel::find()->where(['id' => $model->product_id])->notDeleted()->exists();
         if (!$productExists) {
-            return $this->responseError('Product does not exist or has been deleted');
+            return $this->responseError('Product does not exist or has been deleted', null, 404);
         }
 
         $articleExists = ArticleModel::find()->where(['id' => $model->article_id])->notDeleted()->exists();
         if (!$articleExists) {
-            return $this->responseError('Article does not exist or has been deleted');
+            return $this->responseError('Article does not exist or has been deleted', null, 404);
         }
 
         $alreadyLinked = ProductArticleModel::find()->where([
@@ -43,14 +43,14 @@ class ProductArticleController extends BaseApiController
         ])->exists();
 
         if ($alreadyLinked) {
-            return $this->responseError('Product is already linked to this article');
+            return $this->responseError('Product is already linked to this article', null, 400);
         }
 
         if ($model->save(false)) {
             return $this->responseSuccess($model, 'Product linked to article successfully');
         }
 
-        return $this->responseError('Failed to save association record');
+        return $this->responseError('Failed to save association record', null, 500);
     }
 
     /**
@@ -65,16 +65,16 @@ class ProductArticleController extends BaseApiController
         try {
             $model = ProductArticleModel::findOne($id);
             if (!$model) {
-                return $this->responseError('Association record not found', null);
+                return $this->responseError('Association record not found', null, 404);
             }
 
             if ($model->delete()) {
                 return $this->responseSuccess(null, 'Product unlinked from article successfully');
             }
 
-            return $this->responseError('Failed to delete association record');
+            return $this->responseError('Failed to delete association record', null, 400);
         } catch (\Throwable $e) {
-            return $this->responseError('Error deleting association: ' . $e->getMessage());
+            return $this->responseError('Error deleting association: ' . $e->getMessage(), null, 500);
         }
     }
 }

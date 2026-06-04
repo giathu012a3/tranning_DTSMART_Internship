@@ -39,10 +39,12 @@ class BaseApiController extends Controller
      *
      * @param string $message
      * @param mixed|null $data
+     * @param int $code HTTP status code
      * @return array
      */
-    public function responseError(string $message = 'Error', $data = null): array
+    public function responseError(string $message = 'Error', $data = null, int $code = 400): array
     {
+        \Yii::$app->response->statusCode = $code;
         return [
             'status'  => false,
             'data'    => $data,

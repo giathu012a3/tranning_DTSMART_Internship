@@ -16,7 +16,7 @@ class ProductController extends BaseApiController
             $searchModel  = new ProductSearch();
             return $searchModel->search(Yii::$app->request->queryParams, '');
         } catch (\Throwable $e) {
-            return $this->responseError('Error retrieving products: ' . $e->getMessage());
+            return $this->responseError('Error retrieving products: ' . $e->getMessage(), null, 500);
         }
     }
 
@@ -26,12 +26,12 @@ class ProductController extends BaseApiController
             $product = $this->loadProduct($id);
 
             if (!$product || $product->is_deleted) {
-                return $this->responseError('Product not found', null);
+                return $this->responseError('Product not found', null, 404);
             }
 
             return $product;
         } catch (\Throwable $e) {
-            return $this->responseError('Error retrieving product: ' . $e->getMessage());
+            return $this->responseError('Error retrieving product: ' . $e->getMessage(), null, 500);
         }
     }
 
@@ -55,7 +55,8 @@ class ProductController extends BaseApiController
 
         return $this->responseError(
             'Validation failed: ' . json_encode($form->errors),
-            $form->getErrors()
+            $form->getErrors(),
+            422
         );
     }
 
@@ -64,7 +65,7 @@ class ProductController extends BaseApiController
         $form = ProductForm::find()->byId($id)->notDeleted()->one();
 
         if (!$form) {
-            return $this->responseError('Product not found', null);
+            return $this->responseError('Product not found', null, 404);
         }
 
         if ($form->load(Yii::$app->request->post(), '') && $form->save()) {
@@ -83,7 +84,8 @@ class ProductController extends BaseApiController
 
         return $this->responseError(
             'Validation failed: ' . json_encode($form->errors),
-            $form->getErrors()
+            $form->getErrors(),
+            422
         );
     }
 
@@ -93,16 +95,16 @@ class ProductController extends BaseApiController
             $product = ProductModel::find()->byId($id)->notDeleted()->one();
 
             if (!$product) {
-                return $this->responseError('Product not found', null);
+                return $this->responseError('Product not found', null, 404);
             }
 
             if ($product->softDelete()) {
                 return $this->responseSuccess(null, 'Product moved to trash successfully');
             }
 
-            return $this->responseError('Failed to delete product');
+            return $this->responseError('Failed to delete product', null, 400);
         } catch (\Throwable $e) {
-            return $this->responseError('Error deleting product: ' . $e->getMessage());
+            return $this->responseError('Error deleting product: ' . $e->getMessage(), null, 500);
         }
     }
 

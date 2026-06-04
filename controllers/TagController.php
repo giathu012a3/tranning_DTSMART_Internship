@@ -15,7 +15,7 @@ class TagController extends BaseApiController
             $searchModel = new TagSearch();
             return $searchModel->search(Yii::$app->request->queryParams, '');
         } catch (\Throwable $e) {
-            return $this->responseError('Error retrieving tags: ' . $e->getMessage());
+            return $this->responseError('Error retrieving tags: ' . $e->getMessage(), null, 500);
         }
     }
 
@@ -25,12 +25,12 @@ class TagController extends BaseApiController
             $tag = TagModel::findOne($id);
 
             if (!$tag) {
-                return $this->responseError('Tag not found', null);
+                return $this->responseError('Tag not found', null, 404);
             }
 
             return $tag;
         } catch (\Throwable $e) {
-            return $this->responseError('Error retrieving tag: ' . $e->getMessage());
+            return $this->responseError('Error retrieving tag: ' . $e->getMessage(), null, 500);
         }
     }
 
@@ -44,7 +44,8 @@ class TagController extends BaseApiController
 
         return $this->responseError(
             'Validation failed: ' . json_encode($form->errors),
-            $form->getErrors()
+            $form->getErrors(),
+            422
         );
     }
 
@@ -53,7 +54,7 @@ class TagController extends BaseApiController
         $form = TagForm::findOne($id);
 
         if (!$form) {
-            return $this->responseError('Tag not found', null);
+            return $this->responseError('Tag not found', null, 404);
         }
 
         if ($form->load(Yii::$app->request->post(), '') && $form->save()) {
@@ -62,7 +63,8 @@ class TagController extends BaseApiController
 
         return $this->responseError(
             'Validation failed: ' . json_encode($form->errors),
-            $form->getErrors()
+            $form->getErrors(),
+            422
         );
     }
 
@@ -72,16 +74,16 @@ class TagController extends BaseApiController
             $tag = TagModel::findOne($id);
 
             if (!$tag) {
-                return $this->responseError('Tag not found', null);
+                return $this->responseError('Tag not found', null, 404);
             }
 
             if ($tag->delete()) {
                 return $this->responseSuccess(null, 'Tag deleted successfully');
             }
 
-            return $this->responseError('Failed to delete tag');
+            return $this->responseError('Failed to delete tag', null, 400);
         } catch (\Throwable $e) {
-            return $this->responseError('Error deleting tag: ' . $e->getMessage());
+            return $this->responseError('Error deleting tag: ' . $e->getMessage(), null, 500);
         }
     }
 }

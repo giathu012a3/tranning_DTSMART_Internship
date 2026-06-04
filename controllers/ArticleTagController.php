@@ -26,7 +26,7 @@ class ArticleTagController extends BaseApiController
             $errors = [];
             $tagIds = TagModel::resolveIds([$tagName], $errors);
             if (!empty($errors)) {
-                return $this->responseError('Failed to resolve or create tag: ' . implode(', ', $errors));
+                return $this->responseError('Failed to resolve or create tag: ' . implode(', ', $errors), null, 400);
             }
             $tagId = !empty($tagIds) ? $tagIds[0] : null;
         }
@@ -36,17 +36,17 @@ class ArticleTagController extends BaseApiController
         $model->tag_id = $tagId;
 
         if (!$model->validate()) {
-            return $this->responseError('Validation failed', $model->getErrors());
+            return $this->responseError('Validation failed', $model->getErrors(), 422);
         }
 
         $articleExists = ArticleModel::find()->where(['id' => $model->article_id])->notDeleted()->exists();
         if (!$articleExists) {
-            return $this->responseError('Article does not exist or has been deleted');
+            return $this->responseError('Article does not exist or has been deleted', null, 404);
         }
 
         $tagExists = TagModel::find()->where(['id' => $model->tag_id])->exists();
         if (!$tagExists) {
-            return $this->responseError('Tag does not exist');
+            return $this->responseError('Tag does not exist', null, 404);
         }
 
         $alreadyLinked = ArticleTagModel::find()->where([
@@ -55,14 +55,14 @@ class ArticleTagController extends BaseApiController
         ])->exists();
 
         if ($alreadyLinked) {
-            return $this->responseError('Tag is already linked to this article');
+            return $this->responseError('Tag is already linked to this article', null, 400);
         }
 
         if ($model->save(false)) {
             return $this->responseSuccess($model, 'Tag linked to article successfully');
         }
 
-        return $this->responseError('Failed to save association record');
+        return $this->responseError('Failed to save association record', null, 500);
     }
 
     /**
@@ -77,16 +77,16 @@ class ArticleTagController extends BaseApiController
         try {
             $model = ArticleTagModel::findOne($id);
             if (!$model) {
-                return $this->responseError('Association record not found', null);
+                return $this->responseError('Association record not found', null, 404);
             }
 
             if ($model->delete()) {
                 return $this->responseSuccess(null, 'Tag unlinked from article successfully');
             }
 
-            return $this->responseError('Failed to delete association record');
+            return $this->responseError('Failed to delete association record', null, 400);
         } catch (\Throwable $e) {
-            return $this->responseError('Error deleting association: ' . $e->getMessage());
+            return $this->responseError('Error deleting association: ' . $e->getMessage(), null, 500);
         }
     }
 }
