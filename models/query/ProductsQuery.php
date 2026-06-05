@@ -77,4 +77,5 @@ class ProductsQuery extends \yii\db\ActiveQuery
     {
         return $this->andWhere(['products.id' => $id]);
     }
+
 }

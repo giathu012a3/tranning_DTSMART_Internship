@@ -57,15 +57,12 @@ class TagModel extends Tag
             return;
         }
 
-        $rows = [];
-        $expression = new \yii\db\Expression('UNIX_TIMESTAMP()');
         foreach ($tagIds as $id) {
-            $rows[] = [$productId, $id, $expression, $expression];
+            $pivot = new ProductTagModel();
+            $pivot->product_id = $productId;
+            $pivot->tag_id = $id;
+            $pivot->save(false);
         }
-
-        Yii::$app->db->createCommand()
-            ->batchInsert(ProductTagModel::tableName(), ['product_id', 'tag_id', 'created_at', 'updated_at'], $rows)
-            ->execute();
     }
 
     public static function syncForArticle(int $articleId, array $tagIds, bool $isInsert = false): void
@@ -78,15 +75,12 @@ class TagModel extends Tag
             return;
         }
 
-        $rows = [];
-        $expression = new \yii\db\Expression('UNIX_TIMESTAMP()');
         foreach ($tagIds as $id) {
-            $rows[] = [$articleId, $id, $expression, $expression];
+            $pivot = new ArticleTagModel();
+            $pivot->article_id = $articleId;
+            $pivot->tag_id = $id;
+            $pivot->save(false);
         }
-
-        Yii::$app->db->createCommand()
-            ->batchInsert(ArticleTagModel::tableName(), ['article_id', 'tag_id', 'created_at', 'updated_at'], $rows)
-            ->execute();
     }
 
     public static function resolveIds(array $names, array &$errors = []): array

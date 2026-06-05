@@ -132,23 +132,11 @@ class CategoryController extends BaseApiController
         }
     }
 
-    /**
-     * Helper to load a fully structured CategoryModel object.
-     *
-     * @param int $id
-     * @return CategoryModel|null
-     */
     private function loadCategory(int $id): ?CategoryModel
     {
-        $category = CategoryModel::find()
+        return CategoryModel::find()
             ->withProducts()
             ->byId($id)
             ->one();
-
-        if ($category !== null) {
-            $category->detailMode = true;
-        }
-
-        return $category;
     }
 }

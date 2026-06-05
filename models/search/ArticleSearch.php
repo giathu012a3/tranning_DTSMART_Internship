@@ -59,7 +59,14 @@ class ArticleSearch extends ArticleModel
                 'articles.updated_at',
                 'comment_count' => ArticleComment::find()
                     ->select('COUNT(*)')
-                    ->where('article_id = articles.id')
+                    ->where('article_id = articles.id'),
+                'products_count' => \app\models\ProductArticleModel::find()
+                    ->select('COUNT(*)')
+                    ->where('article_id = articles.id'),
+                'files_count' => \app\models\AssetModel::find()
+                    ->select('COUNT(*)')
+                    ->where(['asset_type' => 'article'])
+                    ->andWhere('asset_id = articles.id')
             ])
             ->notDeleted()
             ->withAsset()

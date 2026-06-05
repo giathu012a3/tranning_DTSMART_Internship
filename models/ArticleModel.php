@@ -21,13 +21,9 @@ class ArticleModel extends Article
         return new ArticlesQuery(get_called_class());
     }
 
-    public $deleted_image_ids;
-    public $thumbnail;
-    public $images;
     public $comment_count;
-    public $tags;
-    public array $tagErrors = [];
-    public bool $detailMode = false;
+    public $products_count;
+    public $files_count;
 
     public function behaviors()
     {
@@ -94,7 +90,7 @@ class ArticleModel extends Article
      */
     public function getProductArticles()
     {
-        return $this->hasMany(ProductArticle::class, ['article_id' => 'id']);
+        return $this->hasMany(ProductArticleModel::class, ['article_id' => 'id']);
     }
 
     /**
@@ -133,25 +129,37 @@ class ArticleModel extends Article
         return $this->hasMany(FileModel::class, ['id' => 'file_id'])->via('assets');
     }
 
-    public function afterSave($insert, $changedAttributes)
-    {
-        parent::afterSave($insert, $changedAttributes);
-        if ($this->tags !== null) {
-            try {
-                $tagIds = TagModel::resolveIds($this->tags, $this->tagErrors);
-                TagModel::syncForArticle($this->id, $tagIds, $insert);
-            } catch (\Throwable $e) {
-                $this->tagErrors[] = 'Lỗi hệ thống khi đồng bộ tag: ' . $e->getMessage();
-            }
-        }
-    }
-
     public function softDelete(): bool
     {
         $this->deleted_at = time();
         return $this->save(false);
     }
 
+    public function getAuthorName()
+    {
+        return $this->author->username ?? 'N/A';
+    }
+
+    public function getCommentCount()
+    {
+        return $this->comment_count !== null
+            ? (int) $this->comment_count
+            : ($this->isRelationPopulated('articleComments') ? count($this->articleComments) : (int) $this->getArticleComments()->count());
+    }
+
+    public function getFilesCount()
+    {
+        return $this->files_count !== null
+            ? (int) $this->files_count
+            : ($this->isRelationPopulated('assets') ? count($this->assets) : (int) $this->getAssets()->count());
+    }
+
+    public function getProductsCount()
+    {
+        return $this->products_count !== null
+            ? (int) $this->products_count
+            : ($this->isRelationPopulated('products') ? count($this->products) : (int) $this->getProducts()->count());
+    }
     public function fields()
     {
         $fields = [
@@ -160,57 +168,39 @@ class ArticleModel extends Article
             'slug',
             'status',
             'author_id',
-            'author_name' => function () {
-                return $this->author->username ?? 'N/A';
+            'author_name' => fn() => $this->getAuthorName(),
+            'stats' => fn() => [
+                'view_count' => 0,
+                'like_count' => (int) ($this->like_count ?? 0),
+                'comment_count' => $this->getCommentCount(),
+            ],
+            'tags' => fn() => array_map(fn($tag) => [
+                'id'   => $tag->id,
+                'name' => $tag->name,
+                'slug' => $tag->slug,
+            ], $this->tags),
+            'thumbnail_url' => function() {
+                if ($this->isRelationPopulated('assets')) {
+                    foreach ($this->assets as $asset) {
+                        if ($asset->collection_name === 'thumbnail') {
+                            return $asset->file ? FileModel::buildUrl($asset->file->file_path) : null;
+                        }
+                    }
+                    return null;
+                }
+                $thumbnail = $this->isRelationPopulated('thumbnail') ? $this->relatedRecords['thumbnail'] : $this->getThumbnail()->one();
+                return $thumbnail && $thumbnail->file ? FileModel::buildUrl($thumbnail->file->file_path) : null;
             },
-            'stats' => function () {
-                $commentCount = $this->comment_count !== null
-                    ? (int) $this->comment_count
-                    : ($this->isRelationPopulated('articleComments') ? count($this->articleComments) : (int) $this->getArticleComments()->count());
-
-                return [
-                    'view_count' => 0,
-                    'like_count' => (int) ($this->like_count ?? 0),
-                    'comment_count' => $commentCount,
-                ];
-            },
-            'tags' => function () {
-                $tagModels = $this->isRelationPopulated('tags') ? $this->relatedRecords['tags'] : $this->getTags()->all();
-                return array_map(fn($tag) => [
-                    'id'   => $tag->id,
-                    'name' => $tag->name,
-                    'slug' => $tag->slug,
-                ], $tagModels);
-            },
-            'created_at' => function () {
-                return $this->created_at ? date('Y-m-d H:i:s', $this->created_at) : null;
-            },
-            'updated_at' => function () {
-                return $this->updated_at ? date('Y-m-d H:i:s', $this->updated_at) : null;
-            },
-            'linked_items' => function () {
-                return [
-                    'files_count'    => $this->isRelationPopulated('assets') ? count($this->assets) : (int) $this->getAssets()->count(),
-                    'products_count' => $this->isRelationPopulated('products') ? count($this->products) : (int) $this->getProducts()->count(),
-                ];
-            },
+            'linked_items' => fn() => [
+                'files_count'    => $this->getFilesCount(),
+                'products_count' => $this->getProductsCount(),
+            ],
+            'created_at' => fn() => $this->created_at ? date('Y-m-d H:i:s', $this->created_at) : null,
+            'updated_at' => fn() => $this->updated_at ? date('Y-m-d H:i:s', $this->updated_at) : null,
         ];
 
         if ($this->excerpt !== null) {
             $fields['excerpt'] = 'excerpt';
-        }
-
-        if ($this->detailMode) {
-            $fields = array_merge($fields, $this->extraFields());
-        } else {
-            $fields['thumbnail_url'] = function () {
-                foreach ($this->assets as $asset) {
-                    if ($asset->collection_name === 'thumbnail' && $asset->file) {
-                        return FileModel::buildUrl($asset->file->file_path);
-                    }
-                }
-                return null;
-            };
         }
 
         return $fields;
@@ -219,27 +209,12 @@ class ArticleModel extends Article
     public function extraFields()
     {
         return [
-            'content' => 'content',
-            'attachments' => function () {
-                return array_map(fn($asset) => [
-                    'id'              => $asset->id,
-                    'file_id'         => $asset->file->id,
-                    'file_name'       => $asset->file->file_name,
-                    'file_path'       => $asset->file->file_path,
-                    'file_size'       => $asset->file->file_size,
-                    'collection_name' => $asset->collection_name,
-                    'file_type'       => $asset->file->file_type,
-                ], array_filter($this->assets, fn($asset) => $asset->file !== null));
-            },
-            'products' => function () {
-                return array_map(fn($product) => [
-                    'id'          => $product->id,
-                    'name'        => $product->name,
-                    'price'       => $product->price,
-                    'status'      => $product->status,
-                    'category_id' => $product->category_id,
-                ], $this->products);
-            },
+            'content',
+            'author',
+            'products',
+            'attachments' => 'assets',
+            'comments' => 'articleComments',
+            'likes' => 'articleLikes',
         ];
     }
 }

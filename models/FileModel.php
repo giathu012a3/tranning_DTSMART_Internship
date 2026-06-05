@@ -26,6 +26,9 @@ class FileModel extends File
         if (empty($path)) {
             return null;
         }
-        return Yii::$app->request->hostInfo . '/' . ltrim($path, '/');
+        $hostInfo = (Yii::$app instanceof \yii\web\Application || Yii::$app->request instanceof \yii\web\Request)
+            ? Yii::$app->request->hostInfo
+            : 'http://localhost';
+        return $hostInfo . '/' . ltrim($path, '/');
     }
 }

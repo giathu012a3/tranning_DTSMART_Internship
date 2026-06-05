@@ -80,4 +80,5 @@ class ArticlesQuery extends \yii\db\ActiveQuery
             }
         ]);
     }
+
 }

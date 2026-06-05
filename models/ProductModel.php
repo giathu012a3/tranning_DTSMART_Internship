@@ -16,14 +16,8 @@ use app\models\FileModel;
  */
 class ProductModel extends Product
 {
-    public $deleted_image_ids;
-    public $thumbnail;
-    public $images;
     public $articles_count;
-    public $tags;
-    public array $tagErrors = [];
-    public bool $detailMode = false;
-    private $_currentTags = null;
+    public $files_count;
 
     public function behaviors()
     {
@@ -53,7 +47,7 @@ class ProductModel extends Product
      */
     public function getProductArticles()
     {
-        return $this->hasMany(ProductArticle::class, ['product_id' => 'id']);
+        return $this->hasMany(ProductArticleModel::class, ['product_id' => 'id']);
     }
 
     /**
@@ -124,19 +118,6 @@ class ProductModel extends Product
         return $this->hasMany(TagModel::class, ['id' => 'tag_id'])->via('productTags');
     }
 
-    public function afterSave($insert, $changedAttributes)
-    {
-        parent::afterSave($insert, $changedAttributes);
-        if ($this->tags !== null) {
-            try {
-                $tagIds = TagModel::resolveIds($this->tags, $this->tagErrors);
-                TagModel::syncForProduct($this->id, $tagIds, $insert);
-            } catch (\Throwable $e) {
-                $this->tagErrors[] = 'Lỗi hệ thống khi đồng bộ tag: ' . $e->getMessage();
-            }
-        }
-    }
-
     public function softDelete(): bool
     {
         $this->deleted_at = time();
@@ -144,85 +125,67 @@ class ProductModel extends Product
         return $this->save(false);
     }
 
-    /**
-     * {@inheritdoc}
-     */
+    public function getCategoryName()
+    {
+        return $this->category->name ?? 'N/A';
+    }
+
+    public function getArticlesCount()
+    {
+        return $this->articles_count !== null
+            ? (int) $this->articles_count
+            : ($this->isRelationPopulated('articles') ? count($this->articles) : (int) $this->getArticles()->count());
+    }
+
+    public function getFilesCount()
+    {
+        return $this->files_count !== null
+            ? (int) $this->files_count
+            : ($this->isRelationPopulated('assets') ? count($this->assets) : (int) $this->getAssets()->count());
+    }
     public function fields()
     {
-        $fields = [
+        return [
             'id',
             'name',
             'price',
             'stock',
             'status',
             'category_id',
-            'category_name' => function () {
-                return $this->category->name ?? 'N/A';
-            },
-            'tags' => function () {
-                $tagModels = $this->isRelationPopulated('tags') ? $this->relatedRecords['tags'] : $this->getTags()->all();
-                return array_map(fn($tag) => [
-                    'id'   => $tag->id,
-                    'name' => $tag->name,
-                    'slug' => $tag->slug,
-                ], $tagModels);
-            },
-            'created_at' => function () {
-                return $this->created_at ? date('Y-m-d H:i:s', $this->created_at) : null;
-            },
-            'updated_at' => function () {
-                return $this->updated_at ? date('Y-m-d H:i:s', $this->updated_at) : null;
-            },
-            'linked_items' => function () {
-                return [
-                    'files_count'    => count($this->assets),
-                    'articles_count' => $this->articles_count ?? count($this->articles),
-                ];
-            },
-        ];
-
-        if ($this->detailMode) {
-            $fields = array_merge($fields, $this->extraFields());
-        } else {
-            $fields['thumbnail_url'] = function () {
-                foreach ($this->assets as $asset) {
-                    if ($asset->collection_name === 'thumbnail' && $asset->file) {
-                        return FileModel::buildUrl($asset->file->file_path);
+            'category_name' => fn() => $this->getCategoryName(),
+            'tags' => fn() => array_map(fn($tag) => [
+                'id'   => $tag->id,
+                'name' => $tag->name,
+                'slug' => $tag->slug,
+            ], $this->tags),
+            'thumbnail_url' => function() {
+                if ($this->isRelationPopulated('assets')) {
+                    foreach ($this->assets as $asset) {
+                        if ($asset->collection_name === 'thumbnail') {
+                            return $asset->file ? FileModel::buildUrl($asset->file->file_path) : null;
+                        }
                     }
+                    return null;
                 }
-                return null;
-            };
-        }
-
-        return $fields;
+                $thumbnail = $this->isRelationPopulated('thumbnail') ? $this->relatedRecords['thumbnail'] : $this->getThumbnail()->one();
+                return $thumbnail && $thumbnail->file ? FileModel::buildUrl($thumbnail->file->file_path) : null;
+            },
+            'linked_items' => fn() => [
+                'files_count'    => $this->getFilesCount(),
+                'articles_count' => $this->getArticlesCount(),
+            ],
+            'created_at' => fn() => $this->created_at ? date('Y-m-d H:i:s', $this->created_at) : null,
+            'updated_at' => fn() => $this->updated_at ? date('Y-m-d H:i:s', $this->updated_at) : null,
+        ];
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function extraFields()
     {
         return [
-            'description' => 'description',
-            'attachments' => function () {
-                return array_map(fn($asset) => [
-                    'id'              => $asset->id,
-                    'file_id'         => $asset->file->id,
-                    'file_name'       => $asset->file->file_name,
-                    'file_path'       => $asset->file->file_path,
-                    'file_size'       => $asset->file->file_size,
-                    'collection_name' => $asset->collection_name,
-                    'file_type'       => $asset->file->file_type,
-                ], array_filter($this->assets, fn($asset) => $asset->file !== null));
-            },
-            'articles' => function () {
-                return array_map(fn($article) => [
-                    'id'      => $article->id,
-                    'title'   => $article->title,
-                    'slug'    => $article->slug,
-                    'excerpt' => $article->excerpt,
-                ], $this->articles);
-            },
+            'description',
+            'category',
+            'articles',
+            'attachments' => 'assets',
         ];
     }
 }

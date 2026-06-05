@@ -53,7 +53,11 @@ class ProductSearch extends ProductModel
                 'products.updated_at',
                 'articles_count' => ProductArticle::find()
                     ->select('COUNT(*)')
-                    ->where('product_id = products.id')
+                    ->where('product_id = products.id'),
+                'files_count' => \app\models\AssetModel::find()
+                    ->select('COUNT(*)')
+                    ->where(['asset_type' => 'product'])
+                    ->andWhere('asset_id = products.id')
             ])
             ->notDeleted()
             ->leftJoin('categories', 'categories.id = products.category_id AND categories.is_deleted = 0')

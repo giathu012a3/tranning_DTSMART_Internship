@@ -3,10 +3,18 @@
 namespace app\models\forms;
 
 use app\models\ProductModel;
+use app\models\TagModel;
+use yii\helpers\ArrayHelper;
 use yii\web\UploadedFile;
 
 class ProductForm extends ProductModel
 {
+    public $deleted_image_ids;
+    public $thumbnail;
+    public $images;
+    public $tags;
+    public array $tagErrors = [];
+
     public function rules()
     {
         $rules = parent::rules();
@@ -36,11 +44,8 @@ class ProductForm extends ProductModel
     public function getCurrentTags()
     {
         if ($this->_currentTags === null) {
-            if ($this->isNewRecord) {
-                $this->_currentTags = [];
-            } else {
-                $this->_currentTags = $this->getTags()->select('name')->column();
-            }
+            $tagModels = $this->isRelationPopulated('tags') ? $this->relatedRecords['tags'] : $this->getTags()->all();
+            $this->_currentTags = ArrayHelper::getColumn($tagModels, 'name');
         }
         return $this->_currentTags;
     }
@@ -73,6 +78,20 @@ class ProductForm extends ProductModel
 
         if (!$hasChanges) {
             $this->addError('name', 'No changes detected. Please modify at least one field to update.');
+        }
+     }
+
+    public function afterSave($insert, $changedAttributes)
+    {
+        parent::afterSave($insert, $changedAttributes);
+
+        if ($this->tags !== null) {
+            try {
+                $tagIds = TagModel::resolveIds($this->tags, $this->tagErrors);
+                TagModel::syncForProduct($this->id, $tagIds, $insert);
+            } catch (\Throwable $e) {
+                $this->tagErrors[] = 'Lỗi hệ thống khi đồng bộ tag: ' . $e->getMessage();
+            }
         }
     }
 }

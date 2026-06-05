@@ -39,7 +39,7 @@ class ArticleComment extends \yii\db\ActiveRecord
             [['article_id', 'user_id', 'content', 'created_at', 'updated_at'], 'required'],
             [['article_id', 'user_id', 'parent_id', 'status', 'created_at', 'updated_at'], 'integer'],
             [['content'], 'string'],
-            [['article_id'], 'exist', 'skipOnError' => true, 'targetClass' => Articles::class, 'targetAttribute' => ['article_id' => 'id']],
+            [['article_id'], 'exist', 'skipOnError' => true, 'targetClass' => ArticleModel::class, 'targetAttribute' => ['article_id' => 'id']],
         ];
     }
 
@@ -58,6 +58,6 @@ class ArticleComment extends \yii\db\ActiveRecord
             'created_at' => 'Created At',
             'updated_at' => 'Updated At',
         ];
-    }
-
+     }
+     
 }

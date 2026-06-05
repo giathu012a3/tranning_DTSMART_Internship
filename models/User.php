@@ -65,4 +65,14 @@ class User extends \yii\db\ActiveRecord
         ];
     }
 
+    public function fields()
+    {
+        return [
+            'id',
+            'username',
+            'email',
+            'created_at' => fn() => $this->created_at ? date('Y-m-d H:i:s', $this->created_at) : null,
+            'updated_at' => fn() => $this->updated_at ? date('Y-m-d H:i:s', $this->updated_at) : null,
+        ];
+    }
 }

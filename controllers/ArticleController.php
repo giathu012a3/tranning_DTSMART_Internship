@@ -4,6 +4,7 @@ namespace app\controllers;
 
 use app\models\forms\ArticleForm;
 use app\models\ArticleModel;
+use app\models\ProductModel;
 use app\models\search\ArticleSearch;
 use Yii;
 
@@ -39,6 +40,15 @@ class ArticleController extends BaseApiController
         $form = new ArticleForm();
 
         if ($form->load(Yii::$app->request->post(), '') && $form->save()) {
+            if ($form->product_ids !== null) {
+                $form->unlinkAll('products', true);
+                if (!empty($form->product_ids)) {
+                    $products = ProductModel::find()->where(['in', 'id', $form->product_ids])->notDeleted()->all();
+                    foreach ($products as $product) {
+                        $form->link('products', $product);
+                    }
+                }
+            }
             $article = $this->loadArticle($form->id);
             if (!empty($form->tagErrors) || $form->hasErrors()) {
                 $warnings = $this->extractWarnings($form, ['tags' => $form->tagErrors]);
@@ -68,6 +78,15 @@ class ArticleController extends BaseApiController
         }
 
         if ($form->load(Yii::$app->request->post(), '') && $form->save()) {
+            if ($form->product_ids !== null) {
+                $form->unlinkAll('products', true);
+                if (!empty($form->product_ids)) {
+                    $products = ProductModel::find()->where(['in', 'id', $form->product_ids])->notDeleted()->all();
+                    foreach ($products as $product) {
+                        $form->link('products', $product);
+                    }
+                }
+            }
             $article = $this->loadArticle($form->id);
             if (!empty($form->tagErrors) || $form->hasErrors()) {
                 $warnings = $this->extractWarnings($form, ['tags' => $form->tagErrors]);
@@ -109,7 +128,7 @@ class ArticleController extends BaseApiController
 
     private function loadArticle(int $id): ?ArticleModel
     {
-        $article = ArticleModel::find()
+        return ArticleModel::find()
             ->withAsset()
             ->withTags()
             ->withProducts()
@@ -117,11 +136,5 @@ class ArticleController extends BaseApiController
             ->byId($id)
             ->notDeleted()
             ->one();
-
-        if ($article !== null) {
-            $article->detailMode = true;
-        }
-
-        return $article;
     }
 }

@@ -8,7 +8,6 @@ use app\models\query\CategoriesQuery;
 
 class CategoryModel extends Category
 {
-    public bool $detailMode = false;
     public $products_count;
 
     public function behaviors()
@@ -37,48 +36,26 @@ class CategoryModel extends Category
         $this->is_deleted = 1;
         return $this->save(false);
     }
-
     public function fields()
     {
-        $fields = [
+        return [
             'id',
             'name',
             'status',
-            'created_at' => function () {
-                return $this->created_at ? date('Y-m-d H:i:s', $this->created_at) : null;
-            },
-            'updated_at' => function () {
-                return $this->updated_at ? date('Y-m-d H:i:s', $this->updated_at) : null;
-            },
-            'linked_items' => function () {
-                $productsCount = $this->products_count !== null
+            'linked_items' => fn() => [
+                'products_count' => (int) ($this->products_count !== null
                     ? $this->products_count
-                    : ($this->isRelationPopulated('products') ? count($this->products) : (int) $this->getProducts()->count());
-                return [
-                    'products_count' => (int) $productsCount,
-                ];
-            },
+                    : ($this->isRelationPopulated('products') ? count($this->products) : (int) $this->getProducts()->count())),
+            ],
+            'created_at' => fn() => $this->created_at ? date('Y-m-d H:i:s', $this->created_at) : null,
+            'updated_at' => fn() => $this->updated_at ? date('Y-m-d H:i:s', $this->updated_at) : null,
         ];
-
-        if ($this->detailMode) {
-            $fields = array_merge($fields, $this->extraFields());
-        }
-
-        return $fields;
     }
 
     public function extraFields()
     {
         return [
-            'products' => function () {
-                $products = $this->isRelationPopulated('products') ? $this->relatedRecords['products'] : $this->getProducts()->all();
-                return array_map(fn($product) => [
-                    'id'    => $product->id,
-                    'name'  => $product->name,
-                    'price' => $product->price,
-                    'stock' => $product->stock,
-                ], $products);
-            },
+            'products',
         ];
     }
 }
